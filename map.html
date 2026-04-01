@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Venue Map — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/map.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+        <li><a href="map.html" class="active">Map</a></li>
+      </ul>
+      <button class="nav-admin-gear" id="adminToggle" title="Admin" aria-label="Admin settings">⚙</button>
+    </div>
+  </nav>
+
+  <!-- Page Banner (admin-managed) -->
+  <div class="page-banner" data-slot="map-banner"></div>
+
+  <!-- MAP PAGE -->
+  <div class="map-page-wrap" id="mapPageWrap">
+
+    <div class="map-header">
+      <h1>🗺 Venue Map</h1>
+      <div class="flex gap-1" id="mapControls">
+        <span class="text-muted" style="font-size:0.85rem;align-self:center;"><span data-info="dates-short">May 8–9, 2026</span> · <span data-info="location">Central Ohio</span></span>
+      </div>
+    </div>
+
+    <!-- Legend — populated dynamically from marker data -->
+    <div class="map-legend" id="mapLegend"></div>
+
+    <!-- Map Container -->
+    <div style="position:relative;flex:1;display:flex;flex-direction:column;">
+      <div id="venue-map"></div>
+      <div class="add-marker-hint">Click anywhere on the map to place a new marker</div>
+    </div>
+
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="admin-panel">
+    <div class="admin-panel-header">
+      <h3>⚙ Admin — Map</h3>
+      <button class="admin-panel-close" id="adminClose">✕</button>
+    </div>
+    <div class="admin-panel-body">
+
+      <!-- Add marker -->
+      <div class="admin-section">
+        <h4>Add Marker</h4>
+        <button class="btn btn-primary w-full" id="startAddMarker">
+          + Click Map to Place Marker
+        </button>
+        <div id="addMarkerForm" class="hidden mt-2">
+          <div class="form-group">
+            <label>Label</label>
+            <input type="text" id="newMarkerLabel" placeholder="e.g. Main Stage" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="newMarkerType">
+              <option value="stage">Stage</option>
+              <option value="bar">Bar / Beverage</option>
+              <option value="vendor">Vendor</option>
+              <option value="parking">Parking</option>
+              <option value="camping">Camping</option>
+              <option value="entrance">Entrance</option>
+              <option value="off-limits">Off Limits</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="newMarkerDesc" placeholder="Brief description..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Image URL <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="url" id="newMarkerImage" placeholder="https://..." />
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label>Link URL <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+              <input type="url" id="newMarkerUrl" placeholder="https://..." />
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Button Label</label>
+              <input type="text" id="newMarkerUrlLabel" placeholder="More Info" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Location (auto-filled by clicking map)</label>
+            <div class="form-row">
+              <div class="form-group">
+                <input type="text" id="newMarkerLat" placeholder="Latitude" readonly
+                       style="font-family:monospace;font-size:0.8rem;" />
+              </div>
+              <div class="form-group">
+                <input type="text" id="newMarkerLng" placeholder="Longitude" readonly
+                       style="font-family:monospace;font-size:0.8rem;" />
+              </div>
+            </div>
+            <p class="text-muted mt-1" style="font-size:0.75rem;">
+              👆 Click anywhere on the satellite map above to drop a pin
+            </p>
+          </div>
+          <div class="flex gap-1 mt-1">
+            <button class="btn btn-accent btn-sm" id="saveNewMarker">Save Marker</button>
+            <button class="btn btn-ghost btn-sm" id="cancelAddMarker">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit selected marker -->
+      <div class="admin-section" id="editMarkerSection" style="display:none;">
+        <h4>Edit Marker</h4>
+        <div class="form-group">
+          <label>Label</label>
+          <input type="text" id="editMarkerLabel" />
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="editMarkerType">
+            <option value="stage">Stage</option>
+            <option value="bar">Bar / Beverage</option>
+            <option value="vendor">Vendor</option>
+            <option value="parking">Parking</option>
+            <option value="camping">Camping</option>
+            <option value="entrance">Entrance</option>
+            <option value="off-limits">Off Limits</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="editMarkerDesc"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Image URL <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <input type="url" id="editMarkerImage" placeholder="https://..." />
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Link URL <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="url" id="editMarkerUrl" placeholder="https://..." />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Button Label</label>
+            <input type="text" id="editMarkerUrlLabel" placeholder="More Info" />
+          </div>
+        </div>
+        <div class="flex gap-1 mt-1">
+          <button class="btn btn-accent btn-sm" id="saveEditMarker">Save</button>
+          <button class="btn btn-danger btn-sm" id="deleteMarker">Delete</button>
+          <button class="btn btn-ghost btn-sm" id="cancelEditMarker">Cancel</button>
+        </div>
+        <input type="hidden" id="editMarkerId" />
+      </div>
+
+      <!-- Edit selected zone -->
+      <div class="admin-section" id="editZoneSection" style="display:none;">
+        <h4>Edit Zone</h4>
+        <div class="form-group">
+          <label>Zone Name</label>
+          <input type="text" id="editZoneName" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="editZoneDesc" placeholder="Info shown in the popup..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Image URL <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <input type="url" id="editZoneImage" placeholder="https://..." />
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Link URL <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="url" id="editZoneUrl" placeholder="https://..." />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Button Label</label>
+            <input type="text" id="editZoneUrlLabel" placeholder="More Info" />
+          </div>
+        </div>
+        <!-- Scale slider -->
+        <div class="form-group" id="editZoneScaleGroup" style="margin-top:8px;">
+          <label>Scale Boundary: <span id="editZoneScaleVal">1.00×</span></label>
+          <input type="range" id="editZoneScale" min="0.5" max="2" step="0.05" value="1" />
+          <div class="flex gap-1 mt-1">
+            <button class="btn btn-ghost btn-sm" id="applyZoneScale" style="flex:1;">Apply Scale</button>
+            <button class="btn btn-ghost btn-sm" id="resetZoneScale" style="flex:1;">Reset Scale</button>
+          </div>
+          <p class="text-muted mt-1" style="font-size:0.72rem;line-height:1.4;">
+            Drag to preview resize. "Apply Scale" saves the new boundary. Only applies to polygon/line zones.
+          </p>
+        </div>
+        <div class="flex gap-1 mt-1">
+          <button class="btn btn-accent btn-sm" id="saveEditZone">Save</button>
+          <button class="btn btn-danger btn-sm" id="deleteZone">Delete Zone</button>
+          <button class="btn btn-ghost btn-sm" id="cancelEditZone">Cancel</button>
+        </div>
+        <input type="hidden" id="editZoneId" />
+      </div>
+
+      <!-- KML Venue Layer -->
+      <div class="admin-section">
+        <h4>Venue KML Layer</h4>
+        <input type="file" id="kmlUpload" accept=".kml,.kmz" style="display:none" />
+        <button class="btn btn-accent btn-sm w-full" onclick="document.getElementById('kmlUpload').click()">
+          📂 Upload venue.kml from Google Earth
+        </button>
+        <p class="text-muted mt-1" style="font-size:0.75rem;" id="kmlFileName">No KML loaded</p>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-ghost btn-sm" id="downloadKml">Export KML</button>
+          <button class="btn btn-danger btn-sm" id="clearKml">Clear All Zones</button>
+        </div>
+        <p class="text-muted mt-2" style="font-size:0.72rem;line-height:1.5;">
+          💡 Name zones in Google Earth like "Barn Stage", "Camping Area", "Vendor Row" — the map auto-colors by keyword.
+          Click any zone on the map to edit it.
+        </p>
+      </div>
+
+      <!-- Zone List -->
+      <div class="admin-section" id="zoneListSection" style="display:none;">
+        <h4>Venue Zones <span id="zoneCount" style="font-weight:400;color:var(--color-text-muted);font-size:0.75rem;"></span></h4>
+        <div id="zoneList"></div>
+      </div>
+
+      <!-- Import / Export -->
+      <div class="admin-section">
+        <h4>Import / Export</h4>
+        <input type="file" id="importMarkersFile" accept=".json" style="display:none" />
+        <button class="btn btn-ghost btn-sm w-full" onclick="document.getElementById('importMarkersFile').click()">
+          Import markers.json
+        </button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportMarkers">
+          Export markers.json
+        </button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="resetMarkers">
+          Reset to default data
+        </button>
+      </div>
+
+      <!-- Page Banner -->
+      <div class="admin-section">
+        <h4>Page Banner</h4>
+        <button class="btn btn-accent btn-sm w-full" id="editMapBannerBtn">Edit Banner Image</button>
+        <p class="text-muted mt-1" style="font-size:0.75rem;">Full-width image below the nav bar on this page.</p>
+      </div>
+
+      <!-- Background Image -->
+      <div class="admin-section">
+        <h4>Background Image</h4>
+        <button class="btn btn-accent btn-sm w-full" id="editMapBgBtn">Edit Background</button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportImgBlocksMapBtn">Export image-blocks.json</button>
+        <p class="text-muted mt-1" style="font-size:0.75rem;">Site-wide background with dark scrim overlay.</p>
+      </div>
+
+      <!-- Admin Settings -->
+      <div class="admin-section">
+        <h4>Admin Settings</h4>
+        <button class="btn btn-ghost btn-sm w-full"      id="mapChangePwBtn">Change Password</button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="mapExportAdminConfigBtn">Export Admin Config</button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="mapOpenSetupBtn">⚡ Run Setup Wizard</button>
+      </div>
+
+    </div>
+  </div>
+
+  <a id="ticketBtn" class="ticket-btn" href="#" target="_blank" rel="noopener" style="display:none">🎟 Get Tickets</a>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/js/site-info.js"></script>
+  <script src="assets/js/stages.js"></script>
+  <script src="assets/js/image-blocks.js"></script>
+  <script src="assets/js/map.js"></script>
+</body>
+</html>

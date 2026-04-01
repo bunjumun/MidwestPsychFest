@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flash Data — Midwest Psych Fest</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    .flash-wrap {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    .flash-header { text-align: center; margin-bottom: 36px; }
+    .flash-header h1 { font-size: 2.2rem; color: var(--color-primary); margin-bottom: 8px; }
+    .flash-header p  { color: var(--color-text-muted); }
+
+    /* ── Big multi-file drop zone ── */
+    .drop-zone {
+      border: 2px dashed var(--color-primary);
+      border-radius: var(--radius-lg);
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s, border-color 0.2s;
+      background: rgba(255,60,172,0.03);
+    }
+    .drop-zone.dragover {
+      background: rgba(255,60,172,0.08);
+      border-color: var(--color-secondary);
+    }
+    .drop-zone input {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .drop-icon { font-size: 3rem; margin-bottom: 12px; }
+    .drop-label { font-size: 1.1rem; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
+    .drop-sub   { font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.7; }
+    .drop-types {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px;
+    }
+    .drop-type-tag {
+      padding: 3px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-muted);
+    }
+
+    /* ── Detected files list ── */
+    .detected-list {
+      display: flex; flex-direction: column; gap: 8px;
+      margin-top: 20px;
+    }
+    .detected-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+    }
+    .detected-item.recognized { border-color: rgba(79,255,176,0.3); }
+    .detected-item.unknown    { opacity: 0.5; }
+    .detected-icon  { font-size: 1.3rem; width: 28px; text-align: center; }
+    .detected-name  { flex: 1; font-family: monospace; color: var(--color-text); }
+    .detected-role  { font-size: 0.75rem; color: var(--color-accent); font-weight: 700;
+                      text-transform: uppercase; letter-spacing: 0.06em; }
+    .detected-skip  { font-size: 0.75rem; color: var(--color-text-muted); }
+
+    /* ── Flash button ── */
+    #flashBtn {
+      display: none;
+      width: 100%;
+      font-size: 1rem;
+      padding: 14px;
+      margin-top: 20px;
+    }
+
+    /* ── Result ── */
+    .flash-result {
+      display: none;
+      margin-top: 20px;
+      padding: 16px 20px;
+      border-radius: var(--radius-lg);
+    }
+    .flash-result.success {
+      background: rgba(79,255,176,0.06);
+      border: 1px solid rgba(79,255,176,0.25);
+    }
+    .flash-result.error {
+      background: rgba(255,68,68,0.06);
+      border: 1px solid rgba(255,68,68,0.25);
+    }
+    .flash-result h3 { font-size: 1rem; margin-bottom: 8px; }
+    .flash-result ul { font-size: 0.85rem; color: var(--color-text-muted); padding-left: 16px; line-height: 2; }
+
+    /* ── Divider ── */
+    .section-divider {
+      border: none; border-top: 1px solid var(--color-border);
+      margin: 36px 0;
+    }
+
+    /* ── Export section ── */
+    .export-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .export-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .export-card-name {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--color-accent);
+    }
+    .export-card-desc {
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      flex: 1;
+    }
+    @media (max-width: 480px) { .export-grid { grid-template-columns: 1fr; } }
+
+    /* ── Current state indicators ── */
+    .state-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .state-live   { background: var(--color-accent); }
+    .state-stored { background: var(--color-secondary); }
+    .state-empty  { background: var(--color-border); }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="map.html">Map</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="flash-wrap">
+
+  <div class="flash-header">
+    <h1>⚡ Flash Data</h1>
+    <p>Drop your exported data files here to instantly update the site.<br>
+       Use this any time you've updated your spreadsheets or made changes offline.</p>
+  </div>
+
+  <!-- ── IMPORT ── -->
+  <h2 class="section-title" style="text-align:left;font-size:1.3rem;margin-bottom:16px;">Import Files</h2>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="flashFiles" multiple accept=".json,.csv,.kml,.kmz,image/*" />
+    <div class="drop-icon">📂</div>
+    <div class="drop-label">Drop any combination of files here</div>
+    <div class="drop-sub">Drag multiple files at once — the tool auto-detects what each one is</div>
+    <div class="drop-types">
+      <span class="drop-type-tag">info.json</span>
+      <span class="drop-type-tag">schedule.json</span>
+      <span class="drop-type-tag">mpf_schedule.json</span>
+      <span class="drop-type-tag">stages.json</span>
+      <span class="drop-type-tag">markers.json</span>
+      <span class="drop-type-tag">admin-config.json</span>
+      <span class="drop-type-tag">schedule.csv</span>
+      <span class="drop-type-tag">logo image</span>
+      <span class="drop-type-tag">map image</span>
+    </div>
+  </div>
+
+  <div class="detected-list" id="detectedList"></div>
+
+  <button class="btn btn-primary" id="flashBtn" onclick="flashAll()">
+    ⚡ Flash to Site
+  </button>
+
+  <div class="flash-result" id="flashResult"></div>
+
+  <hr class="section-divider" />
+
+  <!-- ── EXPORT ── -->
+  <h2 class="section-title" style="text-align:left;font-size:1.3rem;margin-bottom:6px;">Export Current Data</h2>
+  <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:16px;">
+    Download the current working data from this browser. Use these to back up or commit to GitHub.
+  </p>
+
+  <div class="export-grid" id="exportGrid">
+    <div class="export-card">
+      <div class="export-card-name" id="infoState">
+        <span class="state-dot state-empty"></span>info.json
+      </div>
+      <div class="export-card-desc">Festival name, dates, venue, social links</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportInfo()">Download</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-name" id="scheduleState">
+        <span class="state-dot state-empty"></span>schedule.json
+      </div>
+      <div class="export-card-desc">All artist sets, stages, times</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportSchedule()">Download</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-name" id="markersState">
+        <span class="state-dot state-empty"></span>markers.json
+      </div>
+      <div class="export-card-desc">Venue map marker positions &amp; details</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportMarkers()">Download</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-name" id="stagesState">
+        <span class="state-dot state-empty"></span>stages.json
+      </div>
+      <div class="export-card-desc">Stage display name registry</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportStagesData()">Download</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-name" id="logoState">
+        <span class="state-dot state-empty"></span>logo image
+      </div>
+      <div class="export-card-desc">Festival logo (stored as image data)</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportLogo()">Download</button>
+    </div>
+    <div class="export-card">
+      <div class="export-card-name" id="mapImgState">
+        <span class="state-dot state-empty"></span>venue-map image
+      </div>
+      <div class="export-card-desc">Overhead venue map image</div>
+      <button class="btn btn-ghost btn-sm" onclick="exportMapImg()">Download</button>
+    </div>
+    <div class="export-card" style="border-color:rgba(255,60,172,0.25);">
+      <div class="export-card-name" style="color:var(--color-primary);">📦 Export All</div>
+      <div class="export-card-desc">Download all available data files at once</div>
+      <button class="btn btn-primary btn-sm" onclick="exportAll()">Download All</button>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <a href="setup.html" class="btn btn-ghost btn-sm">Run Full Setup</a>
+    <a href="index.html" class="btn btn-ghost btn-sm">Home</a>
+    <a href="schedule.html" class="btn btn-ghost btn-sm">Schedule</a>
+    <a href="map.html" class="btn btn-ghost btn-sm">Map</a>
+  </div>
+
+</div>
+
+<script src="assets/js/site-info.js"></script>
+<script src="assets/js/stages.js"></script>
+<script>
+// ── Detected files state ──────────────────────
+const pending = []; // { file, role, data }
+
+const ROLE_MAP = {
+  'info.json':         { role: 'info',        icon: 'ℹ️',  label: 'Festival Info'         },
+  'schedule.json':     { role: 'schedule',    icon: '📋', label: 'Schedule Data'          },
+  'mpf_schedule.json': { role: 'mpf-schedule',icon: '🎸', label: 'MPF Band Tool Export'   },
+  'stages.json':       { role: 'stages',      icon: '🎪', label: 'Stage Name Registry'    },
+  'markers.json':      { role: 'markers',     icon: '📍', label: 'Map Markers'            },
+  'admin-config.json': { role: 'admin-config',icon: '🔐', label: 'Admin Credentials'      },
+  'venue.kml':         { role: 'kml',         icon: '🗺', label: 'Venue KML Layer'        },
+  'schedule.csv':      { role: 'schedule',    icon: '📋', label: 'Schedule (CSV)'         },
+};
+
+function detectRole(filename, parsedData) {
+  const lower = filename.toLowerCase();
+  if (ROLE_MAP[lower]) return ROLE_MAP[lower];
+  // Any .kml file is a venue layer
+  if (lower.endsWith('.kml') || lower.endsWith('.kmz')) {
+    return { role: 'kml', icon: '🗺', label: 'Venue KML Layer' };
+  }
+  // Content-based detection: MPF band tool export by _meta.source
+  if (parsedData && parsedData._meta?.source === 'MPF Band Emails Tool') {
+    return { role: 'mpf-schedule', icon: '🎸', label: 'MPF Band Tool Export' };
+  }
+  // image detection by extension
+  if (/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(lower)) {
+    if (/logo|brand/i.test(lower))
+      return { role: 'logo',    icon: '🎪', label: 'Festival Logo' };
+    if (/map|venue|overhead|satellite/i.test(lower))
+      return { role: 'map-img', icon: '🗺', label: 'Venue Map Image' };
+    return { role: 'logo',    icon: '🖼', label: 'Image (assumed Logo — rename to "venue-map.jpg" for map)' };
+  }
+  return null;
+}
+
+// ── File input / drag & drop ──────────────────
+document.getElementById('flashFiles').addEventListener('change', e => {
+  handleFiles([...e.target.files]);
+  e.target.value = '';
+});
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles([...e.dataTransfer.files]);
+});
+
+function handleFiles(files) {
+  pending.length = 0;
+  const list = document.getElementById('detectedList');
+  list.innerHTML = '';
+  document.getElementById('flashResult').style.display = 'none';
+
+  const promises = files.map(file => new Promise(resolve => {
+    const meta = detectRole(file.name);
+    if (!meta) {
+      // Try reading as JSON first to detect content-based roles
+      if (!file.name.match(/\.(png|jpg|jpeg|gif|webp|svg|csv)$/i)) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            const contentMeta = detectRole(file.name, parsed);
+            if (contentMeta) {
+              pending.push({ file, role: contentMeta.role, data: parsed, meta: contentMeta });
+            } else {
+              pending.push({ file, role: null, data: null, meta: null });
+            }
+          } catch(e) {
+            pending.push({ file, role: null, data: null, meta: null });
+          }
+          resolve();
+        };
+        reader.readAsText(file);
+        return;
+      }
+      pending.push({ file, role: null, data: null, meta: null });
+      resolve();
+      return;
+    }
+
+    if (meta.role === 'logo' || meta.role === 'map-img') {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        pending.push({ file, role: meta.role, data: ev.target.result, meta });
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    } else if (meta.role === 'kml') {
+      // KML is XML text — read as-is, not JSON
+      const reader = new FileReader();
+      reader.onload = ev => {
+        pending.push({ file, role: 'kml', data: ev.target.result, meta });
+        resolve();
+      };
+      reader.readAsText(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        let parsed = null;
+        try {
+          if (file.name.endsWith('.csv')) {
+            parsed = csvToSchedule(ev.target.result);
+          } else {
+            parsed = JSON.parse(ev.target.result);
+            // Re-detect role using parsed content (catches MPF exports with non-standard filenames)
+            const contentRole = detectRole(file.name, parsed);
+            if (contentRole && contentRole.role !== meta.role) {
+              meta = contentRole;
+            }
+          }
+        } catch(err) {
+          meta.error = err.message;
+        }
+        pending.push({ file, role: meta.role, data: parsed, meta });
+        resolve();
+      };
+      reader.readAsText(file);
+    }
+  }));
+
+  Promise.all(promises).then(renderDetected);
+}
+
+function renderDetected() {
+  const list = document.getElementById('detectedList');
+  list.innerHTML = '';
+
+  let hasReady = false;
+
+  pending.forEach(p => {
+    const item = document.createElement('div');
+    const ok = p.role && p.data !== null && !p.meta?.error;
+    item.className = 'detected-item ' + (ok ? 'recognized' : (p.role ? 'error' : 'unknown'));
+
+    let summary = '';
+    if (p.role === 'schedule' && Array.isArray(p.data)) summary = `${p.data.length} sets`;
+    else if (p.role === 'markers' && Array.isArray(p.data)) summary = `${p.data.length} markers`;
+    else if (p.role === 'info' && p.data) summary = p.data.name || '';
+    else if (p.role === 'logo' || p.role === 'map-img') summary = p.file.name;
+    else if (p.role === 'kml') summary = `${(p.data.match(/<Placemark/g)||[]).length} zones`;
+    if (p.meta?.error) summary = '✗ ' + p.meta.error;
+
+    item.innerHTML = `
+      <span class="detected-icon">${ok ? (p.meta?.icon || '📄') : '⚠'}</span>
+      <span class="detected-name">${p.file.name}</span>
+      ${ok
+        ? `<span class="detected-role">${p.meta.label}${summary ? ' · ' + summary : ''}</span>`
+        : `<span class="detected-skip">${p.meta ? 'Parse error' : 'Unrecognized — skipped'}</span>`
+      }
+    `;
+    list.appendChild(item);
+    if (ok) hasReady = true;
+  });
+
+  document.getElementById('flashBtn').style.display = hasReady ? 'block' : 'none';
+}
+
+// ── Flash ─────────────────────────────────────
+function flashAll() {
+  const applied = [];
+  const errors  = [];
+
+  pending.forEach(p => {
+    if (!p.role || p.data === null || p.meta?.error) return;
+    try {
+      switch (p.role) {
+        case 'info':
+          localStorage.setItem('mpf_info', JSON.stringify(p.data));
+          applied.push('Festival info updated');
+          break;
+        case 'schedule': {
+          // Plain schedule array — normalize to v2
+          const normalized = p.data.map((s, i) => {
+            const n = normalizeEntry(s, {});
+            if (!n.id) n.id = 's' + Date.now() + i;
+            return n;
+          });
+          localStorage.setItem('mpf_schedule', JSON.stringify(normalized));
+          applied.push(`Schedule: ${normalized.length} sets loaded`);
+          break;
+        }
+        case 'mpf-schedule': {
+          // MPF Band Tool export — extract stages + normalize schedule
+          if (Array.isArray(p.data.stages) && p.data.stages.length) {
+            const stagesObj = {};
+            p.data.stages.forEach(s => { if (s.id) stagesObj[s.id] = s.name || s.id; });
+            localStorage.setItem('mpf_stages', JSON.stringify(stagesObj));
+          }
+          const entries = Array.isArray(p.data.schedule) ? p.data.schedule : [];
+          const normalized = entries.map((s, i) => {
+            const n = normalizeEntry(s, {});
+            if (!n.id) n.id = 's' + Date.now() + i;
+            return n;
+          });
+          localStorage.setItem('mpf_schedule', JSON.stringify(normalized));
+          applied.push(`MPF export: ${normalized.length} sets + ${p.data.stages?.length || 0} stages loaded`);
+          break;
+        }
+        case 'stages':
+          localStorage.setItem('mpf_stages', JSON.stringify(p.data));
+          applied.push(`Stage registry: ${Object.keys(p.data).length} stages loaded`);
+          break;
+        case 'markers':
+          localStorage.setItem('mpf_markers', JSON.stringify(p.data));
+          applied.push(`Map: ${p.data.length} markers loaded`);
+          break;
+        case 'admin-config':
+          if (p.data.mpf_admin_pw)    localStorage.setItem('mpf_admin_pw',    p.data.mpf_admin_pw);
+          if (p.data.mpf_admin_email) localStorage.setItem('mpf_admin_email', p.data.mpf_admin_email);
+          applied.push('Admin credentials restored');
+          break;
+        case 'logo':
+          localStorage.setItem('mpf_logo', p.data);
+          applied.push('Logo image updated');
+          break;
+        case 'map-img':
+          localStorage.setItem('mpf_map_image', p.data);
+          applied.push('Venue map image updated');
+          break;
+        case 'kml':
+          localStorage.setItem('mpf_kml', p.data);
+          applied.push('Venue KML layer loaded');
+          break;
+      }
+    } catch(e) {
+      errors.push(p.file.name + ': ' + e.message);
+    }
+  });
+
+  const result = document.getElementById('flashResult');
+  if (applied.length) {
+    result.className = 'flash-result success';
+    result.style.display = 'block';
+    result.innerHTML = `
+      <h3 style="color:var(--color-accent);">⚡ Flashed! ${applied.length} item${applied.length > 1 ? 's' : ''} applied</h3>
+      <ul>${applied.map(a => `<li>${a}</li>`).join('')}</ul>
+      ${errors.length ? `<p style="color:#ff9944;margin-top:8px;font-size:0.82rem;">⚠ ${errors.join(', ')}</p>` : ''}
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="index.html" class="btn btn-accent btn-sm">View Site →</a>
+        <a href="schedule.html" class="btn btn-ghost btn-sm">Schedule</a>
+        <a href="map.html" class="btn btn-ghost btn-sm">Map</a>
+      </div>
+    `;
+    updateStateIndicators();
+  } else {
+    result.className = 'flash-result error';
+    result.style.display = 'block';
+    result.innerHTML = `<h3 style="color:#ff6b6b;">Nothing applied</h3><ul>${errors.map(e=>`<li>${e}</li>`).join('')}</ul>`;
+  }
+}
+
+// ── Export functions ──────────────────────────
+async function getInfo() {
+  const ls = localStorage.getItem('mpf_info');
+  if (ls) return JSON.parse(ls);
+  try { const r = await fetch('data/info.json'); if (r.ok) return r.json(); } catch(e) {}
+  return {};
+}
+async function getSchedule() {
+  const ls = localStorage.getItem('mpf_schedule');
+  if (ls) return JSON.parse(ls);
+  try { const r = await fetch('data/schedule.json'); if (r.ok) return r.json(); } catch(e) {}
+  return [];
+}
+async function getMarkers() {
+  const ls = localStorage.getItem('mpf_markers');
+  if (ls) return JSON.parse(ls);
+  try { const r = await fetch('data/markers.json'); if (r.ok) return r.json(); } catch(e) {}
+  return [];
+}
+
+function dlJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+function dlDataUrl(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename; a.click();
+}
+
+async function exportInfo()     { dlJSON(await getInfo(), 'info.json'); }
+async function exportSchedule() { dlJSON(await getSchedule(), 'schedule.json'); }
+async function exportMarkers()  { dlJSON(await getMarkers(), 'markers.json'); }
+async function exportStagesData() {
+  await loadStages();
+  const s = getAllStages();
+  if (!Object.keys(s).length) { alert('No stage data stored yet.'); return; }
+  dlJSON(s, 'stages.json');
+}
+function exportLogo() {
+  const d = localStorage.getItem('mpf_logo');
+  if (d) dlDataUrl(d, 'logo.png');
+  else alert('No logo image stored in this browser yet.');
+}
+function exportMapImg() {
+  const d = localStorage.getItem('mpf_map_image');
+  if (d) dlDataUrl(d, 'venue-map.jpg');
+  else alert('No venue map image stored in this browser yet.');
+}
+async function exportAll() {
+  dlJSON(await getInfo(), 'info.json');
+  dlJSON(await getSchedule(), 'schedule.json');
+  dlJSON(await getMarkers(), 'markers.json');
+  await loadStages();
+  const stages = getAllStages();
+  if (Object.keys(stages).length) dlJSON(stages, 'stages.json');
+  const logo = localStorage.getItem('mpf_logo');
+  if (logo) dlDataUrl(logo, 'logo.png');
+  const mapImg = localStorage.getItem('mpf_map_image');
+  if (mapImg) dlDataUrl(mapImg, 'venue-map.jpg');
+}
+
+// ── State indicators ──────────────────────────
+function updateStateIndicators() {
+  const checks = {
+    infoState:    'mpf_info',
+    scheduleState:'mpf_schedule',
+    markersState: 'mpf_markers',
+    stagesState:  'mpf_stages',
+    logoState:    'mpf_logo',
+    mapImgState:  'mpf_map_image',
+  };
+  Object.entries(checks).forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const dot = el.querySelector('.state-dot');
+    if (localStorage.getItem(key)) {
+      dot.className = 'state-dot state-live';
+      dot.title = 'Stored in this browser';
+    }
+  });
+}
+
+// ── CSV helper (same as setup.html) ───────────
+function csvToSchedule(csv) {
+  const lines = csv.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+  return lines.slice(1).map((line, i) => {
+    const vals = splitCsvLine(line);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').replace(/"/g,'').trim(); });
+    if (obj.day) obj.day = parseInt(obj.day) || 1;
+    obj.id = 's' + Date.now() + i;
+    return obj;
+  }).filter(o => o.artist);
+}
+function splitCsvLine(line) {
+  const result = []; let cur = '', inQuote = false;
+  for (const ch of line) {
+    if (ch === '"') inQuote = !inQuote;
+    else if (ch === ',' && !inQuote) { result.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+// Nav hamburger
+document.addEventListener('DOMContentLoaded', () => {
+  updateStateIndicators();
+  const t = document.getElementById('navToggle');
+  if (t) t.addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+});
+</script>
+</body>
+</html>

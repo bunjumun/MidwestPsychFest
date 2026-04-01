@@ -1,0 +1,331 @@
+/* ============================================
+   MIDWEST PSYCH FEST — Map Page Styles
+   ============================================ */
+
+.map-page-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--nav-height));
+  margin-right: 0;
+  transition: margin-right 0.3s ease;
+}
+
+/* Shrink map when admin panel is open */
+body.admin-mode .map-page-wrap {
+  margin-right: 360px;
+}
+
+.map-header {
+  padding: 16px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.map-header h1 {
+  font-size: 1.8rem;
+  color: var(--color-secondary);
+}
+
+.map-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 24px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 3px 0;
+  transition: color 0.2s;
+}
+.legend-item:hover { color: var(--color-text); }
+.legend-item.active { color: var(--color-text); }
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Map Container ── */
+#venue-map {
+  flex: 1;
+  margin: 8px 16px 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  background: #1a1030;
+  min-height: 400px;
+}
+
+/* ── Leaflet overrides for carnival theme ── */
+.leaflet-container {
+  /* Satellite tiles load as base — dark fallback until tiles render */
+  background: #111 !important;
+  font-family: var(--font-body) !important;
+}
+
+/* Attribution text readability over satellite */
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.6) !important;
+  color: rgba(255,255,255,0.5) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a { color: rgba(255,255,255,0.6) !important; }
+
+/* Zoom controls */
+.leaflet-bar a {
+  background: rgba(13, 0, 16, 0.85) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+.leaflet-bar a:hover {
+  background: rgba(255, 60, 172, 0.2) !important;
+  color: var(--color-primary) !important;
+}
+
+/* ── KML Zone hover pulse ── */
+.kml-zone {
+  transition: fill-opacity 0.2s, stroke-width 0.2s;
+}
+
+/* Custom marker icons */
+.map-marker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.map-marker-icon:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+}
+.map-marker-icon .marker-inner {
+  transform: rotate(45deg);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.marker-stage   { background: var(--color-stage); }
+.marker-bar     { background: var(--color-bar); }
+.marker-vendor  { background: var(--color-vendor); }
+.marker-parking { background: var(--color-parking); }
+.marker-camping { background: var(--color-camping); }
+.marker-entrance { background: var(--color-entrance); }
+.marker-off-limits { background: var(--color-off-limits); }
+
+/* Leaflet popup customization */
+.leaflet-popup-content-wrapper {
+  background: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 8px 32px rgba(178, 75, 255, 0.3) !important;
+  color: var(--color-text) !important;
+  min-width: 200px;
+}
+.leaflet-popup-tip {
+  background: var(--color-bg-card) !important;
+}
+.leaflet-popup-close-button {
+  color: var(--color-text-muted) !important;
+  font-size: 18px !important;
+  top: 8px !important;
+  right: 10px !important;
+}
+.leaflet-popup-close-button:hover {
+  color: var(--color-text) !important;
+}
+
+/* Custom popup content */
+.map-popup {
+  padding: 4px 2px;
+}
+.map-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.map-popup-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.map-popup-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+.map-popup-type {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+.map-popup-desc {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.map-popup-actions {
+  margin-top: 10px;
+  display: none;
+  gap: 6px;
+}
+.admin-mode .map-popup-actions { display: flex; }
+
+/* Coordinate picker crosshair */
+.coord-picker-active {
+  cursor: crosshair !important;
+}
+.coord-display {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13,0,16,0.9);
+  border: 1px solid var(--color-primary);
+  color: var(--color-text);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Admin "Add Marker" cursor hint ── */
+.map-adding-marker #venue-map {
+  cursor: crosshair;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px rgba(255, 60, 172, 0.3);
+}
+
+.add-marker-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 60, 172, 0.12);
+  border: 2px dashed var(--color-primary);
+  color: var(--color-primary);
+  padding: 12px 20px;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: 0.9rem;
+  pointer-events: none;
+  z-index: 999;
+  text-align: center;
+  display: none;
+}
+.map-adding-marker .add-marker-hint { display: block; }
+
+/* ── Zone List (admin panel) ── */
+.zone-list-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.82rem;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+.zone-list-row:last-child { border-bottom: none; }
+.zone-list-row.active {
+  background: rgba(255, 60, 172, 0.07);
+  padding: 6px 6px;
+}
+.zone-list-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.zone-list-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+.zone-list-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  padding: 3px 5px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+.zone-list-btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.07);
+}
+.zone-list-btn--delete:hover { color: var(--color-off-limits); }
+
+/* ── Popup Image ── */
+.map-popup-img {
+  width: 100%;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  max-height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Popup Link Button ── */
+.map-popup-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 16px;
+  background: rgba(255, 60, 172, 0.12);
+  border: 1px solid rgba(255, 60, 172, 0.35);
+  border-radius: var(--radius);
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+  letter-spacing: 0.02em;
+}
+.map-popup-link:hover {
+  background: rgba(255, 60, 172, 0.25);
+  border-color: rgba(255, 60, 172, 0.6);
+  color: var(--color-primary);
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .map-header { padding: 12px 16px 0; }
+  .map-legend { padding: 6px 16px; }
+  #venue-map { margin: 6px 8px 0; }
+
+  /* On small screens let the panel overlay the map — no room to shrink */
+  body.admin-mode .map-page-wrap {
+    margin-right: 0;
+  }
+}

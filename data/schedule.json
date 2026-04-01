@@ -1,0 +1,58 @@
+[
+  {
+    "id": "example-friday-1",
+    "band": "Example Artist",
+    "stage_id": "outdoor-stage-a",
+    "stage": "Outdoor Stage A",
+    "day": "Friday, May 8",
+    "date": "2026-05-08",
+    "set_time": "14:00",
+    "set_time_display": "2:00 PM",
+    "status": "confirmed",
+    "bio": "Add artist bio here.",
+    "image": "",
+    "social": {}
+  },
+  {
+    "id": "example-friday-2",
+    "band": "Another Band",
+    "stage_id": "outdoor-stage-b",
+    "stage": "Outdoor Stage B",
+    "day": "Friday, May 8",
+    "date": "2026-05-08",
+    "set_time": "15:30",
+    "set_time_display": "3:30 PM",
+    "status": "confirmed",
+    "bio": "Add artist bio here.",
+    "image": "",
+    "social": {}
+  },
+  {
+    "id": "example-friday-3",
+    "band": "Headliner",
+    "stage_id": "outdoor-stage-a",
+    "stage": "Outdoor Stage A",
+    "day": "Friday, May 8",
+    "date": "2026-05-08",
+    "set_time": "20:00",
+    "set_time_display": "8:00 PM",
+    "status": "confirmed",
+    "bio": "Add artist bio here.",
+    "image": "",
+    "social": {}
+  },
+  {
+    "id": "example-saturday-1",
+    "band": "Day 2 Opener",
+    "stage_id": "barn-stage",
+    "stage": "Barn Stage",
+    "day": "Saturday, May 9",
+    "date": "2026-05-09",
+    "set_time": "13:00",
+    "set_time_display": "1:00 PM",
+    "status": "confirmed",
+    "bio": "Add artist bio here.",
+    "image": "",
+    "social": {}
+  }
+]

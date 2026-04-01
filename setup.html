@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Setup — Midwest Psych Fest</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    body { background: var(--color-bg); }
+
+    .setup-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .setup-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .setup-header h1 {
+      font-size: 2.4rem;
+      color: var(--color-secondary);
+      margin-bottom: 8px;
+    }
+    .setup-header p { color: var(--color-text-muted); }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 40px;
+    }
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .progress-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: var(--color-border);
+      z-index: 0;
+      transition: background 0.3s;
+    }
+    .progress-step.done:not(:last-child)::after { background: var(--color-primary); }
+
+    .step-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--color-border);
+      background: var(--color-bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      z-index: 1;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .progress-step.active .step-dot {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      box-shadow: 0 0 12px rgba(255,60,172,0.4);
+    }
+    .progress-step.done .step-dot {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+    .step-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+      text-align: center;
+    }
+    .progress-step.active .step-label { color: var(--color-primary); }
+    .progress-step.done .step-label   { color: var(--color-text-muted); }
+
+    /* ── Step panels ── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    .step-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .step-card h2 {
+      font-size: 1.6rem;
+      color: var(--color-secondary);
+      margin-bottom: 6px;
+    }
+    .step-card .step-desc {
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--color-primary);
+      background: rgba(255,60,172,0.04);
+    }
+    .upload-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .upload-zone-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .upload-zone-label { font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
+    .upload-zone-sub { font-size: 0.82rem; color: var(--color-text-muted); }
+
+    .upload-preview {
+      margin-top: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: none;
+    }
+    .upload-preview img { width: 100%; max-height: 260px; object-fit: cover; }
+    .upload-preview-name {
+      font-size: 0.82rem;
+      color: var(--color-accent);
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* ── JSON drop zone ── */
+    .json-zone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      position: relative;
+    }
+    .json-zone:hover { border-color: var(--color-accent); }
+    .json-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .json-preview {
+      margin-top: 14px;
+      background: rgba(79,255,176,0.05);
+      border: 1px solid rgba(79,255,176,0.2);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      color: var(--color-accent);
+      display: none;
+      text-align: left;
+      font-family: monospace;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    /* ── Navigation ── */
+    .step-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+    }
+    .step-skip {
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 6px 0;
+      font-family: var(--font-body);
+    }
+    .step-skip:hover { color: var(--color-text); }
+
+    /* ── Final apply step ── */
+    .apply-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .apply-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+    }
+    .apply-item .apply-status {
+      font-size: 1.1rem;
+      width: 24px;
+      text-align: center;
+    }
+    .apply-item.ready   { border-color: rgba(79,255,176,0.3); }
+    .apply-item.skipped { opacity: 0.5; }
+    .apply-item .apply-label { flex: 1; }
+    .apply-item .apply-badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-weight: 700;
+    }
+    .badge-ready   { background: rgba(79,255,176,0.15); color: var(--color-accent); }
+    .badge-skipped { background: rgba(255,255,255,0.06); color: var(--color-text-muted); }
+
+    .apply-note {
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* ── Success screen ── */
+    #successScreen {
+      display: none;
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .success-icon { font-size: 4rem; margin-bottom: 16px; }
+    #successScreen h2 {
+      font-size: 2rem;
+      color: var(--color-accent);
+      margin-bottom: 12px;
+    }
+    #successScreen p { color: var(--color-text-muted); margin-bottom: 32px; }
+    .success-links {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* misc */
+    .hint {
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .field-row { display: flex; gap: 12px; }
+    .field-row .form-group { flex: 1; }
+    code {
+      background: rgba(255,255,255,0.07);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--color-accent);
+    }
+  </style>
+</head>
+<body>
+
+<div class="setup-wrap">
+
+  <div class="setup-header">
+    <h1>Site Setup</h1>
+    <p>Walk through these steps to get your festival site ready to launch.</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" data-step="0">
+      <div class="step-dot">1</div>
+      <div class="step-label">Info</div>
+    </div>
+    <div class="progress-step" data-step="1">
+      <div class="step-dot">2</div>
+      <div class="step-label">Logo</div>
+    </div>
+    <div class="progress-step" data-step="2">
+      <div class="step-dot">3</div>
+      <div class="step-label">Map</div>
+    </div>
+    <div class="progress-step" data-step="3">
+      <div class="step-dot">4</div>
+      <div class="step-label">Schedule</div>
+    </div>
+    <div class="progress-step" data-step="4">
+      <div class="step-dot">5</div>
+      <div class="step-label">Apply</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 1 — Festival Info
+  ══════════════════════════════════════ -->
+  <div class="step-panel active" id="step-0">
+    <div class="step-card">
+      <h2>Festival Info</h2>
+      <p class="step-desc">Basic details shown on the home page, schedule, and map. Pre-filled with defaults — update anything that's different.</p>
+
+      <div class="form-group">
+        <label>Festival Name</label>
+        <input type="text" id="info-name" value="Midwest Psych Fest" />
+      </div>
+      <div class="field-row">
+        <div class="form-group">
+          <label>Day 1 Date</label>
+          <input type="date" id="info-day1" value="2026-05-08" />
+        </div>
+        <div class="form-group">
+          <label>Day 2 Date</label>
+          <input type="date" id="info-day2" value="2026-05-09" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Venue Name</label>
+        <input type="text" id="info-venue" placeholder="e.g. Skullhouse, The Ranch, etc." />
+      </div>
+      <div class="form-group">
+        <label>City / Location</label>
+        <input type="text" id="info-location" value="Central Ohio" />
+      </div>
+      <div class="form-group">
+        <label>Full Address (for map links)</label>
+        <input type="text" id="info-address" placeholder="123 Main St, Columbus, OH 43215" />
+      </div>
+      <div class="field-row">
+        <div class="form-group">
+          <label>Instagram URL</label>
+          <input type="url" id="info-instagram" placeholder="https://instagram.com/..." />
+        </div>
+        <div class="form-group">
+          <label>Facebook URL</label>
+          <input type="url" id="info-facebook" placeholder="https://facebook.com/..." />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tagline</label>
+        <input type="text" id="info-tagline" value="Two days of psychedelic music, art & magic" />
+      </div>
+      <div class="form-group">
+        <label>Ticket / Info URL (optional)</label>
+        <input type="url" id="info-tickets" placeholder="https://..." />
+      </div>
+    </div>
+    <div class="step-nav">
+      <span></span>
+      <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 2 — Logo
+  ══════════════════════════════════════ -->
+  <div class="step-panel" id="step-1">
+    <div class="step-card">
+      <h2>Festival Logo</h2>
+      <p class="step-desc">Upload your logo image. It will appear in the nav bar and the home page hero. PNG with transparency works best, but JPG is fine too.</p>
+
+      <div class="upload-zone" id="logoZone">
+        <input type="file" id="logoFile" accept="image/*" />
+        <div class="upload-zone-icon">🎪</div>
+        <div class="upload-zone-label">Drop your logo here or click to browse</div>
+        <div class="upload-zone-sub">PNG, JPG, SVG · Any size</div>
+      </div>
+      <div class="upload-preview" id="logoPreview">
+        <img id="logoPreviewImg" src="" alt="Logo preview" style="object-fit:contain;background:#0a0014;" />
+        <div class="upload-preview-name" id="logoPreviewName"></div>
+      </div>
+    </div>
+    <div class="step-nav">
+      <button class="step-skip" onclick="prevStep()">← Back</button>
+      <div style="display:flex;gap:10px;">
+        <button class="step-skip" onclick="skipStep()">Skip for now</button>
+        <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 3 — Venue Map Image
+  ══════════════════════════════════════ -->
+  <div class="step-panel" id="step-2">
+    <div class="step-card">
+      <h2>Venue Map Image</h2>
+      <p class="step-desc">
+        Upload an overhead image of your venue. A Google Maps satellite screenshot works great.<br><br>
+        <strong>Tips for a good screenshot:</strong><br>
+        — Zoom in until the full property fills the screen<br>
+        — Use satellite view for best detail<br>
+        — Landscape orientation works best<br>
+        — Save as PNG or JPG at the highest quality you can
+      </p>
+
+      <div class="upload-zone" id="mapZone">
+        <input type="file" id="mapFile" accept="image/*" />
+        <div class="upload-zone-icon">🗺</div>
+        <div class="upload-zone-label">Drop your venue overhead image here</div>
+        <div class="upload-zone-sub">PNG or JPG · Recommended 1200px+ wide</div>
+      </div>
+      <div class="upload-preview" id="mapPreview">
+        <img id="mapPreviewImg" src="" alt="Map preview" />
+        <div class="upload-preview-name" id="mapPreviewName"></div>
+      </div>
+
+      <p class="hint mt-2">
+        After you apply this setup, go to the <a href="map.html">Map page</a>, open ⚙ Admin, and use "Click Map to Place Marker" to position each marker on the actual spots.
+      </p>
+    </div>
+    <div class="step-nav">
+      <button class="step-skip" onclick="prevStep()">← Back</button>
+      <div style="display:flex;gap:10px;">
+        <button class="step-skip" onclick="skipStep()">Skip for now</button>
+        <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 4 — Schedule JSON
+  ══════════════════════════════════════ -->
+  <div class="step-panel" id="step-3">
+    <div class="step-card">
+      <h2>Schedule Data</h2>
+      <p class="step-desc">
+        Upload your schedule as a <code>.json</code> file. Export it from Google Sheets using the instructions below, or drop in a file you already have.
+      </p>
+
+      <details style="margin-bottom:20px;">
+        <summary style="cursor:pointer;color:var(--color-secondary);font-weight:700;font-size:0.9rem;padding:8px 0;">
+          How to export from Google Sheets →
+        </summary>
+        <div style="padding:12px 0 0;color:var(--color-text-muted);font-size:0.85rem;line-height:1.8;">
+          <strong style="color:var(--color-text);">Option A — Easiest (use a converter):</strong><br>
+          1. In your Sheet, go to <strong>File → Download → CSV</strong><br>
+          2. Go to <a href="https://csvjson.com/csv2json" target="_blank">csvjson.com/csv2json</a> and paste the CSV<br>
+          3. Download the resulting JSON and upload it here<br><br>
+          <strong style="color:var(--color-text);">Option B — Direct JSON export:</strong><br>
+          Use the <em>Export Sheet to JSON</em> Google Sheets add-on<br><br>
+          <strong style="color:var(--color-text);">Required column names (case-insensitive):</strong><br>
+          <code>artist</code> &nbsp;·&nbsp; <code>stage</code> &nbsp;·&nbsp; <code>day</code> (1 or 2) &nbsp;·&nbsp; <code>start</code> (e.g. 14:00) &nbsp;·&nbsp; <code>end</code> &nbsp;·&nbsp; <code>bio</code> (optional)
+        </div>
+      </details>
+
+      <div class="json-zone" id="scheduleZone">
+        <input type="file" id="scheduleFile" accept=".json,.csv" />
+        <div style="font-size:1.8rem;margin-bottom:8px;">📋</div>
+        <div style="font-weight:700;color:var(--color-text);">Drop schedule.json here or click to browse</div>
+        <div style="font-size:0.82rem;color:var(--color-text-muted);margin-top:4px;">.json or .csv accepted</div>
+      </div>
+      <div class="json-preview" id="schedulePreview"></div>
+
+      <div id="scheduleValidation" style="margin-top:12px;display:none;"></div>
+    </div>
+    <div class="step-nav">
+      <button class="step-skip" onclick="prevStep()">← Back</button>
+      <div style="display:flex;gap:10px;">
+        <button class="step-skip" onclick="skipStep()">Skip for now</button>
+        <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 5 — Review & Apply
+  ══════════════════════════════════════ -->
+  <div class="step-panel" id="step-4">
+    <div class="step-card">
+      <h2>Review & Apply</h2>
+      <p class="step-desc">Here's everything you've provided. Click Apply to save it all to the site.</p>
+
+      <ul class="apply-list" id="applyList">
+        <!-- Populated by JS -->
+      </ul>
+
+      <p class="apply-note">
+        Clicking <strong>Apply &amp; Download</strong> will:<br>
+        1. Save everything to this browser immediately (site updates live)<br>
+        2. Download your data files — drop them into the <code>data/</code> folder and commit to GitHub to make changes permanent for all visitors
+      </p>
+
+      <button class="btn btn-primary w-full" id="applyBtn" onclick="applyAll()" style="font-size:1rem;padding:14px;">
+        ✓ Apply &amp; Download Data Files
+      </button>
+    </div>
+    <div class="step-nav">
+      <button class="step-skip" onclick="prevStep()">← Back</button>
+      <span></span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SUCCESS
+  ══════════════════════════════════════ -->
+  <div id="successScreen">
+    <div class="success-icon">🎪</div>
+    <h2>Applied!</h2>
+    <p>Your site is updated in this browser. To make it permanent, move the downloaded files into your <code>data/</code> folder and commit to GitHub.</p>
+
+    <div id="downloadedFiles" style="margin:20px auto;max-width:460px;text-align:left;"></div>
+
+    <div style="background:rgba(79,255,176,0.06);border:1px solid rgba(79,255,176,0.2);border-radius:12px;padding:16px 20px;margin:0 auto 28px;max-width:460px;text-align:left;">
+      <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent);margin-bottom:10px;">Next steps</div>
+      <ol style="font-size:0.85rem;color:var(--color-text-muted);line-height:2;padding-left:18px;">
+        <li>Move downloaded files into the <code>data/</code> folder</li>
+        <li>If you got a logo or map image, put them in <code>assets/img/</code></li>
+        <li>Commit &amp; push to GitHub — live for all visitors</li>
+        <li>Use <a href="flash.html" style="color:var(--color-accent);">Flash Data</a> anytime to re-apply updates</li>
+      </ol>
+    </div>
+
+    <div class="success-links">
+      <a href="index.html" class="btn btn-primary">View Home</a>
+      <a href="schedule.html" class="btn btn-secondary">Schedule</a>
+      <a href="map.html" class="btn btn-secondary">Map</a>
+      <a href="flash.html" class="btn btn-ghost">Flash Data</a>
+    </div>
+    <p style="margin-top:28px;font-size:0.82rem;color:var(--color-text-muted);">
+      Need to update later? Use <a href="flash.html">Flash Data</a> to re-import files, or run setup again.
+    </p>
+  </div>
+
+</div><!-- /setup-wrap -->
+
+<script>
+// ── State ─────────────────────────────────────
+let currentStep = 0;
+const totalSteps = 5;
+
+const collected = {
+  info: null,
+  logoDataUrl: null,
+  logoFileName: null,
+  mapDataUrl: null,
+  mapFileName: null,
+  schedule: null,
+  scheduleCount: 0,
+};
+
+const skipped = { 1: false, 2: false, 3: false };
+
+// ── Navigation ───────────────────────────────
+function goToStep(n) {
+  document.querySelectorAll('.step-panel').forEach((p, i) => {
+    p.classList.toggle('active', i === n);
+  });
+  document.querySelectorAll('.progress-step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i < n)  s.classList.add('done');
+    if (i === n) s.classList.add('active');
+    if (i < n) s.querySelector('.step-dot').textContent = '✓';
+  });
+  currentStep = n;
+  if (n === 4) buildApplyList();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() { if (currentStep < totalSteps - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+function skipStep() { skipped[currentStep] = true; nextStep(); }
+
+// ── Step 1: Info ─────────────────────────────
+// (collected on apply)
+
+// ── Step 2: Logo ─────────────────────────────
+document.getElementById('logoFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    collected.logoDataUrl  = ev.target.result;
+    collected.logoFileName = file.name;
+    const preview = document.getElementById('logoPreview');
+    preview.style.display = 'block';
+    document.getElementById('logoPreviewImg').src = ev.target.result;
+    document.getElementById('logoPreviewName').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+});
+
+// ── Step 3: Map image ────────────────────────
+document.getElementById('mapFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    collected.mapDataUrl  = ev.target.result;
+    collected.mapFileName = file.name;
+    const preview = document.getElementById('mapPreview');
+    preview.style.display = 'block';
+    document.getElementById('mapPreviewImg').src = ev.target.result;
+    document.getElementById('mapPreviewName').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+});
+
+// ── Step 4: Schedule ─────────────────────────
+document.getElementById('scheduleFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result;
+    try {
+      let data;
+      if (file.name.endsWith('.csv')) {
+        data = csvToSchedule(text);
+      } else {
+        data = JSON.parse(text);
+        // Normalize keys to lowercase
+        data = data.map(row => normalizeKeys(row));
+      }
+      if (!Array.isArray(data)) throw new Error('Expected an array of sets');
+      // Add IDs if missing
+      data.forEach((s, i) => { if (!s.id) s.id = 's' + Date.now() + i; });
+      collected.schedule      = data;
+      collected.scheduleCount = data.length;
+
+      const preview = document.getElementById('schedulePreview');
+      preview.style.display = 'block';
+      preview.textContent = `✓ ${data.length} sets loaded\n\nFirst 3:\n` +
+        data.slice(0, 3).map(s => `  ${s.artist} — ${s.stage} — Day ${s.day} — ${s.start}`).join('\n');
+
+      showValidation(data);
+    } catch(err) {
+      document.getElementById('schedulePreview').style.display = 'block';
+      document.getElementById('schedulePreview').textContent = '✗ Error: ' + err.message;
+      document.getElementById('schedulePreview').style.borderColor = 'rgba(255,68,68,0.4)';
+      document.getElementById('schedulePreview').style.color = '#ff6b6b';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function csvToSchedule(csv) {
+  const lines = csv.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+  return lines.slice(1).map((line, i) => {
+    const vals = splitCsvLine(line);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').replace(/"/g,'').trim(); });
+    // Normalize day to number
+    if (obj.day) obj.day = parseInt(obj.day) || 1;
+    obj.id = 's' + Date.now() + i;
+    return obj;
+  }).filter(o => o.artist);
+}
+
+function splitCsvLine(line) {
+  const result = [];
+  let cur = '', inQuote = false;
+  for (const ch of line) {
+    if (ch === '"') { inQuote = !inQuote; }
+    else if (ch === ',' && !inQuote) { result.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+function normalizeKeys(row) {
+  const out = {};
+  for (const [k, v] of Object.entries(row)) out[k.toLowerCase().trim()] = v;
+  return out;
+}
+
+function showValidation(data) {
+  const el = document.getElementById('scheduleValidation');
+  el.style.display = 'block';
+  const stages   = [...new Set(data.map(s => s.stage))];
+  const missing  = data.filter(s => !s.start || !s.end || !s.artist);
+  el.innerHTML = `
+    <div style="font-size:0.82rem;color:var(--color-text-muted);line-height:1.8;">
+      <span style="color:var(--color-accent);">✓</span> ${data.length} sets &nbsp;·&nbsp;
+      Stages: ${stages.map(s => `<code>${s}</code>`).join(', ')} &nbsp;·&nbsp;
+      Day 1: ${data.filter(s=>s.day==1).length} sets &nbsp;·&nbsp;
+      Day 2: ${data.filter(s=>s.day==2).length} sets
+      ${missing.length ? `<br><span style="color:#ff9944;">⚠ ${missing.length} sets missing artist, start, or end time</span>` : ''}
+    </div>`;
+}
+
+// ── Step 5: Build review list ────────────────
+function buildApplyList() {
+  const list = document.getElementById('applyList');
+  const items = [
+    {
+      label: 'Festival info (name, dates, venue, links)',
+      status: true,
+      note: document.getElementById('info-name').value || 'Midwest Psych Fest',
+    },
+    {
+      label: 'Logo image',
+      status: !!collected.logoDataUrl,
+      note: collected.logoFileName || 'Not provided — will use text logo',
+    },
+    {
+      label: 'Venue map image',
+      status: !!collected.mapDataUrl,
+      note: collected.mapFileName || 'Not provided — upload later in Admin',
+    },
+    {
+      label: 'Schedule data',
+      status: !!collected.schedule,
+      note: collected.schedule ? `${collected.scheduleCount} sets` : 'Not provided — add later in Admin',
+    },
+  ];
+
+  list.innerHTML = items.map(item => `
+    <li class="apply-item ${item.status ? 'ready' : 'skipped'}">
+      <span class="apply-status">${item.status ? '✓' : '—'}</span>
+      <span class="apply-label">
+        <strong>${item.label}</strong><br>
+        <span style="font-size:0.8rem;color:var(--color-text-muted);">${item.note}</span>
+      </span>
+      <span class="apply-badge ${item.status ? 'badge-ready' : 'badge-skipped'}">
+        ${item.status ? 'Ready' : 'Skipped'}
+      </span>
+    </li>
+  `).join('');
+}
+
+// ── Apply all ────────────────────────────────
+function applyAll() {
+  // 1. Collect info fields
+  collected.info = {
+    name:      document.getElementById('info-name').value.trim()      || 'Midwest Psych Fest',
+    day1:      document.getElementById('info-day1').value             || '2026-05-08',
+    day2:      document.getElementById('info-day2').value             || '2026-05-09',
+    venue:     document.getElementById('info-venue').value.trim(),
+    location:  document.getElementById('info-location').value.trim()  || 'Central Ohio',
+    address:   document.getElementById('info-address').value.trim(),
+    instagram: document.getElementById('info-instagram').value.trim(),
+    facebook:  document.getElementById('info-facebook').value.trim(),
+    tagline:   document.getElementById('info-tagline').value.trim()   || 'Two days of psychedelic music, art & magic',
+    tickets:   document.getElementById('info-tickets').value.trim(),
+  };
+
+  // 2. Save to localStorage
+  localStorage.setItem('mpf_info', JSON.stringify(collected.info));
+
+  if (collected.logoDataUrl) {
+    localStorage.setItem('mpf_logo', collected.logoDataUrl);
+  }
+
+  if (collected.mapDataUrl) {
+    localStorage.setItem('mpf_map_image', collected.mapDataUrl);
+  }
+
+  if (collected.schedule) {
+    localStorage.setItem('mpf_schedule', JSON.stringify(collected.schedule));
+  }
+
+  // 3. Download data files
+  const downloaded = [];
+
+  // Always download info.json
+  dlJSON(collected.info, 'info.json');
+  downloaded.push({ name: 'info.json', dest: 'data/info.json', ready: true });
+
+  // Download schedule.json if provided
+  if (collected.schedule) {
+    dlJSON(collected.schedule, 'schedule.json');
+    downloaded.push({ name: 'schedule.json', dest: 'data/schedule.json', ready: true });
+  } else {
+    downloaded.push({ name: 'schedule.json', dest: 'data/schedule.json', ready: false });
+  }
+
+  // Download logo if provided (as original file)
+  if (collected.logoDataUrl) {
+    dlDataUrl(collected.logoDataUrl, collected.logoFileName || 'logo.png');
+    downloaded.push({ name: collected.logoFileName || 'logo.png', dest: 'assets/img/', ready: true });
+  }
+
+  // Download map image if provided
+  if (collected.mapDataUrl) {
+    dlDataUrl(collected.mapDataUrl, collected.mapFileName || 'venue-map.jpg');
+    downloaded.push({ name: collected.mapFileName || 'venue-map.jpg', dest: 'assets/img/', ready: true });
+  }
+
+  // 4. Show success with file list
+  const fileList = document.getElementById('downloadedFiles');
+  fileList.innerHTML = downloaded.map(f => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:6px;
+      background:rgba(255,255,255,0.03);border:1px solid ${f.ready ? 'rgba(79,255,176,0.2)' : 'rgba(255,255,255,0.08)'};
+      border-radius:8px;font-size:0.82rem;">
+      <span>${f.ready ? '⬇' : '—'}</span>
+      <span style="flex:1;font-family:monospace;color:${f.ready ? 'var(--color-accent)' : 'var(--color-text-muted)'};">${f.name}</span>
+      <span style="color:var(--color-text-muted);">→ ${f.dest}</span>
+    </div>
+  `).join('');
+
+  document.querySelector('.setup-wrap').style.display = 'none';
+  document.getElementById('successScreen').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function dlJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function dlDataUrl(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename; a.click();
+}
+
+// ── Drag-and-drop on upload zones ────────────
+['logoZone','mapZone','scheduleZone'].forEach(id => {
+  const zone = document.getElementById(id);
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const fileInput = zone.querySelector('input[type=file]');
+    const dt = e.dataTransfer;
+    if (dt.files.length) {
+      // Manually trigger change event with the dropped file
+      Object.defineProperty(fileInput, 'files', { value: dt.files, writable: false });
+      fileInput.dispatchEvent(new Event('change'));
+    }
+  });
+});
+</script>
+
+</body>
+</html>

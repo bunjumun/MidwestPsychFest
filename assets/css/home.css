@@ -1,0 +1,284 @@
+/* ============================================
+   MIDWEST PSYCH FEST — Home Page Styles
+   ============================================ */
+
+/* ── Hero ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, #3b0066 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 70%, #660033 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 20%, #003366 0%, transparent 60%),
+    var(--color-bg);
+  z-index: 0;
+}
+
+/* Floating orbs */
+.hero-orbs { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  animation: float 8s ease-in-out infinite;
+}
+.orb-1 {
+  width: 400px; height: 400px;
+  background: var(--color-primary);
+  top: -100px; left: -100px;
+  animation-duration: 9s;
+}
+.orb-2 {
+  width: 300px; height: 300px;
+  background: var(--color-purple);
+  bottom: 0; right: 0;
+  animation-duration: 11s;
+  animation-delay: -3s;
+}
+.orb-3 {
+  width: 250px; height: 250px;
+  background: var(--color-secondary);
+  top: 40%; left: 60%;
+  animation-duration: 13s;
+  animation-delay: -6s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.05); }
+  66%       { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+/* Subtle scanline overlay for texture */
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 24px;
+  max-width: 800px;
+}
+
+.hero-eyebrow {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.hero-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  margin-bottom: 20px;
+}
+
+.title-midwest {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 10vw, 7rem);
+  color: var(--color-text);
+  text-shadow: 0 0 40px rgba(178, 75, 255, 0.4);
+}
+.title-psych {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 15vw, 11rem);
+  color: var(--color-primary);
+  text-shadow:
+    0 0 20px rgba(255, 60, 172, 0.6),
+    0 0 60px rgba(255, 60, 172, 0.3);
+  line-height: 0.9;
+}
+.title-fest {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 10vw, 7rem);
+  color: var(--color-secondary);
+  text-shadow: 0 0 40px rgba(249, 200, 14, 0.4);
+}
+
+.hero-sub {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: var(--color-text-muted);
+  margin-bottom: 36px;
+  letter-spacing: 0.04em;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text-muted);
+  z-index: 2;
+  animation: bob 2s ease-in-out infinite;
+}
+@keyframes bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(6px); }
+}
+
+/* ── Info Strip ── */
+.info-strip {
+  background: var(--color-bg-2);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 24px;
+}
+.info-strip-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 40px;
+  gap: 4px;
+}
+.info-icon { font-size: 1.5rem; }
+.info-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+.info-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+.info-divider {
+  width: 1px;
+  background: var(--color-border);
+  align-self: stretch;
+  margin: 16px 0;
+}
+@media (max-width: 480px) {
+  .info-divider { display: none; }
+  .info-item { padding: 16px 20px; }
+}
+
+/* ── Lineup Section ── */
+.section-lineup {
+  padding: 64px 0 32px;
+}
+
+.lineup-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.lineup-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  transition: border-color 0.2s, transform 0.2s;
+  min-width: 140px;
+}
+.lineup-name:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.lineup-name[data-day="1"] { border-top: 2px solid var(--color-primary); }
+.lineup-name[data-day="2"] { border-top: 2px solid var(--color-secondary); }
+
+.lineup-artist {
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.lineup-stage {
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+/* ── Explore Strip ── */
+.explore-strip {
+  padding: 48px 0 64px;
+}
+
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.explore-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  color: var(--color-text);
+}
+.explore-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(255, 60, 172, 0.15);
+  color: var(--color-text);
+}
+.explore-card-dim {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.explore-icon { font-size: 2rem; }
+.explore-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-secondary);
+}
+.explore-card p {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}

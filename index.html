@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/home.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+        <li><a href="map.html">Map</a></li>
+      </ul>
+      <button class="nav-admin-gear" id="adminToggle" title="Admin" aria-label="Admin settings">⚙</button>
+    </div>
+  </nav>
+
+  <!-- Page Banner (admin-managed) -->
+  <div class="page-banner" data-slot="home-banner"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-eyebrow"><span data-info="dates-short">MAY 8 – 9, 2026</span> · <span data-info="location">CENTRAL OHIO</span></div>
+      <h1 class="hero-title">
+        <span class="title-midwest">Midwest</span>
+        <span class="title-psych">Psych</span>
+        <span class="title-fest">Fest</span>
+      </h1>
+      <p class="hero-sub" data-info="tagline">Two days of psychedelic music, art &amp; magic</p>
+      <div class="hero-actions">
+        <a href="schedule.html" class="btn btn-primary">View Schedule</a>
+        <a href="map.html" class="btn btn-secondary">Venue Map</a>
+      </div>
+    </div>
+    <div class="hero-scroll-hint">scroll ↓</div>
+  </section>
+
+  <!-- INFO STRIP -->
+  <section class="info-strip">
+    <div class="info-strip-inner">
+      <div class="info-item">
+        <div class="info-icon">📅</div>
+        <div class="info-label">Dates</div>
+        <div class="info-value" data-info="dates-short">May 8–9, 2026</div>
+      </div>
+      <div class="info-divider"></div>
+      <div class="info-item">
+        <div class="info-icon">📍</div>
+        <div class="info-label">Location</div>
+        <div class="info-value" data-info="location">Central Ohio</div>
+      </div>
+      <div class="info-divider"></div>
+      <div class="info-item">
+        <div class="info-icon">🎸</div>
+        <div class="info-label">Stages</div>
+        <div class="info-value">3 Stages</div>
+      </div>
+      <div class="info-divider"></div>
+      <div class="info-item">
+        <div class="info-icon">🎭</div>
+        <div class="info-label">Artists</div>
+        <div class="info-value">30+ Performers</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LINEUP TEASER -->
+  <section class="section-lineup">
+    <div class="page-content">
+      <h2 class="section-title">The Lineup</h2>
+      <p class="section-subtitle">Full schedule coming soon — check back for updates</p>
+
+      <!-- Admin image slot: lineup poster / promo graphic -->
+      <div class="mpf-img-block" data-slot="home-lineup-poster" style="margin-bottom:24px;"></div>
+
+      <div class="lineup-grid" id="lineupGrid">
+        <!-- Populated by JS from schedule.json -->
+        <div class="lineup-loading text-muted text-center">Loading lineup…</div>
+      </div>
+      <div class="text-center mt-3">
+        <a href="schedule.html" class="btn btn-secondary">Full Schedule →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPLORE STRIP -->
+  <section class="explore-strip">
+    <div class="page-content">
+      <div class="explore-grid">
+        <a href="map.html" class="explore-card">
+          <div class="explore-icon">🗺</div>
+          <h3>Venue Map</h3>
+          <p>Find stages, bars, vendors, camping, and more.</p>
+        </a>
+        <a href="schedule.html" class="explore-card">
+          <div class="explore-icon">📋</div>
+          <h3>Full Schedule</h3>
+          <p>Browse sets by day and stage. Never miss your band.</p>
+        </a>
+        <a href="#" class="explore-card explore-card-dim">
+          <div class="explore-icon">👕</div>
+          <h3>Merch</h3>
+          <p>Coming soon — festival tees, posters, and more.</p>
+        </a>
+        <a href="#" class="explore-card explore-card-dim">
+          <div class="explore-icon">🎉</div>
+          <h3>Contests & Games</h3>
+          <p>Coming soon — win prizes, play, get weird.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      <span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span>
+    </div>
+    <div style="margin-top:12px;">
+      <a href="#" data-info="instagram">Instagram</a> &nbsp;·&nbsp;
+      <a href="#" data-info="facebook">Facebook</a> &nbsp;·&nbsp;
+      <a href="#">Contact</a>
+    </div>
+    <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
+  </footer>
+
+  <!-- ADMIN PANEL -->
+  <div id="admin-panel">
+    <div class="admin-panel-header">
+      <h3>⚙ Admin — Home</h3>
+      <button class="admin-panel-close" id="adminClose">✕</button>
+    </div>
+    <div class="admin-panel-body">
+
+      <!-- Page Banner -->
+      <div class="admin-section">
+        <h4>Page Banner</h4>
+        <button class="btn btn-accent btn-sm w-full" id="editHomeBannerBtn">Edit Banner Image</button>
+        <p class="text-muted mt-1" style="font-size:0.75rem;">Full-width image displayed below the nav bar.</p>
+      </div>
+
+      <!-- Image Blocks -->
+      <div class="admin-section">
+        <h4>Image Blocks</h4>
+        <p class="text-muted" style="font-size:0.75rem;margin-bottom:10px;">Click any image slot on the page to edit it, or use the buttons below.</p>
+        <button class="btn btn-ghost btn-sm w-full" id="editLineupPosterBtn">Edit Lineup Poster</button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportImgBlocksBtn">Export image-blocks.json</button>
+      </div>
+
+      <!-- Background Image -->
+      <div class="admin-section">
+        <h4>Background Image</h4>
+        <button class="btn btn-accent btn-sm w-full" id="editBgBtn">Edit Background</button>
+        <p class="text-muted mt-1" style="font-size:0.75rem;">Site-wide background image with dark scrim overlay.</p>
+      </div>
+
+      <!-- Admin Settings -->
+      <div class="admin-section">
+        <h4>Admin Settings</h4>
+        <button class="btn btn-ghost btn-sm w-full" id="homeChangePwBtn">Change Password</button>
+        <button class="btn btn-ghost btn-sm w-full mt-1" id="homeExportAdminConfigBtn">Export Admin Config</button>
+      </div>
+
+    </div>
+  </div>
+
+  <a id="ticketBtn" class="ticket-btn" href="#" target="_blank" rel="noopener" style="display:none">🎟 Get Tickets</a>
+  <script src="assets/js/stages.js"></script>
+  <script src="assets/js/image-blocks.js"></script>
+  <script src="assets/js/site-info.js"></script>
+  <script>
+    // Nav toggle
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    // ── Admin panel ──────────────────────────────
+    const adminPanel = document.getElementById('admin-panel');
+    const adminToggle = document.getElementById('adminToggle');
+    const adminClose  = document.getElementById('adminClose');
+
+    function openAdminPanel() {
+      adminPanel.classList.add('open');
+      document.body.classList.add('admin-mode');
+      adminToggle.classList.add('active');
+    }
+    function closeAdminPanel() {
+      adminPanel.classList.remove('open');
+      document.body.classList.remove('admin-mode');
+      adminToggle.classList.remove('active');
+    }
+
+    adminToggle.addEventListener('click', () => {
+      if (adminPanel.classList.contains('open')) { closeAdminPanel(); return; }
+      openAdminWithAuth(openAdminPanel);
+    });
+    adminClose.addEventListener('click', closeAdminPanel);
+
+    // Wire image-block admin buttons (after DOMContentLoaded)
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('editHomeBannerBtn')?.addEventListener('click', () => {
+        const el = document.querySelector('.page-banner[data-slot="home-banner"]');
+        window.imageBlocksAdmin?.openEditBanner('home-banner', el);
+      });
+      document.getElementById('editLineupPosterBtn')?.addEventListener('click', () => {
+        const el = document.querySelector('.mpf-img-block[data-slot="home-lineup-poster"]');
+        window.imageBlocksAdmin?.openEditBlock('home-lineup-poster', el);
+      });
+      document.getElementById('editBgBtn')?.addEventListener('click', () => {
+        window.imageBlocksAdmin?.openBgEditor();
+      });
+      document.getElementById('exportImgBlocksBtn')?.addEventListener('click', () => {
+        window.imageBlocksAdmin?.exportImageBlocks();
+      });
+      document.getElementById('homeChangePwBtn')?.addEventListener('click', () => {
+        showChangePasswordModal?.();
+      });
+      document.getElementById('homeExportAdminConfigBtn')?.addEventListener('click', () => {
+        exportAdminConfig?.();
+      });
+    });
+
+    // Load lineup teaser from schedule.json
+    fetch('data/schedule.json')
+      .then(r => r.json())
+      .then(data => {
+        const grid = document.getElementById('lineupGrid');
+        if (!data.length) { grid.innerHTML = '<p class="text-muted text-center">Lineup TBA</p>'; return; }
+        // Support v2 (band) and v1 (artist) field names
+        const getName = s => s.band || s.artist || '';
+        const getStage = s => s.stage || s.stage_id || '';
+        // Show unique acts, up to 12
+        const artists = [...new Map(data.map(s => [getName(s), s])).values()]
+          .filter(s => getName(s)).slice(0, 12);
+        grid.innerHTML = artists.map(s => `
+          <div class="lineup-name" data-day="${s.day}">
+            <span class="lineup-artist">${getName(s)}</span>
+            <span class="lineup-stage text-muted">${getStage(s)}</span>
+          </div>
+        `).join('');
+      })
+      .catch(() => {
+        document.getElementById('lineupGrid').innerHTML = '<p class="text-muted text-center">Lineup TBA</p>';
+      });
+  </script>
+</body>
+</html>

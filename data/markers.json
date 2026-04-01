@@ -1,0 +1,74 @@
+[
+  {
+    "id": "marker-1775025086258",
+    "type": "stage",
+    "label": "Undercurrents Stage",
+    "lat": 40.256371,
+    "lng": -82.936778,
+    "description": "",
+    "image": "https://scontent-lga3-1.xx.fbcdn.net/v/t39.30808-6/290665815_2319176934889159_3072457462210763048_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=EJ8ck_3kL4IQ7kNvwE2Z5xO&_nc_oc=AdrH82aK1-QBsJh0X_Ly2yBS4ZLHP2V5HKf9a-oG14cmTiJL0PjpBhukli6gQ1sUuYM&_nc_zt=23&_nc_ht=scontent-lga3-1.xx&_nc_gid=chzTwzyPNPSJnKMxh28yrA&_nc_ss=7a3a8&oh=00_Af233rjzaB-VvCKZtCxlLpwNiZ9PA2iFA28E6a-57tkfAw&oe=69D27944",
+    "url": "",
+    "url_label": "",
+    "details": ""
+  },
+  {
+    "id": "marker-1775025144341",
+    "type": "stage",
+    "label": "Better Call Spall Stage",
+    "lat": 40.256394,
+    "lng": -82.936688,
+    "description": "",
+    "image": "https://bettercallspall.com/wp-content/uploads/2020/07/logo-2.png",
+    "url": "",
+    "url_label": "",
+    "details": ""
+  },
+  {
+    "id": "marker-1775025213255",
+    "type": "stage",
+    "label": "Butler Records Stage",
+    "lat": 40.256726,
+    "lng": -82.93682,
+    "description": "Indoor Stage",
+    "image": "https://scontent-lga3-3.xx.fbcdn.net/v/t39.30808-6/633801707_914465374472509_4160362854797503202_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=K4k6d7EOPNgQ7kNvwEhFE5N&_nc_oc=Adr-27TQ5IOls1x-2RZo8PO2SxvXYMBuaWspzgUcMKC72Wz5DAgxrrIHqdoVr2Exdpw&_nc_zt=23&_nc_ht=scontent-lga3-3.xx&_nc_gid=F34_v2yCMdGDVb5LQ1QsOw&_nc_ss=7a3a8&oh=00_Af3qZo2JHuAk9nrnK3bnDb9w8HCRQSzVV68wGxVCOJcILw&oe=69D2A68A",
+    "url": "",
+    "url_label": "",
+    "details": ""
+  },
+  {
+    "id": "marker-1775025926156",
+    "type": "camping",
+    "label": "General Camping",
+    "lat": 40.25649,
+    "lng": -82.936395,
+    "description": "For the people who want to hang out late.",
+    "image": "https://scontent-lga3-1.xx.fbcdn.net/v/t39.30808-6/450366913_122095938074415989_993856811314134471_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=YYW3ugHgJREQ7kNvwGRkcur&_nc_oc=AdqoyImN5wFkLkdVfS6Cq8Ev_uJMlrG5JA3YkkHGoAHdovjWtz2jVJmFqfn_Uc5faO0&_nc_zt=23&_nc_ht=scontent-lga3-1.xx&_nc_gid=z7hVzq6avvYGRolLAG52IQ&_nc_ss=7a3a8&oh=00_Af1r8tDpgj4iroHZZBbqDLmkbib2DA_CZk5VIUZ0Qn8gDg&oe=69D2A77C",
+    "url": "https://docs.google.com/presentation/d/e/2PACX-1vSzlurUyAtSAPpTmEzQvPnbR5rgF7uj980kIFyJtNgVXrw9faNdpJsaSbrzg8oJBb7THokTwNnmXfte/pub?start=true&loop=true&delayms=5000&slide=id.g3d3d1e4eb56_0_52",
+    "url_label": "",
+    "details": ""
+  },
+  {
+    "id": "marker-1775026080821",
+    "type": "camping",
+    "label": "Quiet Camping",
+    "lat": 40.256461,
+    "lng": -82.937714,
+    "description": "Family Camping/ Sober Camping/ Vendor Camping",
+    "image": "",
+    "url": "https://docs.google.com/presentation/d/e/2PACX-1vSzlurUyAtSAPpTmEzQvPnbR5rgF7uj980kIFyJtNgVXrw9faNdpJsaSbrzg8oJBb7THokTwNnmXfte/pub?start=true&loop=true&delayms=5000&slide=id.g3d3d1e4eb56_0_52",
+    "url_label": "",
+    "details": ""
+  },
+  {
+    "id": "marker-1775026209888",
+    "type": "bar",
+    "label": "District Bar",
+    "lat": 40.256632,
+    "lng": -82.936849,
+    "description": "$4 Beers, Coffee, Water.  Get your bevvies, tip your buddies.",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fassets.untappd.com%2Fsite%2Fbrewery_logos_hd%2Fbrewery-574065_df425_hd.jpeg&f=1&nofb=1&ipt=5b61ff2dce0a6806c48d490e6760e9a001f611926382176e63542de9c71e720a",
+    "url": "",
+    "url_label": "",
+    "details": ""
+  }
+]

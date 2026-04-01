@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPF 2026 — Schedule Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,400;0,500;1,400&display=swap');
+  :root {
+    --bg: #0e0c09; --surface: #1a1710; --border: #2e2b22;
+    --accent: #d4a843; --accent2: #7eb89a; --text: #e8e2d4;
+    --muted: #7a7567; --barn: #c47a3a; --outdoor: #7eb89a;
+    --missing: #9b6b6b; --confirmed: #7eb89a; --sent: #a0916b;
+    --conflict: #c47a3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* HEADER */
+  header { padding: 16px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: space-between; }
+  .header-left { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  header h1 { font-family: 'Archivo Black', sans-serif; font-size: 20px; letter-spacing: 0.04em; color: var(--accent); text-transform: uppercase; }
+  header .subtitle { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hdr-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 14px; border-radius: 2px; cursor: pointer; transition: all 0.15s; }
+  .hdr-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .hdr-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--border) !important; color: var(--muted) !important; }
+  .hdr-btn.save { background: var(--accent); color: #0e0c09; border-color: var(--accent); }
+  .hdr-btn.save:hover { opacity: 0.85; }
+  .hdr-btn.active-view { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Indicators */
+  .sync-indicator { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); transition: color 0.4s; white-space: nowrap; }
+  .sync-indicator.synced { color: var(--accent2); }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 270px 1fr; height: calc(100vh - 57px); }
+  .sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 8px 0; }
+  .main { overflow-y: auto; padding: 28px 36px; }
+
+  /* SIDEBAR */
+  .day-label { padding: 14px 18px 5px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .band-btn { display: block; width: 100%; text-align: left; background: none; border: none; padding: 9px 18px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .band-btn:hover { background: var(--surface); }
+  .band-btn.active { background: var(--surface); border-left-color: var(--accent); }
+  .bname { display: block; font-family: 'Archivo Black', sans-serif; font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text); margin-bottom: 3px; }
+  .bmeta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .tag { font-size: 9px; letter-spacing: 0.07em; text-transform: uppercase; padding: 1px 5px; border-radius: 2px; font-weight: 500; white-space: nowrap; }
+  .tag.barn { background: rgba(196,122,58,0.18); color: var(--barn); }
+  .tag.outdoor { background: rgba(126,184,154,0.18); color: var(--outdoor); }
+  .tag.no-email { background: rgba(155,107,107,0.18); color: var(--missing); }
+  .tag.confirmed { background: rgba(126,184,154,0.18); color: var(--confirmed); }
+  .tag.sent { background: rgba(160,145,107,0.18); color: var(--sent); }
+  .btime { font-size: 10px; color: var(--muted); }
+
+  /* EMAIL VIEW */
+  .email-header { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .email-header h2 { font-family: 'Archivo Black', sans-serif; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .meta-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+  .meta-item { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .meta-item strong { color: var(--text); font-weight: 500; }
+  .field-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .field-label { font-size: 11px; color: var(--muted); min-width: 28px; }
+  .email-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 5px 10px; border-radius: 2px; width: 280px; outline: none; transition: border-color 0.15s; }
+  .email-input:focus { border-color: var(--accent); }
+  .email-input::placeholder { color: var(--muted); }
+
+  /* TIME EDITOR */
+  .time-edit-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .time-display { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+  .arrive-display { font-size: 11px; color: var(--muted); }
+  .time-input { background: var(--surface); border: 1px solid var(--accent); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 13px; padding: 5px 10px; border-radius: 2px; outline: none; width: 130px; }
+  .time-editor-wrap { background: rgba(212,168,67,0.04); border: 1px solid rgba(212,168,67,0.2); border-radius: 3px; padding: 12px 14px; margin-top: 10px; }
+  .time-editor-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .time-editor-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* CONFLICT */
+  .conflict-box { background: rgba(155,107,107,0.10); border: 1px solid rgba(155,107,107,0.35); border-radius: 3px; padding: 10px 14px; font-size: 12px; color: var(--missing); margin-top: 10px; }
+  .conflict-box .conflict-title { font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #e07070; margin-bottom: 4px; }
+  .conflict-box .conflict-detail { margin-bottom: 8px; line-height: 1.5; }
+  .conflict-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swap-btn { background: #c47a3a; color: #fff; border: none; padding: 6px 14px; font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: opacity 0.15s; }
+  .swap-btn:hover { opacity: 0.85; }
+  .conflict-ok { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.15s; }
+  .conflict-ok:hover { border-color: var(--muted); }
+
+  /* STATUS ROW */
+  .status-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .status-label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .status-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 5px 10px; border-radius: 2px; outline: none; cursor: pointer; }
+  .status-select:focus { border-color: var(--accent); }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .copy-btn { background: var(--accent); color: #0e0c09; border: none; padding: 8px 18px; font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: opacity 0.15s; }
+  .copy-btn:hover { opacity: 0.85; }
+  .copy-btn.copied { background: var(--outdoor); }
+  .copy-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .edit-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.15s; }
+  .edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .edit-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(212,168,67,0.07); }
+  .edit-btn.sm { padding: 5px 12px; font-size: 9px; }
+
+  .missing-banner { background: rgba(155,107,107,0.08); border: 1px solid rgba(155,107,107,0.25); border-radius: 3px; padding: 7px 12px; font-size: 11px; color: var(--missing); margin-bottom: 14px; }
+  .subject-line { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 9px 14px; margin-bottom: 16px; font-size: 12px; color: var(--muted); }
+  .subject-line strong { color: var(--text); font-weight: 500; }
+  .email-body { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 24px 28px; white-space: pre-wrap; font-size: 13px; line-height: 1.75; color: var(--text); font-family: 'Archivo', sans-serif; }
+  .email-body-edit { background: var(--surface); border: 1px solid var(--accent); border-radius: 3px; padding: 24px 28px; font-size: 13px; line-height: 1.75; color: var(--text); font-family: 'Archivo', sans-serif; width: 100%; min-height: 600px; outline: none; resize: vertical; }
+
+  /* DASHBOARD */
+  .dashboard { padding: 4px 0; }
+  .dash-title { font-family: 'Archivo Black', sans-serif; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+  .dash-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 20px; min-width: 110px; }
+  .stat-num { font-family: 'Archivo Black', sans-serif; font-size: 28px; color: var(--accent); }
+  .stat-lbl { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+  .dash-table { width: 100%; border-collapse: collapse; }
+  .dash-table th { font-family: 'Archivo Black', sans-serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .dash-table td { font-size: 12px; padding: 9px 12px; border-bottom: 1px solid rgba(46,43,34,0.5); vertical-align: middle; }
+  .dash-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .dash-table td .edit-time-link { font-size: 10px; color: var(--muted); margin-left: 6px; cursor: pointer; text-decoration: underline; }
+  .dash-table td .edit-time-link:hover { color: var(--accent); }
+  .status-pill { display: inline-block; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+  .pill-confirmed { background: rgba(126,184,154,0.18); color: var(--confirmed); }
+  .pill-sent { background: rgba(160,145,107,0.18); color: var(--sent); }
+  .pill-no-email { background: rgba(155,107,107,0.18); color: var(--missing); }
+  .pill-pending { background: rgba(122,117,103,0.18); color: var(--muted); }
+
+  .placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* FIELDS PANEL */
+  .fields-panel { background: rgba(212,168,67,0.04); border: 1px solid rgba(212,168,67,0.18); border-radius: 3px; padding: 14px 16px; margin-bottom: 16px; margin-top: 10px; }
+  .fields-panel-title { font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+  .field-grid .field-cell { display: flex; flex-direction: column; gap: 3px; }
+  .field-cell label { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+  .field-input-sm { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 5px 8px; border-radius: 2px; outline: none; transition: border-color 0.15s; width: 100%; }
+  .field-input-sm:focus { border-color: var(--accent); }
+
+  /* PHOTO */
+  .photo-section { display: flex; align-items: flex-start; gap: 14px; margin-top: 14px; margin-bottom: 4px; }
+  .photo-preview { width: 72px; height: 72px; border-radius: 3px; object-fit: cover; display: none; flex-shrink: 0; border: 1px solid var(--border); }
+  .photo-preview.visible { display: block; }
+  .photo-inputs { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .photo-inputs .field-cell label { margin-bottom: 2px; }
+
+  /* PATCH WARNING */
+  .patch-warn-banner { background: rgba(196,122,58,0.09); border: 1px solid rgba(196,122,58,0.3); border-radius: 3px; padding: 7px 12px; font-size: 11px; color: var(--conflict); margin-bottom: 14px; }
+
+  /* EXTRA INFO */
+  .extra-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .extra-section-title { font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .extra-field { margin-bottom: 10px; }
+  .extra-field label { display: block; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .extra-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 5px 10px; border-radius: 2px; outline: none; transition: border-color 0.15s; width: 100%; }
+  .extra-input:focus { border-color: var(--accent2); }
+  .extra-textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 8px 10px; border-radius: 2px; outline: none; transition: border-color 0.15s; width: 100%; min-height: 80px; resize: vertical; line-height: 1.5; }
+  .extra-textarea:focus { border-color: var(--accent2); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <h1>Midwest Psych Fest 2026</h1>
+    <span class="subtitle">Schedule &amp; Confirmation Tool</span>
+  </div>
+  <div class="header-right">
+    <span class="sync-indicator" id="syncIndicator">⟳ Live</span>
+    <span class="sync-indicator" id="fileIndicator">No file linked</span>
+    <div class="header-btns">
+      <button class="hdr-btn" id="dashBtn" onclick="toggleDashboard()">Status Dashboard</button>
+      <button class="hdr-btn" onclick="exportScheduleJSON()" title="Download schedule JSON for the MPF website">Export JSON</button>
+      <button class="hdr-btn" onclick="exportCSV()" title="Export all data as CSV for Google Sheets">Export CSV</button>
+      <button class="hdr-btn" id="undoBtn" onclick="undo()" disabled>Undo</button>
+      <button class="hdr-btn" onclick="linkFile()" title="Link a JSON file — loads on open, saves automatically on Save Changes">Link File</button>
+      <button class="hdr-btn save" onclick="saveChanges()">Save Changes</button>
+      <button class="hdr-btn" onclick="downloadBackup()" title="Download a backup JSON file to disk">Download Backup</button>
+      <label class="hdr-btn" style="cursor:pointer" title="Load a previously saved data file">Load Data <input type="file" accept=".json" style="display:none" onchange="importState(event)"></label>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main" id="main"><div class="placeholder">← Select a band to view their details</div></div>
+</div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const STATE_KEY = 'mpf_state_saved';
+
+// ─── BAND DATA ────────────────────────────────────────────────────────────────
+const bands = [
+  {"band":"SINQUBE","stage":"Outdoor Stage A","type":"outdoor","time_str":"5:00 PM","arrive_str":"3:30 PM","date":"Friday, May 8","email":"octoberemberband@gmail.com"},
+  {"band":"HOLLYWOOD MANNEQUIN","stage":"Outdoor Stage B","type":"outdoor","time_str":"6:00 PM","arrive_str":"4:30 PM","date":"Friday, May 8","email":"hollywoodmannequin@gmail.com"},
+  {"band":"BOG","stage":"Barn Stage","type":"barn","time_str":"6:30 PM","arrive_str":"5:00 PM","date":"Friday, May 8","email":""},
+  {"band":"COSMIC RAYS","stage":"Outdoor Stage A","type":"outdoor","time_str":"7:00 PM","arrive_str":"5:30 PM","date":"Friday, May 8","email":"gerardcox1@gmail.com"},
+  {"band":"NYCTALOPIA","stage":"Barn Stage","type":"barn","time_str":"7:30 PM","arrive_str":"6:00 PM","date":"Friday, May 8","email":""},
+  {"band":"ZUCK'S TURKEY FARM","stage":"Outdoor Stage B","type":"outdoor","time_str":"8:00 PM","arrive_str":"6:30 PM","date":"Friday, May 8","email":""},
+  {"band":"JAWNBEY","stage":"Barn Stage","type":"barn","time_str":"8:30 PM","arrive_str":"7:00 PM","date":"Friday, May 8","email":""},
+  {"band":"SOVIET SHISKA","stage":"Outdoor Stage A","type":"outdoor","time_str":"9:00 PM","arrive_str":"7:30 PM","date":"Friday, May 8","email":""},
+  {"band":"THE GREAT DEPRESSIONS","stage":"Barn Stage","type":"barn","time_str":"9:30 PM","arrive_str":"8:00 PM","date":"Friday, May 8","email":"michaelbusch.mike@gmail.com"},
+  {"band":"HAPPY CHICHESTER","stage":"Outdoor Stage B","type":"outdoor","time_str":"10:00 PM","arrive_str":"8:30 PM","date":"Friday, May 8","email":""},
+  {"band":"TINA FEY","stage":"Barn Stage","type":"barn","time_str":"10:30 PM","arrive_str":"9:00 PM","date":"Friday, May 8","email":""},
+  {"band":"HIGH DEFINITIONS","stage":"Outdoor Stage A","type":"outdoor","time_str":"11:00 PM","arrive_str":"9:30 PM","date":"Friday, May 8","email":""},
+  {"band":"FREDERICK FOXTROT","stage":"Barn Stage","type":"barn","time_str":"11:30 PM","arrive_str":"10:00 PM","date":"Friday, May 8","email":"frederickfoxtrott@gmail.com"},
+  {"band":"TRAYVON BARKSDALE AND REALISTIC TEARS","stage":"Outdoor Stage B","type":"outdoor","time_str":"12:00 AM","arrive_str":"10:30 PM","date":"Friday, May 8","email":""},
+  {"band":"SOUNDING ROD","stage":"Barn Stage","type":"barn","time_str":"12:30 AM","arrive_str":"11:00 PM","date":"Friday, May 8","email":""},
+  {"band":"LETHAL FX","stage":"Barn Stage","type":"barn","time_str":"2:00 AM","arrive_str":"12:30 AM","date":"Friday, May 8","email":""},
+  {"band":"BUTLER RECORDS / HAPPY CHICHESTER","stage":"Outdoor Stage B","type":"outdoor","time_str":"2:00 PM","arrive_str":"12:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"MYSTIC VALLEY PARKWAY","stage":"Outdoor Stage A","type":"outdoor","time_str":"3:00 PM","arrive_str":"1:30 PM","date":"Saturday, May 9","email":"mysticvalleypkwy@gmail.com"},
+  {"band":"SCENIUS","stage":"Outdoor Stage B","type":"outdoor","time_str":"4:00 PM","arrive_str":"2:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"NEW MOTHER NATURE","stage":"Outdoor Stage A","type":"outdoor","time_str":"5:00 PM","arrive_str":"3:30 PM","date":"Saturday, May 9","email":"newmothernature25@gmail.com"},
+  {"band":"LOCKED GROOVES","stage":"Outdoor Stage B","type":"outdoor","time_str":"6:00 PM","arrive_str":"4:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"PARTY IN THE FRONT PARTY IN THE BACK","stage":"Barn Stage","type":"barn","time_str":"6:30 PM","arrive_str":"5:00 PM","date":"Saturday, May 9","email":""},
+  {"band":"FRIENDS WITH ELEPHANTS","stage":"Outdoor Stage A","type":"outdoor","time_str":"7:00 PM","arrive_str":"5:30 PM","date":"Saturday, May 9","email":"friendswithelephantsmusic@gmail.com"},
+  {"band":"NOVEL APPROACH","stage":"Barn Stage","type":"barn","time_str":"7:30 PM","arrive_str":"6:00 PM","date":"Saturday, May 9","email":""},
+  {"band":"BROOD X","stage":"Outdoor Stage B","type":"outdoor","time_str":"8:00 PM","arrive_str":"6:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"TOP SCRUB","stage":"Barn Stage","type":"barn","time_str":"8:30 PM","arrive_str":"7:00 PM","date":"Saturday, May 9","email":""},
+  {"band":"LAKEHORSE","stage":"Outdoor Stage A","type":"outdoor","time_str":"9:00 PM","arrive_str":"7:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"ILLUSIVE MAN","stage":"Barn Stage","type":"barn","time_str":"9:30 PM","arrive_str":"8:00 PM","date":"Saturday, May 9","email":""},
+  {"band":"SKIN DIET","stage":"Outdoor Stage B","type":"outdoor","time_str":"10:00 PM","arrive_str":"8:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"BROKEN CIRCUIT","stage":"Barn Stage","type":"barn","time_str":"10:30 PM","arrive_str":"9:00 PM","date":"Saturday, May 9","email":"riley.thompson13@gmail.com"},
+  {"band":"SNAKEMAN","stage":"Outdoor Stage A","type":"outdoor","time_str":"11:00 PM","arrive_str":"9:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"EASY TIGER","stage":"Barn Stage","type":"barn","time_str":"11:30 PM","arrive_str":"10:00 PM","date":"Saturday, May 9","email":"easytigermusicandlight@gmail.com"},
+  {"band":"MAS BAGUA","stage":"Outdoor Stage B","type":"outdoor","time_str":"12:00 AM","arrive_str":"10:30 PM","date":"Saturday, May 9","email":""},
+  {"band":"BURNING BRAIN BAND","stage":"Barn Stage","type":"barn","time_str":"12:30 AM","arrive_str":"11:00 PM","date":"Saturday, May 9","email":""},
+  {"band":"DJ TACTIC","stage":"Barn Stage","type":"barn","time_str":"2:00 AM","arrive_str":"12:30 AM","date":"Saturday, May 9","email":""}
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = {
+  emails:         {},  // idx -> string
+  bodies:         {},  // idx -> {manual,text} | {patched,patches,fieldSnapshot} | string(legacy)
+  status:         {},  // idx -> 'pending'|'sent'|'confirmed'
+  times:          {},  // idx -> "5:00 PM" 12hr override
+  photos:         {},  // idx -> data URL or URL string
+  extra:          {},  // idx -> { social, streaming, bio }
+  fieldOverrides: {},  // idx -> { band, stage, date, arrive_str } partial overrides
+  _patchWarn:     {},  // idx -> true if fields drifted since patch saved
+};
+
+// ─── UNDO STACK ───────────────────────────────────────────────────────────────
+let undoStack = [];
+
+function pushUndo() {
+  const snap = JSON.parse(JSON.stringify({
+    emails: state.emails, bodies: state.bodies, status: state.status,
+    times: state.times, photos: state.photos, extra: state.extra,
+    fieldOverrides: state.fieldOverrides,
+  }));
+  undoStack.push(snap);
+  if (undoStack.length > 30) undoStack.shift();
+  updateUndoBtn();
+}
+
+function undo() {
+  if (!undoStack.length) return;
+  const snap = undoStack.pop();
+  Object.assign(state, snap);
+  state._patchWarn = {};
+  updateUndoBtn();
+  buildSidebar();
+  if (currentIdx !== null) renderBand(currentIdx);
+  syncToStorage();
+}
+
+function updateUndoBtn() {
+  const btn = document.getElementById('undoBtn');
+  if (btn) btn.disabled = undoStack.length === 0;
+}
+
+// ─── TIME HELPERS ─────────────────────────────────────────────────────────────
+function parseTime12to24(str) {
+  const m = String(str).match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+  if (!m) return '00:00';
+  let h = parseInt(m[1]), min = m[2], period = m[3].toUpperCase();
+  if (period === 'AM' && h === 12) h = 0;
+  if (period === 'PM' && h !== 12) h += 12;
+  return `${String(h).padStart(2,'0')}:${min}`;
+}
+
+function parse24to12(str) {
+  const m = str.match(/^(\d+):(\d+)$/);
+  if (!m) return str;
+  let h = parseInt(m[1]), min = m[2];
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${min} ${period}`;
+}
+
+function computeArriveStr(time12) {
+  const t24 = parseTime12to24(time12);
+  const [hh, mm] = t24.split(':').map(Number);
+  let total = hh * 60 + mm - 90;
+  if (total < 0) total += 24 * 60;
+  const ah = Math.floor(total / 60) % 24;
+  const am = String(total % 60).padStart(2, '0');
+  return parse24to12(`${String(ah).padStart(2,'0')}:${am}`);
+}
+
+function slugify(str) {
+  return String(str).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function dateToISO(dayStr) {
+  const months = {January:'01',February:'02',March:'03',April:'04',May:'05',June:'06',
+                  July:'07',August:'08',September:'09',October:'10',November:'11',December:'12'};
+  const m = String(dayStr).match(/(\w+),\s+(\w+)\s+(\d+)/);
+  if (!m) return '';
+  return `2026-${months[m[2]] || '00'}-${String(parseInt(m[3])).padStart(2,'0')}`;
+}
+
+// Festival sort key: 12am-5:59am treated as late night (sorts after 11:59pm)
+function festKey(t12) {
+  const t24 = parseTime12to24(t12);
+  const [h, m] = t24.split(':').map(Number);
+  return (h < 6 ? h + 24 : h) * 60 + m;
+}
+
+// ─── ACCESSORS ────────────────────────────────────────────────────────────────
+function getEmail(idx)     { return state.emails[idx] !== undefined ? state.emails[idx] : bands[idx].email; }
+function getStatus(idx)    { return state.status[idx] || 'pending'; }
+function getTime(idx)      { return state.times[idx]  !== undefined ? state.times[idx]  : bands[idx].time_str; }
+function getArrive(idx)    { return state.fieldOverrides[idx]?.arrive_str ?? computeArriveStr(getTime(idx)); }
+function getBandName(idx)  { return state.fieldOverrides[idx]?.band   ?? bands[idx].band; }
+function getBandStage(idx) { return state.fieldOverrides[idx]?.stage  ?? bands[idx].stage; }
+function getBandDate(idx)  { return state.fieldOverrides[idx]?.date   ?? bands[idx].date; }
+function getExtra(idx)     { return state.extra[idx] || {}; }
+function getPhoto(idx)     { return state.photos[idx] || ''; }
+
+// ─── BODY STORAGE HELPERS ─────────────────────────────────────────────────────
+function currentFieldSnapshot(idx) {
+  return { band: getBandName(idx), stage: getBandStage(idx), date: getBandDate(idx),
+           time_str: getTime(idx), arrive_str: getArrive(idx) };
+}
+
+function fieldsMatchSnapshot(idx, snap) {
+  if (!snap) return false;
+  const cur = currentFieldSnapshot(idx);
+  return snap.band === cur.band && snap.stage === cur.stage && snap.date === cur.date &&
+         snap.time_str === cur.time_str && snap.arrive_str === cur.arrive_str;
+}
+
+function computePatches(base, edited) {
+  let s = 0, be = base.length - 1, ee = edited.length - 1;
+  while (s <= be && s <= ee && base[s] === edited[s]) s++;
+  while (be >= s && ee >= s && base[be] === edited[ee]) { be--; ee--; }
+  if (s > be && s > ee) return [];
+  return [{ offset: s, length: be - s + 1, replacement: edited.slice(s, ee + 1) }];
+}
+
+function applyPatches(base, patches) {
+  if (!patches || !patches.length) return base;
+  let result = base;
+  [...patches].sort((a, b) => b.offset - a.offset).forEach(p => {
+    result = result.slice(0, p.offset) + p.replacement + result.slice(p.offset + p.length);
+  });
+  return result;
+}
+
+function commitBodyEdit(idx, editedText) {
+  const def = getDefaultBody(idx);
+  if (editedText === def) { delete state.bodies[idx]; return; }
+  const patches = computePatches(def, editedText);
+  if (JSON.stringify(patches).length >= editedText.length) {
+    state.bodies[idx] = { manual: true, text: editedText };
+  } else {
+    state.bodies[idx] = { patched: true, patches, fieldSnapshot: currentFieldSnapshot(idx) };
+  }
+}
+
+// ─── CONFLICT DETECTION ───────────────────────────────────────────────────────
+function checkConflict(idx, newTime12) {
+  for (let i = 0; i < bands.length; i++) {
+    if (i === idx) continue;
+    if (getBandDate(i) === getBandDate(idx) && getBandStage(i) === getBandStage(idx) && getTime(i) === newTime12) return i;
+  }
+  return -1;
+}
+
+// ─── STATE EXPORT HELPER ──────────────────────────────────────────────────────
+function stateForExport() {
+  return {
+    emails: state.emails, bodies: state.bodies, status: state.status, times: state.times,
+    photos: state.photos, extra: state.extra, fieldOverrides: state.fieldOverrides,
+  };
+}
+
+// ─── STORAGE SYNC ─────────────────────────────────────────────────────────────
+function syncToStorage() {
+  const schedule = bands.map((b, i) => {
+    const ex = getExtra(i);
+    return {
+      id:                `${slugify(getBandName(i))}-${slugify(getBandDate(i).split(',')[0])}`,
+      band:              getBandName(i),
+      stage:             getBandStage(i),
+      stage_id:          slugify(getBandStage(i)),
+      day:               getBandDate(i),
+      date:              dateToISO(getBandDate(i)),
+      set_time:          parseTime12to24(getTime(i)),
+      set_time_display:  getTime(i),
+      arrive_by:         parseTime12to24(getArrive(i)),
+      arrive_by_display: getArrive(i),
+      email:             getEmail(i),
+      status:            getStatus(i),
+      bio:               ex.bio || '',
+      social:            ex.social ? { link: ex.social } : {},
+      streaming:         ex.streaming || '',
+    };
+  });
+  try { localStorage.setItem('mpf_schedule', JSON.stringify(schedule)); } catch(e) {}
+  flashSync();
+}
+
+function flashSync(msg) {
+  const el = document.getElementById('syncIndicator');
+  if (!el) return;
+  el.textContent = '✓ Synced';
+  el.classList.add('synced');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = msg || '⟳ Live'; el.classList.remove('synced'); }, 1800);
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem('mpf_schedule');
+    if (!raw) return;
+    JSON.parse(raw).forEach(entry => {
+      const idx = bands.findIndex(b => b.band.toLowerCase() === (entry.band || '').toLowerCase());
+      if (idx === -1) return;
+      if (entry.email)            state.emails[idx] = entry.email;
+      if (entry.status)           state.status[idx] = entry.status;
+      if (entry.set_time_display) state.times[idx]  = entry.set_time_display;
+    });
+  } catch(e) {}
+}
+
+// ─── SAVE / LOAD ──────────────────────────────────────────────────────────────
+function loadSavedState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    // Migrate legacy string bodies
+    const bodies = {};
+    Object.entries(s.bodies || {}).forEach(([k, v]) => {
+      bodies[k] = typeof v === 'string' ? { manual: true, text: v } : v;
+    });
+    Object.assign(state, {
+      emails: s.emails || {}, bodies,
+      status: s.status || {}, times: s.times || {},
+      photos: s.photos || {}, extra: s.extra || {},
+      fieldOverrides: s.fieldOverrides || {},
+    });
+    state._patchWarn = {};
+  } catch(e) {}
+}
+
+function saveChanges() {
+  // Flush any in-progress edits
+  const ta = document.getElementById('bodyEdit');
+  const ef = document.getElementById('emailField');
+  if (ta && currentIdx !== null) commitBodyEdit(currentIdx, ta.value);
+  if (ef && currentIdx !== null) state.emails[currentIdx] = ef.value.trim();
+
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(stateForExport())); } catch(e) {}
+  syncToStorage();
+
+  // Flash "Saved"
+  const el = document.getElementById('syncIndicator');
+  if (el) {
+    el.textContent = '✓ Saved';
+    el.classList.add('synced');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.textContent = '⟳ Live'; el.classList.remove('synced'); }, 2200);
+  }
+
+  writeToLinkedFile(); // also write to disk if file linked
+}
+
+function downloadBackup() {
+  const ta = document.getElementById('bodyEdit');
+  const ef = document.getElementById('emailField');
+  if (ta && currentIdx !== null) commitBodyEdit(currentIdx, ta.value);
+  if (ef && currentIdx !== null) state.emails[currentIdx] = ef.value.trim();
+  const blob = new Blob([JSON.stringify(stateForExport(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mpf_state.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function applyLoadedState(data) {
+  if (!data || typeof data !== 'object') return;
+  const bodies = {};
+  Object.entries(data.bodies || {}).forEach(([k, v]) => {
+    bodies[k] = typeof v === 'string' ? { manual: true, text: v } : v;
+  });
+  Object.assign(state, {
+    emails: data.emails || {}, bodies,
+    status: data.status || {}, times: data.times || {},
+    photos: data.photos || {}, extra: data.extra || {},
+    fieldOverrides: data.fieldOverrides || {},
+  });
+  state._patchWarn = {};
+}
+
+function importState(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      applyLoadedState(JSON.parse(e.target.result));
+      buildSidebar();
+      if (dashboardOpen)           renderDashboard();
+      else if (currentIdx !== null) renderBand(currentIdx);
+      else document.getElementById('main').innerHTML = '<div class="placeholder">← Select a band to view their details</div>';
+      syncToStorage();
+    } catch(err) { alert('Could not load file — make sure it is a valid mpf_state.json.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── FILE SYSTEM ACCESS API ───────────────────────────────────────────────────
+let _fileHandle = null;
+
+function _idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('mpf_fsh', 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore('h');
+    r.onsuccess = e => res(e.target.result);
+    r.onerror   = rej;
+  });
+}
+async function _storeHandle(h) {
+  const db = await _idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('h', 'readwrite');
+    tx.objectStore('h').put(h, 'f');
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+async function _getHandle() {
+  const db = await _idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('h', 'readonly');
+    const r  = tx.objectStore('h').get('f');
+    r.onsuccess = e => res(e.target.result); r.onerror = rej;
+  });
+}
+
+function updateFileIndicator(name) {
+  const el = document.getElementById('fileIndicator');
+  if (!el) return;
+  el.textContent = name ? `📁 ${name}` : 'No file linked';
+  el.style.color = name ? 'var(--accent2)' : '';
+}
+
+async function linkFile() {
+  if (!('showOpenFilePicker' in window)) {
+    alert('File System Access API not supported. Use Chrome or Edge for auto-save to disk.');
+    return;
+  }
+  try {
+    const [h] = await window.showOpenFilePicker({
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+    });
+    _fileHandle = h;
+    await _storeHandle(h);
+    const file = await h.getFile();
+    applyLoadedState(JSON.parse(await file.text()));
+    updateFileIndicator(h.name);
+    buildSidebar();
+    if (currentIdx !== null) renderBand(currentIdx);
+    syncToStorage();
+  } catch(e) { /* cancelled or error */ }
+}
+
+async function writeToLinkedFile() {
+  if (!_fileHandle) return;
+  try {
+    const opts = { mode: 'readwrite' };
+    if ((await _fileHandle.queryPermission(opts)) !== 'granted')
+      if ((await _fileHandle.requestPermission(opts)) !== 'granted') return;
+    const w = await _fileHandle.createWritable();
+    await w.write(JSON.stringify(stateForExport(), null, 2));
+    await w.close();
+  } catch(e) {}
+}
+
+async function tryAutoLoad() {
+  try {
+    const h = await _getHandle();
+    if (!h) return;
+    if ((await h.queryPermission({ mode: 'readwrite' })) === 'granted') {
+      _fileHandle = h;
+      const file = await h.getFile();
+      applyLoadedState(JSON.parse(await file.text()));
+      updateFileIndicator(h.name);
+    }
+  } catch(e) {}
+}
+
+// ─── EMAIL CONTENT ────────────────────────────────────────────────────────────
+const sharedSections = `TICKET GIVEAWAY
+Along with your band passes, we'll send you a code for 2 additional weekend passes to give away to your fans. We'd love for you to use these as part of a Midwest Psych Fest promo post — a giveaway, a story, a share, whatever feels natural for you and your audience. The winners just need the code to apply it at checkout. Any way you can use these to spread the word is genuinely appreciated.
+
+VOLUNTEER
+If anyone in your band is interested in helping the event run smoothly for the rest of the artists, we'd love to have you involved. Stage managing, working the sound booth, ticket taking — there's a lot of useful stuff to be done and every hand helps. If you're interested, fill out our short volunteer questionnaire here: https://docs.google.com/forms/d/e/1FAIpQLSeLKMIZIUYsJ_a_7uEzekLejEBo4Qv2UQh9rMYiq9ew20toGA/viewform?usp=sharing`;
+
+const payoutSection = `PAYOUT
+Performer payouts come from a split of ticket sale revenue after the festival closes out its accounting. The festival takes nothing from this pool — it goes entirely to the performers. Any touring acts with a guarantee have had that covered by an individual sponsor, so it doesn't affect anyone else's share. We'll turn payouts around as quickly as we can. If you have traveling expenses and need yours expedited, please mention it in your confirmation email. If you have a PayPal, include that link in your confirmation as well.`;
+
+const closingSection = `This is a large DIY event with a lot of moving parts — we'll do everything we can to stay on schedule, but some patience and flexibility is genuinely appreciated.
+
+—
+
+If this time doesn't work for you, please let us know as soon as possible and include the window that works best for your schedule. We'll do everything we can to find you another slot, but with so many schedules to balance we can't guarantee we'll land on something that works for everyone. If we aren't able to make it happen for the spring, we'd love to have you at Fall 2026 Midwest Psych Fest in October.
+
+Questions in the meantime? Reach out to Ben Ahlteen at 614-572-7502.
+
+Can't wait to have you out here,
+Midwest Psych Fest`;
+
+function buildOutdoorEmail(b) {
+  return `Hey ${b.band},
+
+We've got you on the schedule for Midwest Psych Fest 2026 and we'd love to lock you in. Your current slot is ${b.date} at ${b.time_str} on ${b.stage}. If this works for you, read on — everything you need to know to show up and play is below.
+
+TICKETS & ADMISSION
+Each member of your band can receive a full weekend pass at no cost using your discount code — good for the entire weekend. We'll send the code along when your time slot is confirmed. When you reply to confirm, please include the number of members in your band so we can make sure everyone is taken care of. We'll provide 2 weekend passes per member.
+
+CHECK-IN
+When you arrive, head to Entrance A — the main parking lot entrance. Check in there to pick up your wristbands and drink tickets for each member of the band.
+
+LOAD-IN
+After checking in, a parking attendant will direct you to the correct load-in spot behind your stage. We recommend arriving by ${b.arrive_str} to give yourself plenty of time before you're due to line check.
+
+STAGE FLOW
+We're running two stages side by side. While one band performs, the next is line-checking on the other stage. When a set ends there's a short transition — usually under 10 minutes — and the next stage kicks off. Expect to line check roughly 10–20 minutes into the set before yours.
+
+YOUR SET
+Sets start right on the hour, with a target of 45 minutes and a hard cap at 50. Shorter sets are completely fine. If you already know you'll be running short, let us know so we can make good use of the extra time.
+
+BACKLINE
+Each stage has a full drum kit (minus breakables), bass amp, and a guitar amp (most likely a 50w combo). We strongly encourage use of our kit and bass amp — it keeps transitions fast and the day moving. Direct boxes and two monitor mixes are provided at each stage, one at the front and one at the back.
+
+AFTER YOUR SET
+Once you're done, parking staff can direct you to a camp spot or parking area.
+
+${sharedSections}
+
+${payoutSection}
+
+${closingSection}`;
+}
+
+function buildBarnEmail(b) {
+  return `Hey ${b.band},
+
+We've got you on the schedule for Midwest Psych Fest 2026 and we'd love to lock you in. Your current slot is ${b.date} at ${b.time_str} on the Barn Stage. If this works for you, read on — everything you need to know to show up and play is below.
+
+TICKETS & ADMISSION
+Each member of your band can receive a full weekend pass at no cost using your discount code — good for the entire weekend. We'll send the code along when your time slot is confirmed. When you reply to confirm, please include the number of members in your band so we can make sure everyone is taken care of. We'll provide 2 weekend passes per member.
+
+CHECK-IN
+When you arrive, head to Entrance A — the main parking lot entrance, not the house driveway. Check in there to pick up your wristbands and drink tickets for each member of the band.
+
+LOAD-IN
+After checking in at Entrance A, parking staff will direct you to Entrance B, which is the house driveway. After parking, load in through the narrow hallway on the road-facing side of the barn, door on the right — this brings you straight into the stage area. We recommend arriving by ${b.arrive_str} to give yourself enough time to check in and get settled before your set.
+
+YOUR SET
+Barn sets start on the 30-minute mark of each hour and run 35 minutes, with a hard cap at 40. Shorter is always fine. Quick changeovers are important on this stage, so the more of our backline you can use, the smoother things will go for everyone.
+
+BACKLINE & SOUND
+We'll have a full drum kit (minus breakables), bass amp, and guitar amp in the barn. We strongly encourage use of our kit and bass amp — it makes changeovers much smoother, and on this stage especially, quick transitions matter. The guitar amp is there as an extra option if you need it. Two monitor mixes are provided, one at the front of stage and one at the back.
+
+A note on the barn mix: we typically only amplify vocals and anything that requires a direct box or further reinforcement. Guitar amps, bass amps, and drums are normally fine unmic'd and should be set at levels that don't overpower the vocals. It's going to feel like a house show in there — in the best possible way.
+
+AFTER YOUR SET
+Once you're loaded out, please move your vehicle to the main parking or camping area. Parking staff can point you in the right direction.
+
+${sharedSections}
+
+${payoutSection}
+
+${closingSection}`;
+}
+
+// ─── BODY ACCESS ──────────────────────────────────────────────────────────────
+function getDefaultBody(idx) {
+  const b = { ...bands[idx],
+    band: getBandName(idx), stage: getBandStage(idx), date: getBandDate(idx),
+    time_str: getTime(idx), arrive_str: getArrive(idx) };
+  return b.type === 'barn' ? buildBarnEmail(b) : buildOutdoorEmail(b);
+}
+
+function getBody(idx) {
+  const stored = state.bodies[idx];
+  if (stored === undefined) return getDefaultBody(idx);
+  if (typeof stored === 'string') return stored; // legacy
+  if (stored.manual)  return stored.text;
+  if (stored.patched) {
+    if (!fieldsMatchSnapshot(idx, stored.fieldSnapshot)) {
+      if (!state._patchWarn) state._patchWarn = {};
+      state._patchWarn[idx] = true;
+    }
+    return applyPatches(getDefaultBody(idx), stored.patches);
+  }
+  return getDefaultBody(idx);
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+let dashboardOpen = false;
+let currentIdx    = null;
+
+function buildSidebar() {
+  const byDate = {};
+  bands.forEach((b, i) => {
+    const date = getBandDate(i);
+    if (!byDate[date]) byDate[date] = [];
+    byDate[date].push(i);
+  });
+
+  sidebar.innerHTML = '';
+  Object.entries(byDate).forEach(([date, indices]) => {
+    // Sort by festival-day time (12am-5:59am = late night, sorts last)
+    indices.sort((a, b) => festKey(getTime(a)) - festKey(getTime(b)));
+
+    const dl = document.createElement('div');
+    dl.className = 'day-label';
+    dl.textContent = date;
+    sidebar.appendChild(dl);
+
+    indices.forEach(i => {
+      const b      = bands[i];
+      const email  = getEmail(i);
+      const status = getStatus(i);
+      const btn = document.createElement('button');
+      btn.className = 'band-btn' + (currentIdx === i ? ' active' : '');
+      btn.id = `btn-${i}`;
+      let tags = `<span class="tag ${b.type}">${b.type === 'barn' ? 'Barn' : 'Outdoor'}</span>`;
+      if (!email)                  tags += `<span class="tag no-email">No email</span>`;
+      if (status === 'confirmed')  tags += `<span class="tag confirmed">Confirmed</span>`;
+      else if (status === 'sent')  tags += `<span class="tag sent">Sent</span>`;
+      btn.innerHTML = `<span class="bname">${escHtml(getBandName(i))}</span><div class="bmeta">${tags}<span class="btime">${escHtml(getTime(i))}</span></div>`;
+      btn.addEventListener('click', () => {
+        dashboardOpen = false;
+        document.getElementById('dashBtn').classList.remove('active-view');
+        selectBand(i);
+      });
+      sidebar.appendChild(btn);
+    });
+  });
+}
+
+buildSidebar();
+
+// ─── SELECT / RENDER ──────────────────────────────────────────────────────────
+let editingBody   = false;
+let editingTime   = false;
+let editingFields = false;
+
+function selectBand(idx) {
+  currentIdx    = idx;
+  editingBody   = false;
+  editingTime   = false;
+  editingFields = false;
+  buildSidebar();
+  renderBand(idx);
+}
+
+function renderBand(idx) {
+  const b           = bands[idx];
+  const email       = getEmail(idx);
+  const status      = getStatus(idx);
+  const body        = getBody(idx);
+  const noEmail     = !email;
+  const timeDisplay = getTime(idx);
+  const arriveDisp  = getArrive(idx);
+  const photo       = getPhoto(idx);
+  const ex          = getExtra(idx);
+
+  // Time editor
+  let timeSection = '';
+  if (editingTime) {
+    const time24 = parseTime12to24(timeDisplay);
+    timeSection = `
+      <div class="time-editor-wrap" id="timeEditorWrap">
+        <div class="time-editor-label">Change Set Time</div>
+        <div class="time-editor-controls">
+          <input type="time" class="time-input" id="timeInput" value="${escAttr(time24)}" oninput="onTimeInputChange(${idx})" />
+          <button class="edit-btn sm" onclick="saveTime(${idx})">Save</button>
+          <button class="edit-btn sm" onclick="cancelTimeEditor(${idx})">Cancel</button>
+        </div>
+        <div id="conflictBox" style="display:none;"></div>
+      </div>`;
+  }
+
+  // Edit Fields panel
+  let fieldsPanel = '';
+  if (editingFields) {
+    fieldsPanel = `
+      <div class="fields-panel">
+        <div class="fields-panel-title">Edit Fields</div>
+        <div class="field-grid">
+          <div class="field-cell" style="grid-column:1/-1">
+            <label>Band Name</label>
+            <input class="field-input-sm" type="text" value="${escAttr(getBandName(idx))}"
+              oninput="handleFieldEdit(${idx},'band',this.value)" />
+          </div>
+          <div class="field-cell">
+            <label>Stage</label>
+            <input class="field-input-sm" type="text" value="${escAttr(getBandStage(idx))}"
+              oninput="handleFieldEdit(${idx},'stage',this.value)" />
+          </div>
+          <div class="field-cell">
+            <label>Date</label>
+            <input class="field-input-sm" type="text" value="${escAttr(getBandDate(idx))}"
+              oninput="handleFieldEdit(${idx},'date',this.value)" />
+          </div>
+          <div class="field-cell">
+            <label>Set Time (e.g. 7:30 PM)</label>
+            <input class="field-input-sm" type="text" value="${escAttr(getTime(idx))}"
+              oninput="handleFieldEdit(${idx},'time_str',this.value)" />
+          </div>
+          <div class="field-cell">
+            <label>Arrive By (blank = auto)</label>
+            <input class="field-input-sm" type="text" value="${escAttr(getArrive(idx))}"
+              oninput="handleFieldEdit(${idx},'arrive_str',this.value)" />
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Patch warning
+  const patchWarn = (state._patchWarn && state._patchWarn[idx])
+    ? `<div class="patch-warn-banner">⚠ Band fields changed since email edits were saved. Review the body below — some customizations may need updating.</div>`
+    : '';
+
+  // Photo section
+  const photoSrc = photo || '';
+  const isUrl    = photoSrc && !photoSrc.startsWith('data:');
+  const photoPanel = `
+    <div class="photo-section">
+      <img class="photo-preview${photoSrc ? ' visible' : ''}" id="photoPreview" src="${escAttr(photoSrc)}" alt="Artist photo" />
+      <div class="photo-inputs">
+        <div class="field-cell">
+          <label>Photo URL</label>
+          <input class="field-input-sm" type="url" placeholder="https://..." value="${escAttr(isUrl ? photoSrc : '')}"
+            oninput="handlePhotoUrl(${idx},this.value)" />
+        </div>
+        <div class="field-cell" style="margin-top:6px">
+          <label>Or upload file</label>
+          <input type="file" accept="image/*" style="font-size:11px;color:var(--muted)"
+            onchange="handlePhotoFile(${idx},this)" />
+        </div>
+      </div>
+    </div>`;
+
+  // Extra info
+  const extraSection = `
+    <div class="extra-section">
+      <div class="extra-section-title">Additional Info</div>
+      <div class="extra-field">
+        <label>Social Link</label>
+        <input class="extra-input" type="url" placeholder="https://instagram.com/..."
+          value="${escAttr(ex.social || '')}" oninput="handleExtraEdit(${idx},'social',this.value)" />
+      </div>
+      <div class="extra-field">
+        <label>Streaming Link</label>
+        <input class="extra-input" type="url" placeholder="https://open.spotify.com/..."
+          value="${escAttr(ex.streaming || '')}" oninput="handleExtraEdit(${idx},'streaming',this.value)" />
+      </div>
+      <div class="extra-field">
+        <label>Bio</label>
+        <textarea class="extra-textarea" placeholder="Short bio for website/socials..."
+          oninput="handleExtraEdit(${idx},'bio',this.value)">${escHtml(ex.bio || '')}</textarea>
+      </div>
+    </div>`;
+
+  document.getElementById('main').innerHTML = `
+    <div>
+      <div class="email-header">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+          <h2>${escHtml(getBandName(idx))}</h2>
+          <button class="edit-btn sm ${editingFields ? 'active' : ''}" onclick="toggleEditFields(${idx})">${editingFields ? 'Done Editing' : 'Edit Fields'}</button>
+        </div>
+        ${fieldsPanel}
+        <div class="meta-row">
+          <span class="meta-item"><strong>${escHtml(getBandDate(idx))}</strong></span>
+          <span class="meta-item"><strong>${escHtml(getBandStage(idx))}</strong></span>
+        </div>
+        <div class="time-edit-row">
+          <span class="field-label">Set:</span>
+          <span class="time-display">${escHtml(timeDisplay)}</span>
+          <span class="arrive-display">· Arrive by ${escHtml(arriveDisp)}</span>
+          ${!editingTime ? `<button class="edit-btn sm" onclick="openTimeEditor(${idx})">Edit Time</button>` : ''}
+        </div>
+        ${timeSection}
+        <div class="field-row">
+          <span class="field-label">To:</span>
+          <input class="email-input" id="emailField" type="email" placeholder="Enter email address..."
+            value="${escAttr(email)}" oninput="handleEmailInput(${idx}, this.value)" />
+        </div>
+        <div class="status-row">
+          <span class="status-label">Status:</span>
+          <select class="status-select" id="statusSelect" onchange="handleStatusChange(${idx}, this.value)">
+            <option value="pending"   ${status==='pending'   ?'selected':''}>Pending</option>
+            <option value="sent"      ${status==='sent'      ?'selected':''}>Email Sent</option>
+            <option value="confirmed" ${status==='confirmed' ?'selected':''}>Confirmed</option>
+          </select>
+        </div>
+        ${photoPanel}
+        <div class="btn-row">
+          <button class="copy-btn" id="copyBtn" onclick="copyEmail(${idx})" ${noEmail?'disabled':''}>Copy Email</button>
+          <button class="edit-btn ${editingBody?'active':''}" id="editBtn" onclick="toggleEditBody(${idx})">${editingBody ? 'Done Editing' : 'Edit Body'}</button>
+        </div>
+      </div>
+      ${patchWarn}
+      ${noEmail ? '<div class="missing-banner" id="missingBanner">No email address on file — enter one above to enable copying.</div>' : ''}
+      ${extraSection}
+      <div class="subject-line" style="margin-top:22px">Subject: <strong>Midwest Psych Fest 2026 — Your Performance Slot</strong></div>
+      ${editingBody
+        ? `<textarea class="email-body-edit" id="bodyEdit" oninput="handleBodyEdit(${idx}, this.value)">${escHtml(body)}</textarea>`
+        : `<div class="email-body">${escHtml(body)}</div>`
+      }
+    </div>`;
+
+  if (editingTime) {
+    const ti = document.getElementById('timeInput');
+    if (ti) onTimeInputChange(idx);
+  }
+}
+
+// ─── FIELD EDITING ────────────────────────────────────────────────────────────
+function toggleEditFields(idx) {
+  editingFields = !editingFields;
+  renderBand(idx);
+}
+
+function handleFieldEdit(idx, field, val) {
+  pushUndo();
+  if (!state.fieldOverrides[idx]) state.fieldOverrides[idx] = {};
+  state.fieldOverrides[idx][field] = val;
+  if (field === 'time_str') state.times[idx] = val;
+  // Live update h2 without full re-render
+  if (field === 'band') {
+    const h2 = document.querySelector('#main h2');
+    if (h2) h2.textContent = val;
+  }
+  if (field === 'band' || field === 'time_str') {
+    buildSidebar();
+    const btn = document.getElementById(`btn-${idx}`);
+    if (btn) btn.classList.add('active');
+  }
+}
+
+function handleExtraEdit(idx, field, val) {
+  if (!state.extra[idx]) state.extra[idx] = {};
+  state.extra[idx][field] = val;
+}
+
+function handlePhotoUrl(idx, url) {
+  pushUndo();
+  state.photos[idx] = url;
+  const prev = document.getElementById('photoPreview');
+  if (prev) { prev.src = url; prev.classList.toggle('visible', !!url); }
+}
+
+function handlePhotoFile(idx, fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  pushUndo();
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.photos[idx] = e.target.result;
+    const prev = document.getElementById('photoPreview');
+    if (prev) { prev.src = e.target.result; prev.classList.add('visible'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── TIME EDITOR ──────────────────────────────────────────────────────────────
+function openTimeEditor(idx) {
+  editingTime = true;
+  renderBand(idx);
+  const ti = document.getElementById('timeInput');
+  if (ti) ti.focus();
+}
+
+function cancelTimeEditor(idx) {
+  editingTime = false;
+  renderBand(idx);
+}
+
+function onTimeInputChange(idx) {
+  const ti = document.getElementById('timeInput');
+  if (!ti) return;
+  const newTime12   = parse24to12(ti.value);
+  const conflictIdx = checkConflict(idx, newTime12);
+  const box = document.getElementById('conflictBox');
+  if (!box) return;
+  if (conflictIdx !== -1) {
+    box.style.display = 'block';
+    box.innerHTML = `
+      <div class="conflict-box">
+        <div class="conflict-title">⚠ Time Conflict</div>
+        <div class="conflict-detail">
+          <strong>${escHtml(getBandName(conflictIdx))}</strong> is already scheduled at
+          <strong>${escHtml(newTime12)}</strong> on ${escHtml(getBandStage(conflictIdx))}
+          (${escHtml(getBandDate(conflictIdx))}). Two acts cannot share the same slot.
+        </div>
+        <div class="conflict-actions">
+          <button class="swap-btn" onclick="doSwap(${idx}, ${conflictIdx})">⇄ Swap Their Times</button>
+          <button class="conflict-ok" onclick="cancelTimeEditor(${idx})">Keep Original</button>
+        </div>
+      </div>`;
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
+
+function saveTime(idx) {
+  const ti = document.getElementById('timeInput');
+  if (!ti) return;
+  const newTime12   = parse24to12(ti.value);
+  const conflictIdx = checkConflict(idx, newTime12);
+  if (conflictIdx !== -1) { onTimeInputChange(idx); return; }
+  pushUndo();
+  applyTimeChange(idx, newTime12);
+  editingTime = false;
+  buildSidebar();
+  renderBand(idx);
+}
+
+function doSwap(idx, conflictIdx) {
+  const ti        = document.getElementById('timeInput');
+  const newTime12 = ti ? parse24to12(ti.value) : getTime(conflictIdx);
+  const oldTime12 = getTime(idx);
+  pushUndo();
+  applyTimeChange(idx, newTime12, true);
+  applyTimeChange(conflictIdx, oldTime12, true);
+  syncToStorage();
+  editingTime = false;
+  buildSidebar();
+  renderBand(idx);
+}
+
+function applyTimeChange(idx, newTime12, silent) {
+  state.times[idx] = newTime12;
+  delete state.bodies[idx]; // regenerate email with new time
+  if (!silent) syncToStorage();
+}
+
+// ─── BODY EDITING ─────────────────────────────────────────────────────────────
+function toggleEditBody(idx) {
+  if (editingBody) {
+    const ta = document.getElementById('bodyEdit');
+    if (ta) commitBodyEdit(idx, ta.value);
+  }
+  editingBody = !editingBody;
+  renderBand(idx);
+  if (editingBody) {
+    const ta = document.getElementById('bodyEdit');
+    if (ta) ta.focus();
+  }
+}
+
+function handleBodyEdit(idx, val) {
+  state.bodies[idx] = { manual: true, text: val };
+}
+
+// ─── EMAIL / STATUS ───────────────────────────────────────────────────────────
+function handleEmailInput(idx, val) {
+  pushUndo();
+  state.emails[idx] = val.trim();
+  const copyBtn = document.getElementById('copyBtn');
+  const banner  = document.getElementById('missingBanner');
+  if (val.trim()) {
+    if (copyBtn) copyBtn.disabled = false;
+    if (banner)  banner.remove();
+  } else {
+    if (copyBtn) copyBtn.disabled = true;
+  }
+  buildSidebar();
+  const btn = document.getElementById(`btn-${idx}`);
+  if (btn) btn.classList.add('active');
+  syncToStorage();
+}
+
+function handleStatusChange(idx, val) {
+  pushUndo();
+  state.status[idx] = val;
+  buildSidebar();
+  const btn = document.getElementById(`btn-${idx}`);
+  if (btn) btn.classList.add('active');
+  syncToStorage();
+}
+
+function copyEmail(idx) {
+  const email = getEmail(idx);
+  const body  = getBody(idx);
+  const text  = `To: ${email}\nSubject: Midwest Psych Fest 2026 — Your Performance Slot\n\n${body}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    if (btn) {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Email'; btn.classList.remove('copied'); }, 2000);
+    }
+  });
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function toggleDashboard() {
+  dashboardOpen = !dashboardOpen;
+  document.getElementById('dashBtn').classList.toggle('active-view', dashboardOpen);
+  if (dashboardOpen) { currentIdx = null; buildSidebar(); renderDashboard(); }
+  else document.getElementById('main').innerHTML = '<div class="placeholder">← Select a band to view their details</div>';
+}
+
+function renderDashboard() {
+  const total     = bands.length;
+  const withEmail = bands.filter((b, i) => !!getEmail(i)).length;
+  const sentCount = bands.filter((b, i) => getStatus(i) === 'sent').length;
+  const confirmed = bands.filter((b, i) => getStatus(i) === 'confirmed').length;
+  const noEmail   = total - withEmail;
+  let rows = '';
+  bands.forEach((b, i) => {
+    const email  = getEmail(i);
+    const status = getStatus(i);
+    const time   = getTime(i);
+    let pillClass = 'pill-pending', pillText = 'Pending';
+    if (!email)                      { pillClass = 'pill-no-email';  pillText = 'No Email';  }
+    else if (status === 'confirmed') { pillClass = 'pill-confirmed'; pillText = 'Confirmed'; }
+    else if (status === 'sent')      { pillClass = 'pill-sent';      pillText = 'Sent';      }
+    rows += `<tr>
+      <td><strong style="font-size:11px;cursor:pointer;" onclick="selectBand(${i})">${escHtml(getBandName(i))}</strong></td>
+      <td style="color:var(--muted);font-size:11px">${escHtml(getBandDate(i))}</td>
+      <td style="font-size:11px">${escHtml(time)}<span class="edit-time-link" onclick="selectBand(${i}); setTimeout(()=>openTimeEditor(${i}),50)">edit</span></td>
+      <td><span class="tag ${b.type}" style="font-size:9px">${b.type === 'barn' ? 'Barn' : 'Outdoor'}</span></td>
+      <td style="font-size:11px;color:var(--accent2)">${email ? escHtml(email) : '<span style="color:var(--missing)">—</span>'}</td>
+      <td><span class="status-pill ${pillClass}">${pillText}</span></td>
+    </tr>`;
+  });
+  document.getElementById('main').innerHTML = `
+    <div class="dashboard">
+      <div class="dash-title">Status Dashboard</div>
+      <div class="dash-stats">
+        <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Bands</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--accent2)">${confirmed}</div><div class="stat-lbl">Confirmed</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--sent)">${sentCount}</div><div class="stat-lbl">Email Sent</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--missing)">${noEmail}</div><div class="stat-lbl">No Email</div></div>
+      </div>
+      <table class="dash-table">
+        <thead><tr><th>Band</th><th>Date</th><th>Time</th><th>Stage</th><th>Email</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ─── EXPORT SCHEDULE JSON ─────────────────────────────────────────────────────
+function exportScheduleJSON() {
+  const ef = document.getElementById('emailField');
+  if (ef && currentIdx !== null) state.emails[currentIdx] = ef.value.trim();
+  const stageMap = {};
+  bands.forEach((b, i) => {
+    const sid = slugify(getBandStage(i));
+    if (!stageMap[sid]) stageMap[sid] = { id: sid, name: getBandStage(i), type: b.type };
+  });
+  const schedule = bands.map((b, i) => {
+    const ex = getExtra(i);
+    return {
+      id: `${slugify(getBandName(i))}-${slugify(getBandDate(i).split(',')[0])}`,
+      band: getBandName(i), stage: getBandStage(i), stage_id: slugify(getBandStage(i)),
+      stage_type: b.type, day: getBandDate(i), date: dateToISO(getBandDate(i)),
+      set_time: parseTime12to24(getTime(i)), set_time_display: getTime(i),
+      arrive_by: parseTime12to24(getArrive(i)), arrive_by_display: getArrive(i),
+      email: getEmail(i) || '', status: getStatus(i),
+      bio: ex.bio || '', social: ex.social ? { link: ex.social } : {}, streaming: ex.streaming || '',
+    };
+  });
+  const output = {
+    _meta: { source: 'MPF Band Emails Tool', exported: new Date().toISOString(), total: schedule.length },
+    stages: Object.values(stageMap), schedule,
+  };
+  const blob = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'mpf_schedule.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Band','Date','Time','Stage','Type','Email','Status','Social','Streaming','Bio','Photo URL'];
+  const rows = bands.map((b, i) => {
+    const ex    = getExtra(i);
+    const photo = getPhoto(i);
+    return [
+      getBandName(i), getBandDate(i), getTime(i), getBandStage(i), b.type,
+      getEmail(i) || '', getStatus(i), ex.social || '', ex.streaming || '',
+      (ex.bio || '').replace(/\r?\n/g, ' '),
+      (photo && !photo.startsWith('data:')) ? photo : (photo ? '[uploaded]' : ''),
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv  = [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a    = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'mpf_schedule.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(str) { return String(str).replace(/"/g,'&quot;'); }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(async () => {
+  loadSavedState();     // 1. full state from localStorage (survives refresh, not cache clear)
+  loadFromStorage();    // 2. merge any mpf_schedule data written by the website
+  await tryAutoLoad();  // 3. auto-read linked file if browser permission still granted
+  buildSidebar();
+  syncToStorage();
+  selectBand(0);
+  updateUndoBtn();
+})();
+</script>
+</body>
+</html>
