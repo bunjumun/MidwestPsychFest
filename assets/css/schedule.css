@@ -179,11 +179,32 @@
   line-height: 1.5;
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease, margin-top 0.2s;
+  transition: max-height 0.4s ease, margin-top 0.2s;
 }
 .set-card.bio-expanded .set-bio {
-  max-height: 220px;
+  max-height: 600px;
   margin-top: 6px;
+}
+
+/* Band photo inside bio section */
+.set-bio-photo {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  display: block;
+  object-fit: cover;
+}
+
+/* Stage label inside merged outdoor column cards */
+.set-stage-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: 2px;
+  opacity: 0.8;
 }
 
 /* Admin edit button on card */

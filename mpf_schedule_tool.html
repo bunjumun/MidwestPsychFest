@@ -411,6 +411,7 @@ function syncToStorage() {
       bio:               ex.bio || '',
       social:            ex.social ? { link: ex.social } : {},
       streaming:         ex.streaming || '',
+      image:             getPhoto(i),
     };
   });
   try { localStorage.setItem('mpf_schedule', JSON.stringify(schedule)); } catch(e) {}
@@ -1223,6 +1224,29 @@ function exportCSV() {
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(str) { return String(str).replace(/"/g,'&quot;'); }
+
+// ─── TWO-WAY SYNC — listen for schedule changes from other tabs ────────────────
+function reloadBandsFromStorage() {
+  try {
+    const raw = localStorage.getItem('mpf_schedule');
+    if (!raw) return;
+    JSON.parse(raw).forEach(entry => {
+      const idx = bands.findIndex(b => b.band.toLowerCase() === (entry.band || '').toLowerCase());
+      if (idx === -1) return;
+      // Sync time display if it was changed from the website side
+      if (entry.set_time_display && entry.set_time_display !== getTime(idx)) {
+        state.times[idx] = entry.set_time_display;
+      }
+      // Sync status only if we don't already have one stored locally
+      if (entry.status && !state.status[idx]) state.status[idx] = entry.status;
+    });
+    buildSidebar();
+    if (currentIdx !== null) renderBand(currentIdx);
+  } catch(e) {}
+}
+window.addEventListener('storage', e => {
+  if (e.key === 'mpf_schedule') reloadBandsFromStorage();
+});
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {

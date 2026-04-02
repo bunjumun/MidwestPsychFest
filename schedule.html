@@ -21,7 +21,6 @@
         <li><a href="schedule.html" class="active">Schedule</a></li>
         <li><a href="map.html">Map</a></li>
       </ul>
-      <button class="nav-admin-gear" id="adminToggle" title="Admin" aria-label="Admin settings">⚙</button>
     </div>
   </nav>
 
@@ -56,169 +55,10 @@
     </div>
   </div>
 
-  <!-- ADMIN PANEL -->
-  <div id="admin-panel">
-    <div class="admin-panel-header">
-      <h3>⚙ Admin — Schedule</h3>
-      <button class="admin-panel-close" id="adminClose">✕</button>
-    </div>
-    <div class="admin-panel-body">
-
-      <!-- Schedule Tool -->
-      <div class="admin-section">
-        <h4>Schedule Tool</h4>
-        <button class="btn btn-accent btn-sm w-full" onclick="window.open('mpf_schedule_tool.html', '_blank')">
-          🗓 Open Schedule Tool
-        </button>
-        <p class="text-muted mt-1" style="font-size:0.75rem;line-height:1.5;">
-          Manage set times, confirmation status, and band emails. Changes sync automatically to this page via shared browser storage.
-        </p>
-      </div>
-
-      <!-- Add Set -->
-      <div class="admin-section">
-        <h4>Add Set</h4>
-        <div class="form-group">
-          <label>Artist / Act</label>
-          <input type="text" id="newArtist" placeholder="Band or performer name" />
-        </div>
-        <div class="form-group">
-          <label>Stage</label>
-          <select id="newStage">
-            <option value="outdoor-stage-a">Outdoor Stage A</option>
-            <option value="outdoor-stage-b">Outdoor Stage B</option>
-            <option value="barn-stage">Barn Stage</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Day</label>
-            <select id="newDay">
-              <option value="1">Friday, May 8</option>
-              <option value="2">Saturday, May 9</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Start Time</label>
-            <input type="time" id="newStart" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Bio (optional)</label>
-          <textarea id="newBio" placeholder="Short description…"></textarea>
-        </div>
-        <button class="btn btn-accent btn-sm w-full mt-1" id="saveNewSet">Add to Schedule</button>
-      </div>
-
-      <!-- Edit Set -->
-      <div class="admin-section" id="editSetSection" style="display:none;">
-        <h4>Edit Set</h4>
-        <div class="form-group">
-          <label>Artist / Act</label>
-          <input type="text" id="editArtist" />
-        </div>
-        <div class="form-group">
-          <label>Stage</label>
-          <select id="editStage">
-            <option value="outdoor-stage-a">Outdoor Stage A</option>
-            <option value="outdoor-stage-b">Outdoor Stage B</option>
-            <option value="barn-stage">Barn Stage</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Day</label>
-            <select id="editDay">
-              <option value="1">Friday, May 8</option>
-              <option value="2">Saturday, May 9</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Start Time</label>
-            <input type="time" id="editStart" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Bio</label>
-          <textarea id="editBio"></textarea>
-        </div>
-        <div class="flex gap-1 mt-1">
-          <button class="btn btn-accent btn-sm"  id="saveEditSet">Save</button>
-          <button class="btn btn-danger btn-sm"   id="deleteSet">Delete</button>
-          <button class="btn btn-ghost btn-sm"    id="cancelEditSet">Cancel</button>
-        </div>
-        <input type="hidden" id="editSetId" />
-      </div>
-
-      <!-- Stage Names -->
-      <div class="admin-section">
-        <h4>Stage Names</h4>
-        <p class="text-muted" style="font-size:0.78rem;margin-bottom:10px;">
-          Rename stages without breaking schedule data. Changes are stored locally — export to commit.
-        </p>
-        <div id="stageEditorList">
-          <p class="text-muted" style="font-size:0.8rem;">Load a schedule to see stages.</p>
-        </div>
-        <div class="flex gap-1 mt-1">
-          <button class="btn btn-accent btn-sm" id="saveStageNames">Save Names</button>
-          <button class="btn btn-ghost btn-sm"  id="exportStages">Export stages.json</button>
-        </div>
-      </div>
-
-      <!-- Import / Export -->
-      <div class="admin-section">
-        <h4>Import / Export</h4>
-        <input type="file" id="importScheduleFile" accept=".json" style="display:none" />
-        <button class="btn btn-ghost btn-sm w-full"
-                onclick="document.getElementById('importScheduleFile').click()">
-          Import schedule.json or mpf_schedule.json
-        </button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportSchedule">
-          Export schedule.json
-        </button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="resetSchedule">
-          Reset to default data
-        </button>
-        <p class="text-muted mt-2" style="font-size:0.75rem;">
-          Accepts both <code style="color:var(--color-accent)">schedule.json</code> (site format)
-          and <code style="color:var(--color-accent)">mpf_schedule.json</code> (band emails tool export).
-        </p>
-      </div>
-
-      <!-- Page Banner -->
-      <div class="admin-section">
-        <h4>Page Banner</h4>
-        <button class="btn btn-accent btn-sm w-full" id="editScheduleBannerBtn">Edit Banner Image</button>
-        <p class="text-muted mt-1" style="font-size:0.75rem;">Full-width image below the nav bar on this page.</p>
-      </div>
-
-      <!-- Background Image -->
-      <div class="admin-section">
-        <h4>Background Image</h4>
-        <button class="btn btn-accent btn-sm w-full" id="editScheduleBgBtn">Edit Background</button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportImgBlocksScheduleBtn">Export image-blocks.json</button>
-        <p class="text-muted mt-1" style="font-size:0.75rem;">Site-wide background with dark scrim overlay.</p>
-      </div>
-
-      <!-- Admin Settings -->
-      <div class="admin-section">
-        <h4>Admin Settings</h4>
-        <button class="btn btn-ghost btn-sm w-full"   id="changePwBtn">Change Password</button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportAdminConfigBtn">Export Admin Config</button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="openSetupBtn">⚡ Run Setup Wizard</button>
-        <p class="text-muted mt-2" style="font-size:0.75rem;">
-          Admin config backup lets you restore credentials after clearing browser storage.
-        </p>
-      </div>
-
-    </div>
-  </div>
-
   <!-- FOOTER -->
   <footer class="site-footer">
     <a href="#" data-info="instagram">Instagram</a> &nbsp;·&nbsp;
-    <a href="#" data-info="facebook">Facebook</a> &nbsp;·&nbsp;
-    <a href="#">Contact</a>
+    <a href="#" data-info="facebook">Facebook</a>
     <div style="margin-top:12px;font-size:0.8rem;">© 2026 Midwest Psych Fest</div>
   </footer>
 
@@ -227,5 +67,7 @@
   <script src="assets/js/stages.js"></script>
   <script src="assets/js/image-blocks.js"></script>
   <script src="assets/js/schedule.js"></script>
+  <div id="widget-slot" style="display:none"></div>
+  <script src="assets/js/widgets.js"></script>
 </body>
 </html>

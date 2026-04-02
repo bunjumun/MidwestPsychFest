@@ -22,7 +22,6 @@
         <li><a href="schedule.html">Schedule</a></li>
         <li><a href="map.html" class="active">Map</a></li>
       </ul>
-      <button class="nav-admin-gear" id="adminToggle" title="Admin" aria-label="Admin settings">⚙</button>
     </div>
   </nav>
 
@@ -277,11 +276,25 @@
     </div>
   </div>
 
+  <!-- Hidden admin toggle required by map.js (visually hidden, accessible via admin.html) -->
+  <button id="adminToggle" aria-hidden="true"
+          style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;overflow:hidden;"></button>
+
   <a id="ticketBtn" class="ticket-btn" href="#" target="_blank" rel="noopener" style="display:none">🎟 Get Tickets</a>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="assets/js/site-info.js"></script>
   <script src="assets/js/stages.js"></script>
   <script src="assets/js/image-blocks.js"></script>
   <script src="assets/js/map.js"></script>
+  <script>
+    // Auto-open admin panel when redirected from admin.html with ?admin=1
+    document.addEventListener('DOMContentLoaded', () => {
+      if (new URLSearchParams(location.search).get('admin') === '1') {
+        openAdminWithAuth(openAdminPanel);
+      }
+    });
+  </script>
+  <div id="widget-slot" style="display:none"></div>
+  <script src="assets/js/widgets.js"></script>
 </body>
 </html>

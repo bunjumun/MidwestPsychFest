@@ -77,6 +77,8 @@ async function loadSchedule() {
 
 function saveSchedule() {
   localStorage.setItem(SCHEDULE_KEY, JSON.stringify(schedule));
+  // Notify other open tabs (e.g. email tool) that schedule changed
+  window.dispatchEvent(new StorageEvent('storage', { key: SCHEDULE_KEY }));
 }
 
 // ── Import — MPF Band Tool format ─────────────
@@ -151,6 +153,9 @@ function bindStageFilters() {
 }
 
 // ── Render ────────────────────────────────────
+// Outdoor stage IDs that merge into one column in all-stages view
+const OUTDOOR_STAGE_IDS = new Set(['outdoor-stage-a', 'outdoor-stage-b']);
+
 function renderSchedule() {
   const grid = document.getElementById('scheduleGrid');
   if (!grid) return;
@@ -166,31 +171,57 @@ function renderSchedule() {
     return;
   }
 
-  // Group by stage_id, sort within each group by set_time
-  const grouped = {};
-  sets.forEach(s => {
-    if (!grouped[s.stage_id]) grouped[s.stage_id] = [];
-    grouped[s.stage_id].push(s);
-  });
   // Festival day: treat 00:00–05:59 as late-night (after midnight), not start of day
   const festSortKey = t => { const [h, m] = (t || '00:00').split(':').map(Number); return (h < 6 ? h + 24 : h) * 60 + (m || 0); };
-  Object.values(grouped).forEach(arr => arr.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time)));
 
-  grid.innerHTML = Object.entries(grouped).map(([sid, entries]) => `
-    <div class="stage-column" data-stage-id="${escHtml(sid)}">
-      <div class="stage-column-header">${escHtml(getStageLabel(sid))}</div>
-      ${entries.map(s => renderSetCard(s)).join('')}
+  // Build column descriptors — in all-stages view, merge outdoor A+B into one column
+  const columns = []; // [{sid, label, entries, showStageLabel}]
+
+  if (activeStage === 'all') {
+    const outdoorEntries = sets.filter(s => OUTDOOR_STAGE_IDS.has(s.stage_id));
+    const otherGroups    = {};
+    sets.filter(s => !OUTDOOR_STAGE_IDS.has(s.stage_id)).forEach(s => {
+      if (!otherGroups[s.stage_id]) otherGroups[s.stage_id] = [];
+      otherGroups[s.stage_id].push(s);
+    });
+
+    if (outdoorEntries.length) {
+      outdoorEntries.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time));
+      columns.push({ sid: 'outdoor-merged', label: 'Outdoor Stages', entries: outdoorEntries, showStageLabel: true });
+    }
+    Object.entries(otherGroups).forEach(([sid, entries]) => {
+      entries.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time));
+      columns.push({ sid, label: getStageLabel(sid), entries, showStageLabel: false });
+    });
+  } else {
+    const grouped = {};
+    sets.forEach(s => {
+      if (!grouped[s.stage_id]) grouped[s.stage_id] = [];
+      grouped[s.stage_id].push(s);
+    });
+    Object.entries(grouped).forEach(([sid, entries]) => {
+      entries.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time));
+      columns.push({ sid, label: getStageLabel(sid), entries, showStageLabel: false });
+    });
+  }
+
+  grid.innerHTML = columns.map(col => `
+    <div class="stage-column" data-stage-id="${escHtml(col.sid)}">
+      <div class="stage-column-header">${escHtml(col.label)}</div>
+      ${col.entries.map(s => renderSetCard(s, col.showStageLabel)).join('')}
     </div>
   `).join('');
 
   bindDragEvents();
 }
 
-function renderSetCard(s) {
+function renderSetCard(s, showStageLabel) {
   const nowPlaying = isNowPlaying(s);
   const isTBD      = s.status !== 'confirmed';
   const artistName = isTBD ? 'TBD' : escHtml(s.band);
   const hasBio     = !isTBD && s.bio;
+  const hasPhoto   = !isTBD && s.image;
+  const hasExpand  = hasBio || hasPhoto;
 
   return `
     <div class="set-card${nowPlaying ? ' now-playing' : ''}${isTBD ? ' tbd' : ''}" data-id="${escHtml(s.id)}">
@@ -201,11 +232,15 @@ function renderSetCard(s) {
       </div>
       ${nowPlaying ? '<span class="now-playing-badge">▶ Now Playing</span>' : ''}
       ${activeDay === 'all' ? `<span class="day-badge" style="background:rgba(255,60,172,0.15);color:var(--color-primary);">${escHtml(s.day)}</span>` : ''}
+      ${showStageLabel ? `<div class="set-stage-label">${escHtml(getStageLabel(s.stage_id, s.stage))}</div>` : ''}
       <div class="set-time">${escHtml(s.set_time_display || formatTime(s.set_time))}</div>
       <div class="set-artist">${artistName}</div>
-      ${hasBio ? `
+      ${hasExpand ? `
         <button class="bio-toggle" onclick="toggleBio(this)">▼ More</button>
-        <div class="set-bio">${escHtml(s.bio)}</div>
+        <div class="set-bio">
+          ${hasPhoto ? `<img src="${escHtml(s.image)}" class="set-bio-photo" alt="${escHtml(s.band)}" loading="lazy" />` : ''}
+          ${hasBio ? escHtml(s.bio) : ''}
+        </div>
       ` : ''}
     </div>
   `;

@@ -21,7 +21,6 @@
         <li><a href="schedule.html">Schedule</a></li>
         <li><a href="map.html">Map</a></li>
       </ul>
-      <button class="nav-admin-gear" id="adminToggle" title="Admin" aria-label="Admin settings">⚙</button>
     </div>
   </nav>
 
@@ -135,51 +134,10 @@
     </div>
     <div style="margin-top:12px;">
       <a href="#" data-info="instagram">Instagram</a> &nbsp;·&nbsp;
-      <a href="#" data-info="facebook">Facebook</a> &nbsp;·&nbsp;
-      <a href="#">Contact</a>
+      <a href="#" data-info="facebook">Facebook</a>
     </div>
     <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
   </footer>
-
-  <!-- ADMIN PANEL -->
-  <div id="admin-panel">
-    <div class="admin-panel-header">
-      <h3>⚙ Admin — Home</h3>
-      <button class="admin-panel-close" id="adminClose">✕</button>
-    </div>
-    <div class="admin-panel-body">
-
-      <!-- Page Banner -->
-      <div class="admin-section">
-        <h4>Page Banner</h4>
-        <button class="btn btn-accent btn-sm w-full" id="editHomeBannerBtn">Edit Banner Image</button>
-        <p class="text-muted mt-1" style="font-size:0.75rem;">Full-width image displayed below the nav bar.</p>
-      </div>
-
-      <!-- Image Blocks -->
-      <div class="admin-section">
-        <h4>Image Blocks</h4>
-        <p class="text-muted" style="font-size:0.75rem;margin-bottom:10px;">Click any image slot on the page to edit it, or use the buttons below.</p>
-        <button class="btn btn-ghost btn-sm w-full" id="editLineupPosterBtn">Edit Lineup Poster</button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="exportImgBlocksBtn">Export image-blocks.json</button>
-      </div>
-
-      <!-- Background Image -->
-      <div class="admin-section">
-        <h4>Background Image</h4>
-        <button class="btn btn-accent btn-sm w-full" id="editBgBtn">Edit Background</button>
-        <p class="text-muted mt-1" style="font-size:0.75rem;">Site-wide background image with dark scrim overlay.</p>
-      </div>
-
-      <!-- Admin Settings -->
-      <div class="admin-section">
-        <h4>Admin Settings</h4>
-        <button class="btn btn-ghost btn-sm w-full" id="homeChangePwBtn">Change Password</button>
-        <button class="btn btn-ghost btn-sm w-full mt-1" id="homeExportAdminConfigBtn">Export Admin Config</button>
-      </div>
-
-    </div>
-  </div>
 
   <a id="ticketBtn" class="ticket-btn" href="#" target="_blank" rel="noopener" style="display:none">🎟 Get Tickets</a>
   <script src="assets/js/stages.js"></script>
@@ -189,52 +147,6 @@
     // Nav toggle
     document.getElementById('navToggle').addEventListener('click', () => {
       document.getElementById('navLinks').classList.toggle('open');
-    });
-
-    // ── Admin panel ──────────────────────────────
-    const adminPanel = document.getElementById('admin-panel');
-    const adminToggle = document.getElementById('adminToggle');
-    const adminClose  = document.getElementById('adminClose');
-
-    function openAdminPanel() {
-      adminPanel.classList.add('open');
-      document.body.classList.add('admin-mode');
-      adminToggle.classList.add('active');
-    }
-    function closeAdminPanel() {
-      adminPanel.classList.remove('open');
-      document.body.classList.remove('admin-mode');
-      adminToggle.classList.remove('active');
-    }
-
-    adminToggle.addEventListener('click', () => {
-      if (adminPanel.classList.contains('open')) { closeAdminPanel(); return; }
-      openAdminWithAuth(openAdminPanel);
-    });
-    adminClose.addEventListener('click', closeAdminPanel);
-
-    // Wire image-block admin buttons (after DOMContentLoaded)
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('editHomeBannerBtn')?.addEventListener('click', () => {
-        const el = document.querySelector('.page-banner[data-slot="home-banner"]');
-        window.imageBlocksAdmin?.openEditBanner('home-banner', el);
-      });
-      document.getElementById('editLineupPosterBtn')?.addEventListener('click', () => {
-        const el = document.querySelector('.mpf-img-block[data-slot="home-lineup-poster"]');
-        window.imageBlocksAdmin?.openEditBlock('home-lineup-poster', el);
-      });
-      document.getElementById('editBgBtn')?.addEventListener('click', () => {
-        window.imageBlocksAdmin?.openBgEditor();
-      });
-      document.getElementById('exportImgBlocksBtn')?.addEventListener('click', () => {
-        window.imageBlocksAdmin?.exportImageBlocks();
-      });
-      document.getElementById('homeChangePwBtn')?.addEventListener('click', () => {
-        showChangePasswordModal?.();
-      });
-      document.getElementById('homeExportAdminConfigBtn')?.addEventListener('click', () => {
-        exportAdminConfig?.();
-      });
     });
 
     // Load lineup teaser from schedule.json
@@ -260,5 +172,7 @@
         document.getElementById('lineupGrid').innerHTML = '<p class="text-muted text-center">Lineup TBA</p>';
       });
   </script>
+  <div id="widget-slot" style="display:none"></div>
+  <script src="assets/js/widgets.js"></script>
 </body>
 </html>
