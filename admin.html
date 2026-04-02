@@ -868,7 +868,6 @@
 <script src="assets/js/image-blocks.js"></script>
 <script src="assets/js/widgets.js"></script>
 <script src="assets/js/deploy.js"></script>
-<script src="assets/js/schedule.js"></script>
 <script src="assets/js/github-sync.js"></script>
 
 <script>
@@ -894,7 +893,7 @@ let editingSetId     = null;
 let editingMarkerIdx = null;
 
 /* ── Auth ──────────────────────────────────────────────── */
-const AUTH_SESSION = 'mpf_admin_unlocked';
+// AUTH_SESSION const is defined in stages.js
 
 function isUnlocked() { return sessionStorage.getItem(AUTH_SESSION) === '1'; }
 function setUnlocked() { sessionStorage.setItem(AUTH_SESSION, '1'); }
