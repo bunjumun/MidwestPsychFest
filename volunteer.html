@@ -422,6 +422,7 @@
         <li><a href="schedule.html">Schedule</a></li>
         <li><a href="map.html">Map</a></li>
         <li><a href="volunteer.html" class="active">Volunteer</a></li>
+        <li><a href="more-info.html">More Info</a></li>
       </ul>
     </div>
   </nav>
@@ -508,23 +509,31 @@
               <input type="text" id="colDate" placeholder="B" maxlength="2" style="margin-top:4px;" />
             </div>
             <div>
-              <label style="font-size:0.72rem;margin-top:0;">Time column</label>
-              <input type="text" id="colTime" placeholder="C" maxlength="2" style="margin-top:4px;" />
+              <label style="font-size:0.72rem;margin-top:0;">Shift Start Time</label>
+              <input type="text" id="colStartTime" placeholder="C" maxlength="2" style="margin-top:4px;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;margin-top:0;">Shift End Time</label>
+              <input type="text" id="colEndTime" placeholder="D" maxlength="2" style="margin-top:4px;" />
             </div>
             <div>
               <label style="font-size:0.72rem;margin-top:0;">Location column</label>
-              <input type="text" id="colLocation" placeholder="D" maxlength="2" style="margin-top:4px;" />
+              <input type="text" id="colLocation" placeholder="E" maxlength="2" style="margin-top:4px;" />
             </div>
             <div>
-              <label style="font-size:0.72rem;margin-top:0;">Role column (optional)</label>
-              <input type="text" id="colRole" placeholder="E" maxlength="2" style="margin-top:4px;" />
+              <label style="font-size:0.72rem;margin-top:0;">Shift Leader Contact</label>
+              <input type="text" id="colLeaderContact" placeholder="F" maxlength="2" style="margin-top:4px;" />
             </div>
             <div>
-              <label style="font-size:0.72rem;margin-top:0;">Notes column (optional)</label>
-              <input type="text" id="colNotes" placeholder="F" maxlength="2" style="margin-top:4px;" />
+              <label style="font-size:0.72rem;margin-top:0;">Role (optional)</label>
+              <input type="text" id="colRole" placeholder="G" maxlength="2" style="margin-top:4px;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;margin-top:0;">Notes (optional)</label>
+              <input type="text" id="colNotes" placeholder="H" maxlength="2" style="margin-top:4px;" />
             </div>
           </div>
-          <p class="field-hint">Leave as defaults (A–F) if your sheet follows the recommended layout.</p>
+          <p class="field-hint">Default layout: A=Name, B=Date, C=Start Time, D=End Time, E=Location, F=Shift Leader Contact, G=Role, H=Notes</p>
         </div>
 
         <div class="config-actions">
@@ -562,7 +571,7 @@
     /* ─────────────────────────────────────────────
        DEFAULT COLUMN MAP
     ───────────────────────────────────────────── */
-    const DEFAULT_COL_MAP = { name: 'A', date: 'B', time: 'C', location: 'D', role: 'E', notes: 'F' };
+    const DEFAULT_COL_MAP = { name: 'A', date: 'B', start_time: 'C', end_time: 'D', location: 'E', leader_contact: 'F', role: 'G', notes: 'H' };
 
     function getColMap() {
       try { return JSON.parse(localStorage.getItem(COL_MAP_KEY)) || DEFAULT_COL_MAP; }
@@ -602,7 +611,7 @@
     }
 
     function shiftKey(shift) {
-      return [shift.name, shift.date, shift.time, shift.location].join('|').toLowerCase();
+      return [shift.name, shift.date, shift.start_time, shift.location].join('|').toLowerCase();
     }
 
     /* ─────────────────────────────────────────────
@@ -637,12 +646,14 @@
         return i >= 0 && i < cols.length ? cols[i] : '';
       };
       return {
-        name:     get(colMap.name),
-        date:     get(colMap.date),
-        time:     get(colMap.time),
-        location: get(colMap.location),
-        role:     get(colMap.role),
-        notes:    get(colMap.notes),
+        name:           get(colMap.name),
+        date:           get(colMap.date),
+        start_time:     get(colMap.start_time),
+        end_time:       get(colMap.end_time),
+        location:       get(colMap.location),
+        leader_contact: get(colMap.leader_contact),
+        role:           get(colMap.role),
+        notes:          get(colMap.notes),
       };
     }
 
@@ -745,20 +756,22 @@
     function renderShiftCard(shift) {
       const key = shiftKey(shift);
       const done = isCompleted(key);
+      const timeRange = [shift.start_time, shift.end_time].filter(Boolean).join(' – ');
       return `
         <div class="shift-card ${done ? 'completed' : ''}" id="card-${btoa(key).replace(/[^a-zA-Z0-9]/g,'')}">
           <div class="shift-name">${escHtml(shift.name)}</div>
           <div class="shift-meta">
             ${shift.date ? `<div class="shift-meta-row"><span class="shift-meta-icon">📅</span><span class="shift-meta-label">Date</span><span class="shift-meta-value">${escHtml(shift.date)}</span></div>` : ''}
-            ${shift.time ? `<div class="shift-meta-row"><span class="shift-meta-icon">🕐</span><span class="shift-meta-label">Time</span><span class="shift-meta-value">${escHtml(shift.time)}</span></div>` : ''}
+            ${timeRange ? `<div class="shift-meta-row"><span class="shift-meta-icon">🕐</span><span class="shift-meta-label">Shift Time</span><span class="shift-meta-value">${escHtml(timeRange)}</span></div>` : ''}
             ${shift.location ? `<div class="shift-meta-row"><span class="shift-meta-icon">📍</span><span class="shift-meta-label">Location</span><span class="shift-meta-value">${escHtml(shift.location)}</span></div>` : ''}
+            ${shift.leader_contact ? `<div class="shift-meta-row"><span class="shift-meta-icon">👤</span><span class="shift-meta-label">Shift Leader</span><span class="shift-meta-value">${escHtml(shift.leader_contact)}</span></div>` : ''}
             ${shift.role ? `<div class="shift-meta-row"><span class="shift-meta-icon">🎭</span><span class="shift-meta-label">Role</span><span class="shift-meta-value">${escHtml(shift.role)}</span></div>` : ''}
             ${shift.notes ? `<div class="shift-meta-row"><span class="shift-meta-icon">📝</span><span class="shift-meta-label">Notes</span><span class="shift-meta-value">${escHtml(shift.notes)}</span></div>` : ''}
           </div>
           <div class="shift-actions">
             <button class="complete-btn" ${done ? 'disabled' : ''}
               onclick="markComplete('${escAttr(JSON.stringify(shift))}', this)">
-              ${done ? '✓ Shift Complete' : 'Mark Shift Complete'}
+              ${done ? '✓ Checked In' : "I'm Here — Check In"}
             </button>
             ${done ? `<button class="undo-btn" onclick="undoComplete('${escAttr(JSON.stringify(shift))}', this)">Undo</button>` : ''}
           </div>
@@ -822,12 +835,14 @@
     function loadConfigForm() {
       document.getElementById('sheetUrl').value = localStorage.getItem(SHEET_URL_KEY) || '';
       const cm = getColMap();
-      document.getElementById('colName').value     = cm.name     || 'A';
-      document.getElementById('colDate').value     = cm.date     || 'B';
-      document.getElementById('colTime').value     = cm.time     || 'C';
-      document.getElementById('colLocation').value = cm.location || 'D';
-      document.getElementById('colRole').value     = cm.role     || 'E';
-      document.getElementById('colNotes').value    = cm.notes    || 'F';
+      document.getElementById('colName').value          = cm.name           || 'A';
+      document.getElementById('colDate').value          = cm.date           || 'B';
+      document.getElementById('colStartTime').value     = cm.start_time     || 'C';
+      document.getElementById('colEndTime').value       = cm.end_time       || 'D';
+      document.getElementById('colLocation').value      = cm.location       || 'E';
+      document.getElementById('colLeaderContact').value = cm.leader_contact || 'F';
+      document.getElementById('colRole').value          = cm.role           || 'G';
+      document.getElementById('colNotes').value         = cm.notes          || 'H';
     }
 
     /* Simple admin auth — checks against stored hash same as admin.html */
@@ -870,12 +885,14 @@
     async function saveConfig() {
       const url = document.getElementById('sheetUrl').value.trim();
       const colMap = {
-        name:     document.getElementById('colName').value.trim()     || 'A',
-        date:     document.getElementById('colDate').value.trim()     || 'B',
-        time:     document.getElementById('colTime').value.trim()     || 'C',
-        location: document.getElementById('colLocation').value.trim() || 'D',
-        role:     document.getElementById('colRole').value.trim()     || 'E',
-        notes:    document.getElementById('colNotes').value.trim()    || 'F',
+        name:           document.getElementById('colName').value.trim()          || 'A',
+        date:           document.getElementById('colDate').value.trim()          || 'B',
+        start_time:     document.getElementById('colStartTime').value.trim()     || 'C',
+        end_time:       document.getElementById('colEndTime').value.trim()       || 'D',
+        location:       document.getElementById('colLocation').value.trim()      || 'E',
+        leader_contact: document.getElementById('colLeaderContact').value.trim() || 'F',
+        role:           document.getElementById('colRole').value.trim()          || 'G',
+        notes:          document.getElementById('colNotes').value.trim()         || 'H',
       };
 
       const statusEl = document.getElementById('configStatus');

@@ -21,6 +21,7 @@
         <li><a href="schedule.html">Schedule</a></li>
         <li><a href="map.html">Map</a></li>
         <li><a href="volunteer.html">Volunteer</a></li>
+        <li><a href="more-info.html">More Info</a></li>
       </ul>
     </div>
   </nav>
@@ -168,10 +169,11 @@
         const artists = [...new Map(data.map(s => [getName(s), s])).values()]
           .filter(s => getName(s)).slice(0, 12);
         grid.innerHTML = artists.map(s => `
-          <div class="lineup-name" data-day="${s.day}">
+          <a class="lineup-name" data-day="${s.day}"
+             href="schedule.html?band=${encodeURIComponent(getName(s))}">
             <span class="lineup-artist">${getName(s)}</span>
             <span class="lineup-stage text-muted">${getStage(s)}</span>
-          </div>
+          </a>
         `).join('');
       })
       .catch(() => {

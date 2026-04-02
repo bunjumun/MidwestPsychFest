@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindStageFilters();
   bindAdmin();
   bindNav();
+  handleBandDeepLink();
 });
 
 // ── Day Map (from info.json / localStorage) ───
@@ -173,6 +174,9 @@ function renderSchedule() {
 
   // Festival day: treat 00:00–05:59 as late-night (after midnight), not start of day
   const festSortKey = t => { const [h, m] = (t || '00:00').split(':').map(Number); return (h < 6 ? h + 24 : h) * 60 + (m || 0); };
+  // When all days shown, sort by day first then time within day
+  const dayOrder = day => { const keys = Object.values(dayMap); const i = keys.indexOf(day); return i >= 0 ? i : 99; };
+  const fullSortKey = s => (activeDay === 'all' ? dayOrder(s.day) * 10000 : 0) + festSortKey(s.set_time);
 
   // Build column descriptors — in all-stages view, merge outdoor A+B into one column
   const columns = []; // [{sid, label, entries, showStageLabel}]
@@ -186,11 +190,11 @@ function renderSchedule() {
     });
 
     if (outdoorEntries.length) {
-      outdoorEntries.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time));
+      outdoorEntries.sort((a, b) => fullSortKey(a) - fullSortKey(b));
       columns.push({ sid: 'outdoor-merged', label: 'Outdoor Stages', entries: outdoorEntries, showStageLabel: true });
     }
     Object.entries(otherGroups).forEach(([sid, entries]) => {
-      entries.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time));
+      entries.sort((a, b) => fullSortKey(a) - fullSortKey(b));
       columns.push({ sid, label: getStageLabel(sid), entries, showStageLabel: false });
     });
   } else {
@@ -200,14 +204,25 @@ function renderSchedule() {
       grouped[s.stage_id].push(s);
     });
     Object.entries(grouped).forEach(([sid, entries]) => {
-      entries.sort((a, b) => festSortKey(a.set_time) - festSortKey(b.set_time));
+      entries.sort((a, b) => fullSortKey(a) - fullSortKey(b));
       columns.push({ sid, label: getStageLabel(sid), entries, showStageLabel: false });
     });
   }
 
+  // Render column header — barn-stage gets two-line Indoor/sponsor treatment
+  const renderColHeader = col => {
+    if (col.sid === 'barn-stage') {
+      return `<div class="stage-column-header stage-column-header--indoor">
+        <span class="stage-col-venue">Indoor Stage</span>
+        <span class="stage-col-sponsor">${escHtml(col.label)}</span>
+      </div>`;
+    }
+    return `<div class="stage-column-header">${escHtml(col.label)}</div>`;
+  };
+
   grid.innerHTML = columns.map(col => `
     <div class="stage-column" data-stage-id="${escHtml(col.sid)}">
-      <div class="stage-column-header">${escHtml(col.label)}</div>
+      ${renderColHeader(col)}
       ${col.entries.map(s => renderSetCard(s, col.showStageLabel)).join('')}
     </div>
   `).join('');
@@ -642,4 +657,42 @@ function downloadJSON(data, filename) {
   const a    = document.createElement('a');
   a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── Band deep-link (?band=Name) ───────────────
+// Called after render. If URL has ?band=, switch to All Days, scroll to and
+// expand that band's card.
+function handleBandDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const target = params.get('band');
+  if (!target) return;
+
+  const q = target.toLowerCase();
+  const entry = schedule.find(s => (s.band || '').toLowerCase() === q);
+  if (!entry) return;
+
+  // Switch to the correct day so the card is visible
+  activeDay = entry.day;
+  activeStage = 'all';
+  renderSchedule();
+  // Re-sync day toggle visual state
+  document.querySelectorAll('.day-btn').forEach(b => {
+    const val = b.dataset.day;
+    const matches = val === 'all'
+      ? false
+      : (dayMap[parseInt(val)] === entry.day);
+    b.classList.toggle('active', matches);
+  });
+  updateStageButtons();
+
+  // Find and expand the card
+  requestAnimationFrame(() => {
+    const card = document.querySelector(`.set-card[data-id="${CSS.escape(entry.id)}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('deep-link-highlight');
+    const toggle = card.querySelector('.bio-toggle');
+    if (toggle && !card.classList.contains('bio-expanded')) toggle.click();
+    setTimeout(() => card.classList.remove('deep-link-highlight'), 2500);
+  });
 }

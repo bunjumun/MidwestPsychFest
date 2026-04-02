@@ -106,6 +106,37 @@
   letter-spacing: 0.02em;
 }
 
+/* Indoor stage two-line header */
+.stage-column-header--indoor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stage-col-venue {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-secondary);
+  letter-spacing: 0.02em;
+}
+.stage-col-sponsor {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(249, 200, 14, 0.6);
+}
+
+/* Deep-link highlight pulse */
+@keyframes deep-link-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249, 200, 14, 0); }
+  40%       { box-shadow: 0 0 0 6px rgba(249, 200, 14, 0.35); }
+}
+.set-card.deep-link-highlight {
+  border-color: var(--color-secondary) !important;
+  animation: deep-link-pulse 0.6s ease-out 2;
+}
+
 /* ── Set Card ── */
 .set-card {
   background: var(--color-bg-card);

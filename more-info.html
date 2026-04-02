@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>More Info — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    /* ── More Info Page ── */
+    .info-hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(160deg, #150020 0%, #0d0010 60%);
+      border-bottom: 1px solid var(--color-border);
+      padding: 64px 24px 48px;
+      text-align: center;
+    }
+    .info-hero-orbs { position: absolute; inset: 0; pointer-events: none; }
+    .info-orb {
+      position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15;
+    }
+    .info-orb-1 { width: 280px; height: 280px; background: var(--color-primary); top: -60px; left: -40px; animation: orb-drift 9s ease-in-out infinite alternate; }
+    .info-orb-2 { width: 200px; height: 200px; background: var(--color-purple); bottom: -50px; right: -30px; animation: orb-drift 11s ease-in-out infinite alternate-reverse; }
+    @keyframes orb-drift { from { transform: translate(0,0); } to { transform: translate(16px, 10px); } }
+
+    .info-hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255, 60, 172, 0.1);
+      border: 1px solid rgba(255, 60, 172, 0.3);
+      border-radius: 99px; padding: 4px 14px;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--color-primary); margin-bottom: 16px;
+    }
+    .info-hero h1 {
+      position: relative;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      color: var(--color-primary);
+      text-shadow: 0 0 40px rgba(255, 60, 172, 0.4);
+      margin-bottom: 10px;
+    }
+    .info-hero p {
+      position: relative;
+      color: var(--color-text-muted);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── Section layout ── */
+    .info-sections {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .info-section {
+      margin-bottom: 56px;
+    }
+    .info-section-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--color-secondary);
+      margin-bottom: 6px;
+    }
+    .info-section-subtitle {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* ── Image gallery ── */
+    .info-image-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .info-image-item {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+    .info-image-item:hover {
+      border-color: var(--color-primary);
+      transform: translateY(-2px);
+    }
+    .info-image-item img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 4/3;
+      object-fit: contain;
+      background: rgba(0,0,0,0.3);
+      padding: 8px;
+    }
+    .info-image-caption {
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Lightbox ── */
+    .lightbox-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .lightbox-overlay.open { display: flex; }
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 90vh;
+      border-radius: var(--radius-lg);
+      object-fit: contain;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 16px; right: 20px;
+      background: transparent;
+      border: none;
+      color: var(--color-text);
+      font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .lightbox-close:hover { opacity: 1; }
+
+    /* ── Empty state ── */
+    .gallery-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px 24px;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+    .gallery-empty strong { color: var(--color-text); display: block; margin-bottom: 6px; font-size: 1rem; }
+
+    /* ── Admin upload panel ── */
+    .admin-upload-section {
+      max-width: 900px;
+      margin: 0 auto 60px;
+      padding: 0 24px;
+    }
+    .admin-upload-toggle {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed rgba(178,75,255,0.3);
+      color: rgba(178,75,255,0.7);
+      border-radius: var(--radius);
+      padding: 10px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .admin-upload-toggle:hover { border-color: var(--color-purple); color: var(--color-purple); }
+
+    .admin-upload-panel {
+      display: none;
+      background: rgba(178,75,255,0.05);
+      border: 1px solid rgba(178,75,255,0.25);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-top: 12px;
+    }
+    .admin-upload-panel.open { display: block; }
+    .admin-upload-panel h3 {
+      font-family: var(--font-display);
+      color: var(--color-purple);
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .upload-instructions {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      line-height: 1.7;
+    }
+    .upload-instructions strong { color: var(--color-text); }
+    .upload-instructions code {
+      background: rgba(255,255,255,0.08);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      color: var(--color-accent);
+    }
+
+    .config-field { margin-bottom: 14px; }
+    .config-field label {
+      display: block;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-muted);
+      margin-bottom: 6px;
+    }
+    .config-field input, .config-field textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .config-field input:focus, .config-field textarea:focus { border-color: var(--color-purple); }
+    .config-field input::placeholder, .config-field textarea::placeholder { color: var(--color-text-muted); font-size: 0.8rem; }
+    .config-field textarea { min-height: 80px; resize: vertical; }
+
+    .upload-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .upload-status { margin-top: 10px; font-size: 0.8rem; color: var(--color-text-muted); min-height: 20px; }
+    .upload-status.ok { color: var(--color-accent); }
+    .upload-status.err { color: #ff6666; }
+
+    .managed-image-list { margin-top: 20px; }
+    .managed-image-list h4 {
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--color-text-muted); margin-bottom: 12px;
+    }
+    .managed-image-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+    .managed-image-item img { width: 48px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+    .managed-image-name { flex: 1; font-size: 0.82rem; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .managed-image-caption-text { font-size: 0.75rem; color: var(--color-text-muted); }
+    .managed-image-delete {
+      background: transparent; border: 1px solid rgba(255,68,68,0.3);
+      color: rgba(255,68,68,0.7); border-radius: var(--radius);
+      padding: 4px 10px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+    }
+    .managed-image-delete:hover { border-color: #ff4444; color: #ff4444; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+        <li><a href="map.html">Map</a></li>
+        <li><a href="volunteer.html">Volunteer</a></li>
+        <li><a href="more-info.html" class="active">More Info</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="info-hero">
+    <div class="info-hero-orbs">
+      <div class="info-orb info-orb-1"></div>
+      <div class="info-orb info-orb-2"></div>
+    </div>
+    <div class="info-hero-eyebrow">Midwest Psych Fest 2026</div>
+    <h1>More Info</h1>
+    <p>FAQs, infographics, and everything you need to know before the fest.</p>
+  </div>
+
+  <!-- IMAGE SECTIONS -->
+  <div class="info-sections">
+
+    <div class="info-section">
+      <div class="info-section-title">FAQ &amp; Info Graphics</div>
+      <div class="info-section-subtitle">Tap any image to view full size.</div>
+      <div class="info-image-gallery" id="infoGallery">
+        <!-- Populated by JS from localStorage / info-images.json -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-upload-section">
+    <button class="admin-upload-toggle" onclick="toggleUploadPanel()">⚙ Admin: Manage Info Images</button>
+    <div class="admin-upload-panel" id="uploadPanel">
+      <h3>Manage FAQ / Info Images</h3>
+
+      <div class="upload-instructions">
+        <strong>How to add images to this page:</strong>
+        <ol style="margin:8px 0 0 18px;padding:0;">
+          <li>Upload your image file to the <code>assets/img/info/</code> folder in the GitHub repo.</li>
+          <li>Enter the filename below (e.g. <code>faq-parking.png</code>) and an optional caption.</li>
+          <li>Click <strong>Add Image</strong> — it will appear in the gallery immediately.</li>
+          <li>The image list is saved in your browser and also in <code>data/info-images.json</code> when you sync.</li>
+        </ol>
+        <p style="margin-top:10px;">
+          <strong>Tip:</strong> For infographics, use tall PNG or JPG images. They display with click-to-enlarge lightbox.
+        </p>
+      </div>
+
+      <div class="config-field">
+        <label>Image filename (relative to assets/img/info/)</label>
+        <input type="text" id="imgFilename" placeholder="e.g. faq-parking.png" />
+      </div>
+      <div class="config-field">
+        <label>Caption (optional)</label>
+        <input type="text" id="imgCaption" placeholder="e.g. Parking &amp; Shuttle Info" />
+      </div>
+
+      <div class="upload-actions">
+        <button class="btn btn-sm btn-accent" onclick="addInfoImage()">Add Image</button>
+        <button class="btn btn-sm btn-ghost" onclick="syncImagesToGitHub()">Sync to GitHub</button>
+        <button class="btn btn-sm btn-ghost" onclick="downloadImagesJSON()">Export JSON</button>
+      </div>
+      <div class="upload-status" id="uploadStatus"></div>
+
+      <div class="managed-image-list" id="managedImageList"></div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      <span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span>
+    </div>
+    <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
+  </footer>
+
+  <script src="assets/js/site-info.js"></script>
+  <script src="assets/js/github-sync.js"></script>
+  <script>
+    const INFO_IMAGES_KEY = 'mpf_info_images';
+
+    function getImages() {
+      try { return JSON.parse(localStorage.getItem(INFO_IMAGES_KEY)) || []; }
+      catch { return []; }
+    }
+    function saveImages(imgs) {
+      localStorage.setItem(INFO_IMAGES_KEY, JSON.stringify(imgs));
+    }
+
+    /* ── Render gallery ── */
+    function renderGallery() {
+      const gallery = document.getElementById('infoGallery');
+      const imgs = getImages();
+      if (!imgs.length) {
+        gallery.innerHTML = `<div class="gallery-empty">
+          <strong>No images yet</strong>
+          Upload infographic images via the admin panel below, then add them here.
+        </div>`;
+        return;
+      }
+      gallery.innerHTML = imgs.map((img, i) => `
+        <div class="info-image-item" onclick="openLightbox('assets/img/info/${escHtml(img.filename)}', '${escAttr(img.caption || img.filename)}')">
+          <img src="assets/img/info/${escHtml(img.filename)}" alt="${escAttr(img.caption || img.filename)}" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+          <div style="display:none;padding:20px;text-align:center;font-size:0.78rem;color:var(--color-text-muted);">Image not found:<br/><code>${escHtml(img.filename)}</code></div>
+          ${img.caption ? `<div class="info-image-caption">${escHtml(img.caption)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    /* ── Lightbox ── */
+    function openLightbox(src, alt) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightboxImg').alt = alt;
+      document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    /* ── Admin panel ── */
+    function toggleUploadPanel() {
+      const panel = document.getElementById('uploadPanel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) renderManagedList();
+    }
+
+    function addInfoImage() {
+      const filename = document.getElementById('imgFilename').value.trim();
+      const caption  = document.getElementById('imgCaption').value.trim();
+      const status   = document.getElementById('uploadStatus');
+      if (!filename) { status.textContent = 'Enter a filename.'; status.className = 'upload-status err'; return; }
+
+      const imgs = getImages();
+      if (imgs.find(i => i.filename === filename)) {
+        status.textContent = 'That filename is already in the list.'; status.className = 'upload-status err'; return;
+      }
+      imgs.push({ filename, caption });
+      saveImages(imgs);
+      document.getElementById('imgFilename').value = '';
+      document.getElementById('imgCaption').value  = '';
+      status.textContent = `Added "${filename}".`; status.className = 'upload-status ok';
+      renderGallery();
+      renderManagedList();
+    }
+
+    function removeInfoImage(filename) {
+      saveImages(getImages().filter(i => i.filename !== filename));
+      renderGallery();
+      renderManagedList();
+    }
+
+    function renderManagedList() {
+      const container = document.getElementById('managedImageList');
+      const imgs = getImages();
+      if (!imgs.length) { container.innerHTML = ''; return; }
+      container.innerHTML = `<h4>Current images (${imgs.length})</h4>` +
+        imgs.map(img => `
+          <div class="managed-image-item">
+            <img src="assets/img/info/${escHtml(img.filename)}" alt="" onerror="this.style.opacity='0.3'" />
+            <div>
+              <div class="managed-image-name">${escHtml(img.filename)}</div>
+              ${img.caption ? `<div class="managed-image-caption-text">${escHtml(img.caption)}</div>` : ''}
+            </div>
+            <button class="managed-image-delete" onclick="removeInfoImage('${escAttr(img.filename)}')">Remove</button>
+          </div>
+        `).join('');
+    }
+
+    async function syncImagesToGitHub() {
+      const status = document.getElementById('uploadStatus');
+      status.textContent = 'Syncing…'; status.className = 'upload-status';
+      try {
+        await ghPutJSON('data/info-images.json', getImages(), 'info: update info images list');
+        status.textContent = 'Synced to GitHub.'; status.className = 'upload-status ok';
+      } catch(e) {
+        status.textContent = 'Sync failed — check PAT in admin settings.'; status.className = 'upload-status err';
+      }
+    }
+
+    function downloadImagesJSON() {
+      const blob = new Blob([JSON.stringify(getImages(), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'info-images.json'; a.click();
+    }
+
+    /* ── Load from data/info-images.json on first visit ── */
+    async function loadImagesFromRepo() {
+      if (localStorage.getItem(INFO_IMAGES_KEY)) return; // already hydrated
+      try {
+        const r = await fetch('data/info-images.json?_=' + Date.now());
+        if (r.ok) {
+          const data = await r.json();
+          if (Array.isArray(data) && data.length) saveImages(data);
+        }
+      } catch {}
+    }
+
+    function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    document.getElementById('navToggle').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    loadImagesFromRepo().then(renderGallery);
+  </script>
+</body>
+</html>
