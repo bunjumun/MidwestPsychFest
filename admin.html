@@ -5,251 +5,764 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Midwest Psych Fest 2026</title>
   <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/schedule.css" />
   <style>
-    .admin-dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
-      align-items: start;
-      margin-top: 28px;
+    /* ── Admin layout ── */
+    * { box-sizing: border-box; }
+    body { overflow: hidden; height: 100vh; }
+
+    #authScreen {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--color-bg);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
     }
-    .admin-hub-title {
+    .auth-card {
+      background: #0f0018;
+      border: 1px solid var(--color-primary);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 0 80px rgba(255,60,172,0.18);
+    }
+    .auth-card h1 {
       font-family: var(--font-display);
-      font-size: 1.8rem;
-      color: var(--color-primary);
-      margin-bottom: 4px;
+      color: var(--color-primary); font-size: 1.8rem;
+      text-align: center; margin-bottom: 4px;
     }
-    .admin-hub-sub {
-      color: var(--color-text-muted);
-      font-size: 0.85rem;
-      margin-bottom: 0;
+    .auth-card .sub { text-align:center; color:var(--color-text-muted); font-size:0.85rem; margin-bottom:24px; }
+    .auth-step { display: none; }
+    .auth-step.active { display: block; }
+
+    #adminShell { display: none; height: 100vh; overflow: hidden; }
+
+    /* ── Top bar ── */
+    .adm-topbar {
+      height: 52px; background: #0a0012; border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; padding: 0 16px; gap: 12px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     }
-    .admin-hub-nav {
-      display: flex;
-      gap: 16px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-      align-items: center;
+    .adm-topbar-logo {
+      font-family: var(--font-display); color: var(--color-primary); font-size: 1rem;
+      text-decoration: none; flex-shrink: 0;
     }
-    .admin-hub-nav a {
-      color: var(--color-text-muted);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: color 0.15s;
+    .adm-topbar-logo span { color: var(--color-secondary); }
+    .adm-deploy { flex: 1; font-size: 0.75rem; color: var(--color-text-muted); }
+    .adm-deploy a { color: inherit; text-decoration: none; }
+    .adm-deploy a:hover { color: var(--color-accent); }
+    .adm-topbar-actions { display: flex; gap: 8px; align-items: center; }
+    .adm-topbar-actions a {
+      color: var(--color-text-muted); font-size: 0.78rem; text-decoration: none;
     }
-    .admin-hub-nav a:hover { color: var(--color-primary); }
-    .admin-hub-nav .sep { color: var(--color-border); }
-    .schedule-preview-wrap { margin-top: 40px; }
-    .schedule-preview-wrap h2 {
-      font-family: var(--font-display);
-      font-size: 1.2rem;
-      color: var(--color-secondary);
-      margin-bottom: 16px;
+    .adm-topbar-actions a:hover { color: var(--color-primary); }
+
+    /* ── Sidebar ── */
+    .adm-sidebar {
+      position: fixed; top: 52px; left: 0; bottom: 0; width: 200px;
+      background: #08000f; border-right: 1px solid var(--color-border);
+      overflow-y: auto; padding: 12px 0;
     }
-    /* Auth box override for admin page */
-    .admin-auth-box { max-width: 400px; }
-    .admin-auth-box p { color: var(--color-text-muted); font-size: 0.88rem; }
-    .deploy-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      font-size: 0.78rem;
-      color: var(--color-text-muted);
-      margin-bottom: 20px;
+    .adm-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; cursor: pointer; border: none; background: none;
+      width: 100%; text-align: left; color: var(--color-text-muted);
+      font-size: 0.85rem; border-radius: 0; transition: all 0.15s;
     }
-    .deploy-badge.success { border-color: var(--color-accent); color: var(--color-accent); }
-    .deploy-badge.failure { border-color: var(--color-off-limits); color: var(--color-off-limits); }
-    .deploy-badge.in_progress { border-color: var(--color-secondary); color: var(--color-secondary); }
+    .adm-nav-item:hover { background: rgba(255,60,172,0.06); color: var(--color-text); }
+    .adm-nav-item.active {
+      background: rgba(255,60,172,0.12); color: var(--color-primary);
+      border-right: 2px solid var(--color-primary);
+    }
+    .adm-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .adm-nav-sep {
+      border: none; border-top: 1px solid var(--color-border);
+      margin: 8px 16px;
+    }
+
+    /* ── Main content area ── */
+    .adm-main {
+      position: fixed; top: 52px; left: 200px; right: 0; bottom: 0;
+      overflow-y: auto; padding: 28px 32px;
+    }
+    .adm-section { display: none; }
+    .adm-section.active { display: block; }
+
+    .adm-section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 24px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .adm-section-header h2 {
+      font-family: var(--font-display); font-size: 1.4rem;
+      color: var(--color-text); margin: 0; flex: 1;
+    }
+
+    /* ── Cards / panels ── */
+    .adm-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px;
+    }
+    .adm-card h3 {
+      font-size: 0.9rem; font-weight: 600; color: var(--color-secondary);
+      margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .adm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 20px; }
+
+    /* ── Status badge ── */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 99px; font-size: 0.72rem;
+      border: 1px solid currentColor;
+    }
+    .status-badge.ok { color: var(--color-accent); }
+    .status-badge.warn { color: var(--color-secondary); }
+    .status-badge.err { color: #ff7070; }
+
+    /* ── Deploy status ── */
+    .deploy-inline {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; color: var(--color-text-muted);
+    }
+    .deploy-inline.success { color: var(--color-accent); }
+    .deploy-inline.failure { color: #ff7070; }
+    .deploy-inline.in_progress,
+    .deploy-inline.queued { color: var(--color-secondary); }
+
+    /* ── Schedule table ── */
+    .sched-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .sched-table th {
+      text-align: left; padding: 8px 10px;
+      color: var(--color-text-muted); font-weight: 500;
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
+    .sched-table td {
+      padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .sched-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .sched-table td.band-name { font-weight: 500; color: var(--color-text); }
+    .sched-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+    .sched-filter-btn {
+      padding: 4px 12px; border-radius: 99px; border: 1px solid var(--color-border);
+      background: none; color: var(--color-text-muted); font-size: 0.78rem; cursor: pointer;
+    }
+    .sched-filter-btn.active { border-color: var(--color-primary); color: var(--color-primary); }
+
+    /* ── Inline edit form ── */
+    .inline-edit-row td { background: rgba(255,60,172,0.04) !important; }
+    .inline-edit-row input,
+    .inline-edit-row select,
+    .inline-edit-row textarea {
+      width: 100%; background: var(--color-input-bg);
+      border: 1px solid var(--color-border); border-radius: var(--radius);
+      color: var(--color-text); padding: 4px 8px; font-size: 0.8rem;
+    }
+    .inline-edit-row textarea { height: 60px; resize: vertical; }
+
+    /* ── Image slot grid ── */
+    .img-slot-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 16px; }
+    .img-slot-card {
+      border: 1px dashed var(--color-border); border-radius: var(--radius);
+      padding: 12px; text-align: center; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .img-slot-card:hover { border-color: var(--color-primary); background: rgba(255,60,172,0.04); }
+    .img-slot-card.has-image { border-style: solid; border-color: var(--color-accent); }
+    .img-slot-card img {
+      width: 100%; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;
+    }
+    .img-slot-name { font-size: 0.75rem; color: var(--color-text-muted); }
+    .img-slot-empty { font-size: 1.8rem; margin-bottom: 8px; opacity: 0.3; }
+
+    /* ── Markers table ── */
+    .marker-type-dot {
+      display: inline-block; width: 10px; height: 10px;
+      border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    }
+
+    /* ── Sync feedback ── */
+    .sync-msg {
+      font-size: 0.78rem; padding: 6px 12px; border-radius: var(--radius);
+      margin-top: 10px; display: none;
+    }
+    .sync-msg.ok { background: rgba(79,255,176,0.08); color: var(--color-accent); display: block; }
+    .sync-msg.err { background: rgba(255,68,68,0.08); color: #ff7070; display: block; }
+
+    /* ── Misc ── */
+    .text-xs { font-size: 0.75rem; }
+    .text-muted { color: var(--color-text-muted); }
+    code { font-size: 0.78em; background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 3px; }
+    @media (max-width: 768px) {
+      .adm-sidebar { width: 52px; }
+      .adm-nav-item span.nav-label { display: none; }
+      .adm-main { left: 52px; padding: 20px 16px; }
+    }
   </style>
 </head>
 <body data-repo="bunjumun/MidwestPsychFest">
 
-  <!-- Dummy elements required by schedule.js bindAdmin() — kept hidden -->
-  <button id="adminToggle" aria-hidden="true"
-          style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;overflow:hidden;"></button>
-  <div id="admin-panel" aria-hidden="true" style="display:none;">
-    <button id="adminClose" style="display:none;"></button>
+<!-- ═══════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div style="text-align:center;font-size:2.2rem;margin-bottom:8px;">⚙</div>
+    <h1>Admin Access</h1>
+    <p class="sub">Midwest Psych Fest 2026</p>
+
+    <!-- Step: loading hash -->
+    <div class="auth-step active" id="stepLoading">
+      <p class="text-muted" style="text-align:center;font-size:0.85rem;">Checking credentials…</p>
+    </div>
+
+    <!-- Step: login -->
+    <div class="auth-step" id="stepLogin">
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="authPwInput" placeholder="Enter admin password"
+               autocomplete="current-password" />
+      </div>
+      <div id="authError" class="admin-auth-error" style="display:none;"></div>
+      <button class="btn btn-primary w-full mt-2" id="authSubmit">Unlock</button>
+      <div style="text-align:center;margin-top:14px;">
+        <button class="admin-auth-reset-btn" id="authForgotBtn">Forgot password?</button>
+      </div>
+    </div>
+
+    <!-- Step: first-time setup -->
+    <div class="auth-step" id="stepSetup">
+      <p class="text-muted" style="font-size:0.83rem;margin-bottom:16px;">
+        No admin password is configured. Set one now — it will be stored in
+        your GitHub repository so it works on any device.
+      </p>
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="setupPw1" placeholder="Choose a password" />
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="setupPw2" placeholder="Confirm" />
+      </div>
+      <div class="form-group">
+        <label>GitHub Personal Access Token</label>
+        <input type="password" id="setupPat" placeholder="ghp_…"
+               autocomplete="off" />
+        <p class="text-muted text-xs" style="margin-top:4px;">
+          Required to save password to your repo (cross-device). Needs <code>repo</code>
+          + <code>workflow</code> scopes.
+        </p>
+      </div>
+      <div id="setupError" class="admin-auth-error" style="display:none;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-primary" id="setupSubmit">Save &amp; Unlock</button>
+        <button class="btn btn-ghost" id="setupSkip">Local only</button>
+      </div>
+      <p class="admin-auth-note">
+        "Local only" stores credentials in this browser only. Use "Save" to sync cross-device.
+      </p>
+    </div>
+
+    <!-- Step: forgot / reset -->
+    <div class="auth-step" id="stepForgot">
+      <p class="text-muted" style="font-size:0.83rem;margin-bottom:16px;">
+        To reset admin access, provide your GitHub PAT. This will let you set a new password
+        and overwrite the one stored in the repo.
+      </p>
+      <div class="form-group">
+        <label>GitHub PAT (to reset)</label>
+        <input type="password" id="forgotPat" placeholder="ghp_…" />
+      </div>
+      <div id="forgotError" class="admin-auth-error" style="display:none;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-primary" id="forgotSubmit">Continue to Setup</button>
+        <button class="btn btn-ghost" id="forgotCancel">Back</button>
+      </div>
+    </div>
   </div>
+</div>
 
-  <!-- Auth modal is generated by stages.js (showAuthModal / showSetPasswordModal) -->
+<!-- ═══════════════════════════════════════════
+     ADMIN SHELL (shown after auth)
+═══════════════════════════════════════════ -->
+<div id="adminShell">
 
-  <!-- ── Admin Dashboard ───────────────────────── -->
-  <div id="adminDashboard" style="display:none;">
+  <!-- Top bar -->
+  <header class="adm-topbar">
+    <a href="index.html" class="adm-topbar-logo">Midwest <span>Psych</span> Fest</a>
+    <div class="adm-deploy" id="topDeployStatus">Checking deploy…</div>
+    <div class="adm-topbar-actions">
+      <a href="index.html" target="_blank">Home ↗</a>
+      <a href="schedule.html" target="_blank">Schedule ↗</a>
+      <a href="mpf_schedule_tool.html" target="_blank">Band Tool ↗</a>
+      <button class="btn btn-ghost btn-sm" id="btnTriggerDeploy">Deploy Now</button>
+      <button class="btn btn-danger btn-sm" id="btnLock">Lock</button>
+    </div>
+  </header>
 
-    <nav class="site-nav">
-      <div class="nav-inner">
-        <a href="index.html" class="nav-logo">Midwest <span>Psych</span> Fest</a>
-        <div class="admin-hub-nav">
-          <a href="index.html">← Home</a>
-          <span class="sep">·</span>
-          <a href="schedule.html" target="_blank">Schedule ↗</a>
-          <span class="sep">·</span>
-          <a href="map.html?admin=1" target="_blank">Map ↗</a>
-          <span class="sep">·</span>
-          <a href="mpf_schedule_tool.html" target="_blank">Band Tool ↗</a>
+  <!-- Sidebar -->
+  <nav class="adm-sidebar">
+    <button class="adm-nav-item active" data-section="dashboard">
+      <span class="adm-nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="adm-nav-item" data-section="schedule">
+      <span class="adm-nav-icon">📅</span>
+      <span class="nav-label">Schedule</span>
+    </button>
+    <button class="adm-nav-item" data-section="siteinfo">
+      <span class="adm-nav-icon">ℹ️</span>
+      <span class="nav-label">Site Info</span>
+    </button>
+    <button class="adm-nav-item" data-section="images">
+      <span class="adm-nav-icon">🖼</span>
+      <span class="nav-label">Images</span>
+    </button>
+    <button class="adm-nav-item" data-section="map">
+      <span class="adm-nav-icon">🗺</span>
+      <span class="nav-label">Map</span>
+    </button>
+    <hr class="adm-nav-sep" />
+    <button class="adm-nav-item" data-section="stages">
+      <span class="adm-nav-icon">🎭</span>
+      <span class="nav-label">Stages</span>
+    </button>
+    <button class="adm-nav-item" data-section="widgets">
+      <span class="adm-nav-icon">📦</span>
+      <span class="nav-label">Widgets</span>
+    </button>
+    <hr class="adm-nav-sep" />
+    <button class="adm-nav-item" data-section="settings">
+      <span class="adm-nav-icon">⚙</span>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Main content -->
+  <main class="adm-main">
+
+    <!-- ── DASHBOARD ── -->
+    <section class="adm-section active" id="section-dashboard">
+      <div class="adm-section-header">
+        <h2>Dashboard</h2>
+        <div id="dashDeployBadge"></div>
+      </div>
+      <div class="adm-grid">
+        <div class="adm-card">
+          <h3>Deploy Status</h3>
+          <div id="dashDeployDetail" style="font-size:0.83rem;line-height:1.8;">
+            <span class="text-muted">Loading…</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn btn-accent btn-sm" id="dashDeployBtn">Trigger Deploy</button>
+            <a id="dashActionsLink" href="https://github.com/bunjumun/MidwestPsychFest/actions"
+               target="_blank" class="btn btn-ghost btn-sm">View Actions ↗</a>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Quick Links</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="index.html" target="_blank" class="btn btn-ghost btn-sm">🏠 Home Page ↗</a>
+            <a href="schedule.html" target="_blank" class="btn btn-ghost btn-sm">📅 Schedule ↗</a>
+            <a href="map.html" target="_blank" class="btn btn-ghost btn-sm">🗺 Map ↗</a>
+            <a href="mpf_schedule_tool.html" target="_blank" class="btn btn-accent btn-sm">🎸 Band Email Tool ↗</a>
+            <a href="setup.html" target="_blank" class="btn btn-ghost btn-sm">⚡ Setup Wizard ↗</a>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Schedule Summary</h3>
+          <div id="dashSchedSummary" style="font-size:0.83rem;line-height:2;color:var(--color-text-muted);">
+            Loading…
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>GitHub Repo</h3>
+          <p class="text-muted text-xs" style="line-height:1.7;">
+            Repository: <code id="dashRepo">—</code><br>
+            Branch: <code>main</code><br>
+            Hosting: GitHub Pages
+          </p>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <a id="dashRepoLink" href="#" target="_blank" class="btn btn-ghost btn-sm">Open Repo ↗</a>
+          </div>
         </div>
       </div>
-    </nav>
+    </section>
 
-    <div class="page-content" style="padding-top:80px;">
-
-      <div class="admin-hub-title">Admin Dashboard</div>
-      <p class="admin-hub-sub">Midwest Psych Fest 2026 — admin access</p>
-
-      <!-- Deploy status (populated by deploy.js) -->
-      <div id="deployStatus" style="margin-top:16px;"></div>
-
-      <div class="admin-dashboard-grid">
-
-        <!-- ── SCHEDULE TOOL ── -->
-        <div class="admin-section">
-          <h4>🗓 Band Emails Tool</h4>
-          <button class="btn btn-accent btn-sm w-full"
-                  onclick="window.open('mpf_schedule_tool.html','_blank')">
-            Open Schedule Tool
-          </button>
-          <p class="text-muted mt-1" style="font-size:0.75rem;line-height:1.5;">
-            Manage set times, confirmation status, band emails, photos, and bios.
-            Changes sync automatically to the public schedule page via shared storage.
-          </p>
+    <!-- ── SCHEDULE ── -->
+    <section class="adm-section" id="section-schedule">
+      <div class="adm-section-header">
+        <h2>Schedule Editor</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="schedImportBtn">Import JSON</button>
+          <input type="file" id="schedImportFile" accept=".json" style="display:none" />
+          <button class="btn btn-ghost btn-sm" id="schedExportBtn">Export JSON</button>
+          <button class="btn btn-accent btn-sm" id="schedSyncBtn">Push to GitHub</button>
         </div>
+      </div>
 
-        <!-- ── MAP EDITOR ── -->
-        <div class="admin-section">
-          <h4>🗺 Map Editor</h4>
-          <button class="btn btn-accent btn-sm w-full"
-                  onclick="window.open('map.html?admin=1','_blank')">
-            Open Map Admin
-          </button>
-          <p class="text-muted mt-1" style="font-size:0.75rem;line-height:1.5;">
-            Manage venue KML zones, place and edit markers, upload new KML from Google Earth.
-            Opens map page in admin mode automatically.
-          </p>
+      <!-- Filter bar -->
+      <div class="sched-filter-bar">
+        <button class="sched-filter-btn active" data-day="all">All Days</button>
+        <button class="sched-filter-btn" data-day="Friday, May 8">Friday</button>
+        <button class="sched-filter-btn" data-day="Saturday, May 9">Saturday</button>
+        <span style="margin-left:8px;color:var(--color-border);">|</span>
+        <button class="sched-filter-btn active" data-stage="all">All Stages</button>
+        <button class="sched-filter-btn" data-stage="outdoor-stage-a">Stage A</button>
+        <button class="sched-filter-btn" data-stage="outdoor-stage-b">Stage B</button>
+        <button class="sched-filter-btn" data-stage="barn-stage">Barn</button>
+        <span style="flex:1;"></span>
+        <button class="btn btn-accent btn-sm" id="addSetBtn">+ Add Set</button>
+      </div>
+      <div id="syncSchedMsg" class="sync-msg"></div>
+      <div id="schedTableWrap" style="overflow-x:auto;">
+        <table class="sched-table" id="schedTable">
+          <thead>
+            <tr>
+              <th>Band / Act</th>
+              <th>Day</th>
+              <th>Stage</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Bio</th>
+              <th style="width:90px;"></th>
+            </tr>
+          </thead>
+          <tbody id="schedBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Add / Edit form (hidden below table) -->
+      <div id="setEditForm" class="adm-card" style="margin-top:24px;display:none;">
+        <h3 id="setFormTitle">Add Set</h3>
+        <div class="adm-grid">
+          <div>
+            <div class="form-group">
+              <label>Band / Act Name</label>
+              <input type="text" id="fBand" placeholder="Artist or act name" />
+            </div>
+            <div class="form-group">
+              <label>Stage</label>
+              <select id="fStage">
+                <option value="outdoor-stage-a">Outdoor Stage A</option>
+                <option value="outdoor-stage-b">Outdoor Stage B</option>
+                <option value="barn-stage">Barn Stage</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Day</label>
+                <select id="fDay">
+                  <option value="Friday, May 8">Friday, May 8</option>
+                  <option value="Saturday, May 9">Saturday, May 9</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Set Time</label>
+                <input type="time" id="fTime" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Arrive By</label>
+                <input type="time" id="fArrive" />
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <select id="fStatus">
+                  <option value="confirmed">Confirmed</option>
+                  <option value="pending">Pending</option>
+                  <option value="sent">Sent</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <label>Bio</label>
+              <textarea id="fBio" rows="4" placeholder="Short description of the act…"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Contact Email</label>
+              <input type="email" id="fEmail" placeholder="band@email.com" />
+            </div>
+            <div class="form-group">
+              <label>Social / Website URL</label>
+              <input type="url" id="fSocial" placeholder="https://bandcamp.com/…" />
+            </div>
+            <div class="form-group">
+              <label>Photo URL</label>
+              <input type="url" id="fImage" placeholder="https://… or data:image/…" />
+            </div>
+          </div>
         </div>
+        <input type="hidden" id="fId" />
+        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+          <button class="btn btn-accent btn-sm" id="setFormSave">Save Set</button>
+          <button class="btn btn-danger btn-sm" id="setFormDelete" style="display:none;">Delete</button>
+          <button class="btn btn-ghost btn-sm" id="setFormCancel">Cancel</button>
+        </div>
+      </div>
+    </section>
 
-        <!-- ── ADD SET ── -->
-        <div class="admin-section">
-          <h4>Add Set</h4>
+    <!-- ── SITE INFO ── -->
+    <section class="adm-section" id="section-siteinfo">
+      <div class="adm-section-header">
+        <h2>Site Info</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="infoReloadBtn">Reload from Repo</button>
+          <button class="btn btn-accent btn-sm" id="infoSyncBtn">Push to GitHub</button>
+        </div>
+      </div>
+      <div id="syncInfoMsg" class="sync-msg"></div>
+      <div class="adm-grid">
+        <div class="adm-card">
+          <h3>Festival Details</h3>
           <div class="form-group">
-            <label>Artist / Act</label>
-            <input type="text" id="newArtist" placeholder="Band or performer name" />
+            <label>Festival Name</label>
+            <input type="text" id="infoName" placeholder="Midwest Psych Fest" />
           </div>
           <div class="form-group">
-            <label>Stage</label>
-            <select id="newStage">
-              <option value="outdoor-stage-a">Outdoor Stage A</option>
-              <option value="outdoor-stage-b">Outdoor Stage B</option>
-              <option value="barn-stage">Barn Stage</option>
-            </select>
+            <label>Tagline</label>
+            <input type="text" id="infoTagline" placeholder="Two days of psychedelic music…" />
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Day</label>
-              <select id="newDay">
-                <option value="1">Friday, May 8</option>
-                <option value="2">Saturday, May 9</option>
-              </select>
+              <label>Day 1 Date</label>
+              <input type="date" id="infoDay1" />
             </div>
             <div class="form-group">
-              <label>Start Time</label>
-              <input type="time" id="newStart" />
+              <label>Day 2 Date</label>
+              <input type="date" id="infoDay2" />
+            </div>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Venue</h3>
+          <div class="form-group">
+            <label>Venue Name</label>
+            <input type="text" id="infoVenue" placeholder="The Venue Name" />
+          </div>
+          <div class="form-group">
+            <label>Location / City</label>
+            <input type="text" id="infoLocation" placeholder="Central Ohio" />
+          </div>
+          <div class="form-group">
+            <label>Full Address</label>
+            <input type="text" id="infoAddress" placeholder="123 Main St, Columbus OH 43201" />
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Links</h3>
+          <div class="form-group">
+            <label>Ticket URL</label>
+            <input type="url" id="infoTickets" placeholder="https://…" />
+            <p class="text-muted text-xs" style="margin-top:4px;">
+              Leave blank to hide the ticket button on all pages.
+            </p>
+          </div>
+          <div class="form-group">
+            <label>Instagram URL</label>
+            <input type="url" id="infoInstagram" placeholder="https://instagram.com/…" />
+          </div>
+          <div class="form-group">
+            <label>Facebook URL</label>
+            <input type="url" id="infoFacebook" placeholder="https://facebook.com/…" />
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Live Preview</h3>
+          <p class="text-muted text-xs" style="line-height:1.8;">
+            Changes saved here write immediately to <code>mpf_info</code> in localStorage
+            for instant preview on the public pages. Use "Push to GitHub" to commit them
+            to <code>data/info.json</code> so they persist for all visitors.
+          </p>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="infoPreviewBtn">Save to LocalStorage</button>
+            <button class="btn btn-ghost btn-sm" id="infoClearLocalBtn">Clear Local Override</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── IMAGES ── -->
+    <section class="adm-section" id="section-images">
+      <div class="adm-section-header">
+        <h2>Images &amp; Banners</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="imgExportBtn">Export image-blocks.json</button>
+          <button class="btn btn-accent btn-sm" id="imgSyncBtn">Push to GitHub</button>
+        </div>
+      </div>
+      <div id="syncImgMsg" class="sync-msg"></div>
+
+      <div class="adm-card" style="margin-bottom:20px;">
+        <h3>Background Image</h3>
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label>Image URL or paste data URL</label>
+            <input type="text" id="bgUrl" placeholder="https://… or data:image/…" />
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>Dark overlay: <span id="bgOpacityLbl">85%</span></label>
+            <input type="range" id="bgOpacity" min="40" max="97" value="85" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>— or upload —</label>
+          <input type="file" id="bgFile" accept="image/*" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-accent btn-sm" id="bgApplyBtn">Apply Background</button>
+          <button class="btn btn-danger btn-sm" id="bgClearBtn">Remove Background</button>
+        </div>
+      </div>
+
+      <div class="adm-card">
+        <h3>Page Banners &amp; Image Slots</h3>
+        <p class="text-muted text-xs" style="margin-bottom:14px;">
+          Click any slot to edit. Slots marked with a green border have an active image.
+        </p>
+        <div class="img-slot-grid" id="imgSlotGrid">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <div class="adm-card">
+        <h3>Logo Upload</h3>
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label>Logo Image URL or upload</label>
+            <input type="text" id="logoUrl" placeholder="https://… or upload below" />
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="file" id="logoFile" accept="image/*" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-accent btn-sm" id="logoApplyBtn">Apply Logo</button>
+          <button class="btn btn-danger btn-sm" id="logoClearBtn">Remove Logo</button>
+        </div>
+        <p class="text-muted text-xs" style="margin-top:8px;">
+          Replaces the text nav logo with an image. Stored in localStorage.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── MAP ── -->
+    <section class="adm-section" id="section-map">
+      <div class="adm-section-header">
+        <h2>Map Markers</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="mapExportBtn">Export markers.json</button>
+          <button class="btn btn-accent btn-sm" id="mapSyncBtn">Push to GitHub</button>
+        </div>
+      </div>
+      <div id="syncMapMsg" class="sync-msg"></div>
+      <p class="text-muted text-xs" style="margin-bottom:14px;">
+        Edit marker details here. To reposition markers on the map visually, open
+        <a href="map.html?admin=1" target="_blank" style="color:var(--color-primary);">Map Admin ↗</a>.
+      </p>
+      <div class="adm-card">
+        <h3>Markers</h3>
+        <div style="overflow-x:auto;">
+          <table class="sched-table" id="markersTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Lat</th>
+                <th>Lng</th>
+                <th style="width:80px;"></th>
+              </tr>
+            </thead>
+            <tbody id="markersBody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-accent btn-sm" id="addMarkerBtn" style="margin-top:12px;">+ Add Marker</button>
+        <div id="markerEditForm" class="adm-card" style="margin-top:16px;display:none;">
+          <h3 id="markerFormTitle">Edit Marker</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" id="mName" />
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="mType">
+                <option value="stage">Stage</option>
+                <option value="camping">Camping</option>
+                <option value="bar">Bar</option>
+                <option value="food">Food</option>
+                <option value="entrance">Entrance</option>
+                <option value="parking">Parking</option>
+                <option value="restroom">Restroom</option>
+                <option value="info">Info</option>
+              </select>
             </div>
           </div>
           <div class="form-group">
-            <label>Bio (optional)</label>
-            <textarea id="newBio" placeholder="Short description…"></textarea>
-          </div>
-          <button class="btn btn-accent btn-sm w-full mt-1" id="saveNewSet">Add to Schedule</button>
-        </div>
-
-        <!-- ── EDIT SET ── -->
-        <div class="admin-section" id="editSetSection" style="display:none;">
-          <h4>Edit Set</h4>
-          <div class="form-group">
-            <label>Artist / Act</label>
-            <input type="text" id="editArtist" />
-          </div>
-          <div class="form-group">
-            <label>Stage</label>
-            <select id="editStage">
-              <option value="outdoor-stage-a">Outdoor Stage A</option>
-              <option value="outdoor-stage-b">Outdoor Stage B</option>
-              <option value="barn-stage">Barn Stage</option>
-            </select>
+            <label>Description</label>
+            <input type="text" id="mDesc" placeholder="Short description…" />
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Day</label>
-              <select id="editDay">
-                <option value="1">Friday, May 8</option>
-                <option value="2">Saturday, May 9</option>
-              </select>
+              <label>Latitude</label>
+              <input type="number" id="mLat" step="any" placeholder="0.5" />
             </div>
             <div class="form-group">
-              <label>Start Time</label>
-              <input type="time" id="editStart" />
+              <label>Longitude</label>
+              <input type="number" id="mLng" step="any" placeholder="0.5" />
             </div>
           </div>
-          <div class="form-group">
-            <label>Bio</label>
-            <textarea id="editBio"></textarea>
-          </div>
-          <div class="flex gap-1 mt-1">
-            <button class="btn btn-accent btn-sm" id="saveEditSet">Save</button>
-            <button class="btn btn-danger btn-sm" id="deleteSet">Delete</button>
-            <button class="btn btn-ghost btn-sm"  id="cancelEditSet">Cancel</button>
-          </div>
-          <input type="hidden" id="editSetId" />
-        </div>
-
-        <!-- ── STAGE NAMES ── -->
-        <div class="admin-section">
-          <h4>Stage Names</h4>
-          <p class="text-muted" style="font-size:0.78rem;margin-bottom:10px;">
-            Rename stages without breaking schedule data. Changes stored locally — export to commit.
-          </p>
-          <div id="stageEditorList">
-            <p class="text-muted" style="font-size:0.8rem;">Load a schedule to see stages.</p>
-          </div>
-          <div class="flex gap-1 mt-1">
-            <button class="btn btn-accent btn-sm" id="saveStageNames">Save Names</button>
-            <button class="btn btn-ghost btn-sm"  id="exportStages">Export stages.json</button>
+          <input type="hidden" id="mIdx" />
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-accent btn-sm" id="markerSave">Save</button>
+            <button class="btn btn-danger btn-sm" id="markerDelete">Delete</button>
+            <button class="btn btn-ghost btn-sm" id="markerCancel">Cancel</button>
           </div>
         </div>
+      </div>
+    </section>
 
-        <!-- ── SCHEDULE IMPORT/EXPORT ── -->
-        <div class="admin-section">
-          <h4>Schedule Import / Export</h4>
-          <input type="file" id="importScheduleFile" accept=".json" style="display:none" />
-          <button class="btn btn-ghost btn-sm w-full"
-                  onclick="document.getElementById('importScheduleFile').click()">
-            Import schedule.json or mpf_schedule.json
-          </button>
-          <button class="btn btn-ghost btn-sm w-full mt-1" id="exportSchedule">
-            Export schedule.json
-          </button>
-          <button class="btn btn-ghost btn-sm w-full mt-1" id="resetSchedule">
-            Reset to default data
-          </button>
-          <p class="text-muted mt-2" style="font-size:0.75rem;">
-            Accepts both <code style="color:var(--color-accent)">schedule.json</code> (site format)
-            and <code style="color:var(--color-accent)">mpf_schedule.json</code> (band tool export).
-          </p>
+    <!-- ── STAGES ── -->
+    <section class="adm-section" id="section-stages">
+      <div class="adm-section-header">
+        <h2>Stage Names</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="stagesExportBtn">Export stages.json</button>
+          <button class="btn btn-accent btn-sm" id="stagesSyncBtn">Push to GitHub</button>
         </div>
+      </div>
+      <div id="syncStagesMsg" class="sync-msg"></div>
+      <div class="adm-card">
+        <h3>Rename Stages</h3>
+        <p class="text-muted text-xs" style="margin-bottom:14px;">
+          Rename stages without changing schedule data. The stage ID stays the same;
+          only the display label changes.
+        </p>
+        <div id="stagesEditorList"></div>
+        <button class="btn btn-accent btn-sm" id="stagesSaveLocalBtn" style="margin-top:12px;">
+          Save Names
+        </button>
+      </div>
+    </section>
 
-        <!-- ── WIDGETS ── -->
-        <div class="admin-section">
-          <h4>Embed Widgets</h4>
-          <p class="text-muted" style="font-size:0.78rem;margin-bottom:12px;">
-            Add an embed widget (Spotify, YouTube, Bandcamp, etc.) to any public page.
-          </p>
+    <!-- ── WIDGETS ── -->
+    <section class="adm-section" id="section-widgets">
+      <div class="adm-section-header">
+        <h2>Embed Widgets</h2>
+      </div>
+      <div class="adm-card">
+        <h3>Page Widget</h3>
+        <p class="text-muted text-xs" style="margin-bottom:14px;">
+          Add an embed (Spotify, YouTube, Bandcamp, etc.) to any public page.
+          Paste raw iframe / embed code below.
+        </p>
+        <div class="form-row">
           <div class="form-group">
             <label>Page</label>
-            <select id="widgetPage" onchange="loadWidgetForPage(this.value)">
+            <select id="widgetPage">
               <option value="index">Home</option>
               <option value="schedule">Schedule</option>
               <option value="map">Map</option>
@@ -263,147 +776,1145 @@
               <option value="float">Float (bottom-right)</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label>Embed Code</label>
+          <textarea id="widgetCode" rows="5" placeholder="&lt;iframe …&gt;&lt;/iframe&gt;"
+                    style="font-family:monospace;font-size:0.78rem;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-accent btn-sm" id="widgetSaveBtn">Save Widget</button>
+          <button class="btn btn-danger btn-sm" id="widgetClearBtn">Remove</button>
+        </div>
+        <div id="widgetCurrentList" style="margin-top:20px;"></div>
+      </div>
+    </section>
+
+    <!-- ── SETTINGS ── -->
+    <section class="adm-section" id="section-settings">
+      <div class="adm-section-header">
+        <h2>Settings</h2>
+      </div>
+      <div class="adm-grid">
+        <div class="adm-card">
+          <h3>GitHub Integration</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;">
+            A Personal Access Token (PAT) with <code>repo</code> + <code>workflow</code>
+            scopes lets this admin page push changes directly to your GitHub repo and
+            trigger deploys.
+          </p>
           <div class="form-group">
-            <label>Embed Code</label>
-            <textarea id="widgetCode" placeholder="Paste iframe or embed code here…"
-                      rows="4" style="font-family:monospace;font-size:0.78rem;"></textarea>
+            <label>GitHub PAT</label>
+            <input type="password" id="settingsPat" placeholder="ghp_…"
+                   autocomplete="off" />
           </div>
-          <div class="flex gap-1 mt-1">
-            <button class="btn btn-accent btn-sm" onclick="adminSaveWidget()">Save Widget</button>
-            <button class="btn btn-danger btn-sm"  onclick="adminClearWidget()">Remove</button>
+          <div id="patStatus" style="font-size:0.78rem;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-accent btn-sm" id="patVerifyBtn">Verify &amp; Save Token</button>
+            <button class="btn btn-danger btn-sm" id="patClearBtn">Remove Token</button>
           </div>
         </div>
-
-        <!-- ── IMAGE BLOCKS ── -->
-        <div class="admin-section">
-          <h4>Image Blocks</h4>
-          <p class="text-muted" style="font-size:0.78rem;margin-bottom:10px;">
-            Page banners and inline image slots. Visit any page while logged in to edit slots
-            via the pencil icon overlay (hover over image block areas).
+        <div class="adm-card">
+          <h3>Admin Password</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;">
+            Changing the password writes the new hash to
+            <code>data/admin-config.json</code> in the repo, so it applies on
+            all devices immediately.
           </p>
-          <button class="btn btn-ghost btn-sm w-full" id="exportImgBlocksBtn">
-            Export image-blocks.json
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="chPw1" placeholder="New password" />
+          </div>
+          <div class="form-group">
+            <label>Confirm</label>
+            <input type="password" id="chPw2" placeholder="Confirm" />
+          </div>
+          <div id="chPwError" class="admin-auth-error" style="display:none;"></div>
+          <button class="btn btn-accent btn-sm" id="chPwBtn" style="margin-top:8px;">
+            Change Password
           </button>
         </div>
-
-        <!-- ── ADMIN SETTINGS ── -->
-        <div class="admin-section">
-          <h4>Admin Settings</h4>
-          <button class="btn btn-ghost btn-sm w-full" id="changePwBtn">Change Password</button>
-          <button class="btn btn-ghost btn-sm w-full mt-1" id="exportAdminConfigBtn">
-            Export Admin Config
-          </button>
-          <button class="btn btn-ghost btn-sm w-full mt-1" id="openSetupBtn">
-            ⚡ Run Setup Wizard
-          </button>
-          <button class="btn btn-danger btn-sm w-full mt-2" id="lockAdminBtn">
-            Lock Admin Session
-          </button>
-          <p class="text-muted mt-2" style="font-size:0.75rem;">
-            Admin config backup lets you restore credentials after clearing browser storage.
+        <div class="adm-card">
+          <h3>Export / Backup</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="exportAllBtn">Export All Data (ZIP)</button>
+            <button class="btn btn-ghost btn-sm" id="exportAdminCfgBtn">Export Admin Config</button>
+            <button class="btn btn-ghost btn-sm" id="exportScheduleBtn2">Export schedule.json</button>
+            <button class="btn btn-ghost btn-sm" id="exportMarkersBtn2">Export markers.json</button>
+            <button class="btn btn-ghost btn-sm" id="exportInfoBtn2">Export info.json</button>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Session</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="settingsSetupBtn">⚡ Run Setup Wizard</button>
+            <button class="btn btn-danger btn-sm" id="settingsLockBtn">Lock Admin Session</button>
+          </div>
+          <p class="text-muted text-xs" style="margin-top:12px;line-height:1.7;">
+            Locking ends your current session. You will need to re-enter the
+            password to access admin tools again.
           </p>
-        </div>
-
-      </div><!-- /admin-dashboard-grid -->
-
-      <!-- ── Schedule Preview ── -->
-      <div class="schedule-preview-wrap">
-        <h2>Live Schedule Preview</h2>
-        <p class="text-muted" style="font-size:0.82rem;margin-bottom:16px;">
-          Click ✏ on any set card to edit it. Drag to reorder within a stage column.
-        </p>
-        <div class="schedule-controls">
-          <div class="day-toggle">
-            <button class="day-btn active" data-day="1">Friday, May 8</button>
-            <button class="day-btn"        data-day="2">Saturday, May 9</button>
-            <button class="day-btn all"    data-day="all">All Days</button>
-          </div>
-          <div class="stage-filters">
-            <span class="stage-filter-label">Stage:</span>
-            <button class="stage-btn active" data-stage="all">All Stages</button>
-          </div>
-        </div>
-        <div class="schedule-columns" id="scheduleGrid" style="margin-top:16px;">
-          <div class="schedule-empty">Loading schedule…</div>
         </div>
       </div>
+    </section>
 
-    </div><!-- /page-content -->
-  </div><!-- /adminDashboard -->
+  </main><!-- /adm-main -->
+</div><!-- /adminShell -->
 
-  <script src="assets/js/site-info.js"></script>
-  <script src="assets/js/stages.js"></script>
-  <script src="assets/js/image-blocks.js"></script>
-  <script src="assets/js/widgets.js"></script>
-  <script src="assets/js/deploy.js"></script>
-  <script src="assets/js/schedule.js"></script>
-  <script>
-    // ── Auth gate ──────────────────────────────────────────────────────────────
-    // stages.js provides openAdminWithAuth(), which handles set-password + login modals
-    document.addEventListener('DOMContentLoaded', () => {
-      if (isAdminSessionUnlocked()) {
-        unlockDashboard();
-      } else {
-        // stages.js will show the appropriate modal (first-time setup or login)
-        openAdminWithAuth(unlockDashboard);
-      }
-    });
+<!-- ── Image editor modal (reused from image-blocks.js) ── -->
 
-    function unlockDashboard() {
-      document.getElementById('adminAuthOverlay').style.display = 'none';
-      document.getElementById('adminDashboard').style.display = 'block';
-      document.body.classList.add('admin-mode');
+<script src="assets/js/site-info.js"></script>
+<script src="assets/js/stages.js"></script>
+<script src="assets/js/image-blocks.js"></script>
+<script src="assets/js/widgets.js"></script>
+<script src="assets/js/deploy.js"></script>
+<script src="assets/js/schedule.js"></script>
+<script src="assets/js/github-sync.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   ADMIN — Master Controller
+   ════════════════════════════════════════════════════════ */
+
+const SCHEDULE_LS = 'mpf_schedule';
+const INFO_LS     = 'mpf_info';
+const MARKERS_LS  = 'mpf_markers';
+
+// ── Schedule state (managed independently of schedule.js) ─
+let adminSchedule = [];
+let adminMarkers  = [];
+let adminInfo     = {};
+let adminInfoSha  = '';
+let adminSchedSha = '';
+let adminMarkersSha = '';
+
+let schedDayFilter   = 'all';
+let schedStageFilter = 'all';
+let editingSetId     = null;
+let editingMarkerIdx = null;
+
+/* ── Auth ──────────────────────────────────────────────── */
+const AUTH_SESSION = 'mpf_admin_unlocked';
+
+function isUnlocked() { return sessionStorage.getItem(AUTH_SESSION) === '1'; }
+function setUnlocked() { sessionStorage.setItem(AUTH_SESSION, '1'); }
+function lockSession() { sessionStorage.removeItem(AUTH_SESSION); }
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showStep(id) {
+  document.querySelectorAll('.auth-step').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function getStoredHash() {
+  // Priority: remote (cross-device) > localStorage
+  const remote = await ghFetchPasswordHash();
+  if (remote) return remote;
+  return localStorage.getItem('mpf_admin_pw') || null;
+}
+
+async function initAuth() {
+  if (isUnlocked()) {
+    bootDashboard();
+    return;
+  }
+
+  let hash = null;
+  try { hash = await getStoredHash(); } catch(e) {}
+
+  if (!hash) {
+    // No password set — show first-time setup
+    showStep('stepSetup');
+    return;
+  }
+
+  showStep('stepLogin');
+  document.getElementById('authPwInput').focus();
+}
+
+// Login
+let loginAttempts = 0;
+document.getElementById('authSubmit').addEventListener('click', async () => {
+  const pw = document.getElementById('authPwInput').value;
+  if (!pw) return;
+  const hash = await sha256(pw);
+  const stored = await getStoredHash();
+  if (hash === stored) {
+    localStorage.setItem('mpf_admin_pw', stored); // cache locally
+    setUnlocked();
+    document.getElementById('authPwInput').value = '';
+    bootDashboard();
+  } else {
+    loginAttempts++;
+    const errEl = document.getElementById('authError');
+    errEl.textContent = loginAttempts >= 3
+      ? 'Incorrect password. Too many attempts — wait 10s.'
+      : 'Incorrect password.';
+    errEl.style.display = 'block';
+    document.getElementById('authPwInput').value = '';
+    if (loginAttempts >= 3) {
+      document.getElementById('authSubmit').disabled =
+        document.getElementById('authPwInput').disabled = true;
+      setTimeout(() => {
+        document.getElementById('authSubmit').disabled =
+          document.getElementById('authPwInput').disabled = false;
+        errEl.style.display = 'none';
+        loginAttempts = 0;
+        document.getElementById('authPwInput').focus();
+      }, 10000);
     }
+  }
+});
+document.getElementById('authPwInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('authSubmit').click();
+});
 
-    // ── Widget admin helpers ───────────────────────────────────────────────────
-    function loadWidgetForPage(page) {
-      const w = getAllWidgets()[page] || {};
-      document.getElementById('widgetCode').value     = w.code     || '';
-      document.getElementById('widgetPosition').value = w.position || 'below';
+// Forgot
+document.getElementById('authForgotBtn').addEventListener('click', () => showStep('stepForgot'));
+document.getElementById('forgotCancel').addEventListener('click', () => showStep('stepLogin'));
+document.getElementById('forgotSubmit').addEventListener('click', async () => {
+  const pat = document.getElementById('forgotPat').value.trim();
+  const errEl = document.getElementById('forgotError');
+  if (!pat) { errEl.textContent = 'Enter a PAT.'; errEl.style.display = 'block'; return; }
+  try {
+    await ghVerifyPat(pat);
+    ghSetPat(pat);
+    localStorage.setItem(GH_PAT_KEY, pat);
+    showStep('stepSetup');
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+});
+
+// First-time setup
+document.getElementById('setupSubmit').addEventListener('click', async () => {
+  const pw1  = document.getElementById('setupPw1').value;
+  const pw2  = document.getElementById('setupPw2').value;
+  const pat  = document.getElementById('setupPat').value.trim();
+  const errEl = document.getElementById('setupError');
+  errEl.style.display = 'none';
+  if (!pw1) { errEl.textContent = 'Enter a password.'; errEl.style.display = 'block'; return; }
+  if (pw1 !== pw2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+  const hash = await sha256(pw1);
+  localStorage.setItem('mpf_admin_pw', hash);
+  if (pat) {
+    try {
+      await ghVerifyPat(pat);
+      ghSetPat(pat);
+      await ghWritePasswordHash(hash);
+    } catch(e) {
+      errEl.textContent = 'Password saved locally, but GitHub write failed: ' + e.message;
+      errEl.style.display = 'block';
+      // still let them in
     }
+  }
+  setUnlocked();
+  bootDashboard();
+});
 
-    function adminSaveWidget() {
-      const page     = document.getElementById('widgetPage').value;
-      const code     = document.getElementById('widgetCode').value;
-      const position = document.getElementById('widgetPosition').value;
-      saveWidget(page, code, position);
-      const btn = document.querySelector('[onclick="adminSaveWidget()"]');
-      if (btn) { const o = btn.textContent; btn.textContent = '✓ Saved'; setTimeout(() => btn.textContent = o, 1500); }
+document.getElementById('setupSkip').addEventListener('click', async () => {
+  const pw1 = document.getElementById('setupPw1').value;
+  if (!pw1) {
+    // allow skip with no password for dev convenience
+    setUnlocked();
+    bootDashboard();
+    return;
+  }
+  const hash = await sha256(pw1);
+  localStorage.setItem('mpf_admin_pw', hash);
+  setUnlocked();
+  bootDashboard();
+});
+
+/* ── Boot dashboard ────────────────────────────────────── */
+function bootDashboard() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('adminShell').style.display = 'block';
+  document.body.classList.add('admin-mode');
+
+  // Update repo info
+  const repo = ghRepo();
+  document.getElementById('dashRepo').textContent = repo;
+  const repoLink = document.getElementById('dashRepoLink');
+  if (repoLink) repoLink.href = `https://github.com/${repo}`;
+
+  loadScheduleData();
+  loadMarkersData();
+  loadInfoData();
+  loadStagesEditor();
+  loadImageSlots();
+  loadWidgetEditor();
+  fetchDeployStatus();
+  updateDashboardSummary();
+}
+
+/* ── Navigation ────────────────────────────────────────── */
+document.querySelectorAll('.adm-nav-item[data-section]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.adm-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.adm-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('section-' + btn.dataset.section).classList.add('active');
+  });
+});
+
+/* ── Top bar actions ───────────────────────────────────── */
+document.getElementById('btnLock').addEventListener('click', () => {
+  lockSession();
+  location.reload();
+});
+document.getElementById('settingsLockBtn')?.addEventListener('click', () => {
+  lockSession();
+  location.reload();
+});
+document.getElementById('btnTriggerDeploy').addEventListener('click', triggerDeploy);
+document.getElementById('dashDeployBtn').addEventListener('click', triggerDeploy);
+
+async function triggerDeploy() {
+  const btn = document.getElementById('btnTriggerDeploy');
+  const orig = btn.textContent;
+  btn.textContent = 'Deploying…'; btn.disabled = true;
+  try {
+    await ghTriggerDeploy();
+    btn.textContent = '✓ Triggered';
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+    setTimeout(fetchDeployStatus, 4000);
+  } catch(e) {
+    btn.textContent = '✗ Failed'; btn.disabled = false;
+    alert('Deploy trigger failed: ' + e.message);
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }
+}
+
+/* ── Deploy status ─────────────────────────────────────── */
+async function fetchDeployStatus() {
+  const repo = ghRepo();
+  const topEl = document.getElementById('topDeployStatus');
+  const detEl = document.getElementById('dashDeployDetail');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${repo}/actions/runs?per_page=1`,
+      { headers: { Accept: 'application/vnd.github+json' } }
+    );
+    if (!res.ok) throw new Error('GitHub ' + res.status);
+    const js = await res.json();
+    const run = js.workflow_runs?.[0];
+    if (!run) { topEl.innerHTML = 'No deploys yet'; return; }
+    const st = run.conclusion || run.status || 'unknown';
+    const ICONS = { success:'✅', failure:'❌', in_progress:'⏳', queued:'🔄', cancelled:'⛔' };
+    const icon = ICONS[st] || '❓';
+    const ago  = relTime(run.updated_at);
+    const msg  = run.head_commit?.message?.split('\n')[0] || '';
+    topEl.innerHTML = `<a href="${run.html_url}" target="_blank" class="deploy-inline ${st}">
+      ${icon} Deploy: <strong>${st}</strong> · ${ago}
+    </a>`;
+    if (detEl) detEl.innerHTML = `
+      <div>${icon} <strong>Status:</strong> ${st}</div>
+      <div>📌 <strong>Branch:</strong> ${run.head_branch}</div>
+      <div>⏱ <strong>Updated:</strong> ${ago}</div>
+      ${msg ? `<div>💬 <strong>Commit:</strong> ${escHtml(msg)}</div>` : ''}
+      <a href="${run.html_url}" target="_blank" style="color:var(--color-primary);font-size:0.8rem;">
+        View run details ↗
+      </a>
+    `;
+  } catch(e) {
+    topEl.innerHTML = '⚠ Deploy status unavailable';
+  }
+}
+
+function relTime(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+/* ════════════════════════════════════════════════════════
+   SCHEDULE EDITOR
+   ════════════════════════════════════════════════════════ */
+
+async function loadScheduleData() {
+  // Try localStorage first (from email tool sync), then GitHub
+  try {
+    const ls = localStorage.getItem(SCHEDULE_LS);
+    if (ls) { adminSchedule = JSON.parse(ls); }
+  } catch(e) {}
+  if (!adminSchedule.length) {
+    try {
+      const { data, sha } = await ghGetJSON('data/schedule.json');
+      adminSchedule = Array.isArray(data) ? data : [];
+      adminSchedSha = sha;
+    } catch(e) {
+      try {
+        const r = await fetch('data/schedule.json');
+        if (r.ok) adminSchedule = await r.json();
+      } catch(e2) {}
     }
+  }
+  renderScheduleTable();
+  updateDashboardSummary();
+}
 
-    function adminClearWidget() {
-      const page = document.getElementById('widgetPage').value;
-      clearWidget(page);
-      document.getElementById('widgetCode').value = '';
-      const btn = document.querySelector('[onclick="adminClearWidget()"]');
-      if (btn) { const o = btn.textContent; btn.textContent = '✓ Removed'; setTimeout(() => btn.textContent = o, 1500); }
+function getFilteredSchedule() {
+  return adminSchedule.filter(s => {
+    const dayOk   = schedDayFilter   === 'all' || s.day   === schedDayFilter;
+    const stageOk = schedStageFilter === 'all' || s.stage_id === schedStageFilter;
+    return dayOk && stageOk;
+  });
+}
+
+function renderScheduleTable() {
+  const tbody = document.getElementById('schedBody');
+  const rows  = getFilteredSchedule();
+  const STATUS_COLORS = {
+    confirmed: 'var(--color-accent)',
+    pending:   'var(--color-secondary)',
+    sent:      'var(--color-primary)',
+    cancelled: '#888',
+  };
+  tbody.innerHTML = rows.map(s => `
+    <tr data-id="${escHtml(s.id)}">
+      <td class="band-name">${escHtml(s.band)}</td>
+      <td style="white-space:nowrap;color:var(--color-text-muted);">${escHtml(s.day || '')}</td>
+      <td style="white-space:nowrap;">${escHtml(s.stage || s.stage_id || '')}</td>
+      <td style="white-space:nowrap;">${escHtml(s.set_time_display || s.set_time || '')}</td>
+      <td>
+        <span style="color:${STATUS_COLORS[s.status] || '#aaa'};font-size:0.75rem;">
+          ${escHtml(s.status || '')}
+        </span>
+      </td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                 color:var(--color-text-muted);font-size:0.75rem;">
+        ${s.bio ? escHtml(s.bio.slice(0,50)) + (s.bio.length>50?'…':'') : ''}
+      </td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm" style="padding:3px 8px;"
+                onclick="openSetEdit('${escHtml(s.id)}')">Edit</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="7" style="color:var(--color-text-muted);padding:20px;text-align:center;">No sets match filter.</td></tr>';
+}
+
+// Filter buttons
+document.querySelectorAll('.sched-filter-btn[data-day]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sched-filter-btn[data-day]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    schedDayFilter = btn.dataset.day;
+    renderScheduleTable();
+  });
+});
+document.querySelectorAll('.sched-filter-btn[data-stage]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sched-filter-btn[data-stage]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    schedStageFilter = btn.dataset.stage;
+    renderScheduleTable();
+  });
+});
+
+// Add set button
+document.getElementById('addSetBtn').addEventListener('click', () => {
+  editingSetId = null;
+  document.getElementById('setFormTitle').textContent = 'Add Set';
+  document.getElementById('setFormDelete').style.display = 'none';
+  clearSetForm();
+  document.getElementById('setEditForm').style.display = 'block';
+  document.getElementById('fBand').focus();
+  document.getElementById('setEditForm').scrollIntoView({ behavior: 'smooth' });
+});
+
+function openSetEdit(id) {
+  const s = adminSchedule.find(x => x.id === id);
+  if (!s) return;
+  editingSetId = id;
+  document.getElementById('setFormTitle').textContent = 'Edit Set';
+  document.getElementById('setFormDelete').style.display = '';
+  document.getElementById('fId').value       = s.id;
+  document.getElementById('fBand').value     = s.band || '';
+  document.getElementById('fStage').value    = s.stage_id || 'outdoor-stage-a';
+  document.getElementById('fDay').value      = s.day || 'Friday, May 8';
+  document.getElementById('fTime').value     = s.set_time || '';
+  document.getElementById('fArrive').value   = s._arrive_by || '';
+  document.getElementById('fStatus').value   = s.status || 'confirmed';
+  document.getElementById('fBio').value      = s.bio || '';
+  document.getElementById('fEmail').value    = s._email || '';
+  document.getElementById('fSocial').value   = s.social?.link || '';
+  document.getElementById('fImage').value    = s.image || '';
+  document.getElementById('setEditForm').style.display = 'block';
+  document.getElementById('setEditForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearSetForm() {
+  ['fId','fBand','fTime','fArrive','fBio','fEmail','fSocial','fImage'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fStage').value  = 'outdoor-stage-a';
+  document.getElementById('fDay').value    = 'Friday, May 8';
+  document.getElementById('fStatus').value = 'confirmed';
+}
+
+document.getElementById('setFormSave').addEventListener('click', () => {
+  const band = document.getElementById('fBand').value.trim();
+  if (!band) { alert('Band name is required.'); return; }
+  const stageId  = document.getElementById('fStage').value;
+  const stageMap = { 'outdoor-stage-a':'Outdoor Stage A', 'outdoor-stage-b':'Outdoor Stage B', 'barn-stage':'Barn Stage' };
+  const day      = document.getElementById('fDay').value;
+  const dateMap  = { 'Friday, May 8':'2026-05-08', 'Saturday, May 9':'2026-05-09' };
+  const time24   = document.getElementById('fTime').value;
+  const arrive24 = document.getElementById('fArrive').value;
+  const social   = document.getElementById('fSocial').value.trim();
+
+  const entry = {
+    id:                 editingSetId || ('s' + Date.now() + Math.random().toString(36).slice(2,6)),
+    band,
+    stage_id:           stageId,
+    stage:              stageMap[stageId] || stageId,
+    day,
+    date:               dateMap[day] || '',
+    set_time:           time24,
+    set_time_display:   toDisplayTime(time24),
+    status:             document.getElementById('fStatus').value,
+    bio:                document.getElementById('fBio').value.trim(),
+    image:              document.getElementById('fImage').value.trim(),
+    social:             social ? { link: social } : {},
+    _email:             document.getElementById('fEmail').value.trim(),
+    _arrive_by:         arrive24,
+    _arrive_by_display: toDisplayTime(arrive24),
+  };
+
+  if (editingSetId) {
+    const idx = adminSchedule.findIndex(s => s.id === editingSetId);
+    if (idx !== -1) adminSchedule[idx] = entry;
+  } else {
+    adminSchedule.push(entry);
+  }
+
+  saveScheduleToStorage();
+  renderScheduleTable();
+  document.getElementById('setEditForm').style.display = 'none';
+  clearSetForm();
+  editingSetId = null;
+});
+
+document.getElementById('setFormDelete').addEventListener('click', () => {
+  if (!editingSetId) return;
+  if (!confirm('Delete this set? This cannot be undone.')) return;
+  adminSchedule = adminSchedule.filter(s => s.id !== editingSetId);
+  saveScheduleToStorage();
+  renderScheduleTable();
+  document.getElementById('setEditForm').style.display = 'none';
+  editingSetId = null;
+});
+
+document.getElementById('setFormCancel').addEventListener('click', () => {
+  document.getElementById('setEditForm').style.display = 'none';
+  editingSetId = null;
+});
+
+function saveScheduleToStorage() {
+  localStorage.setItem(SCHEDULE_LS, JSON.stringify(adminSchedule));
+  // notify schedule.js in other tabs
+  window.dispatchEvent(new StorageEvent('storage', { key: SCHEDULE_LS }));
+}
+
+// Export
+document.getElementById('schedExportBtn').addEventListener('click', () => {
+  dlJson(adminSchedule, 'schedule.json');
+});
+
+// Import
+document.getElementById('schedImportBtn').addEventListener('click', () => {
+  document.getElementById('schedImportFile').click();
+});
+document.getElementById('schedImportFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      adminSchedule = Array.isArray(data) ? data : [];
+      saveScheduleToStorage();
+      renderScheduleTable();
+      showSyncMsg('syncSchedMsg', 'ok', 'Imported ' + adminSchedule.length + ' sets.');
+    } catch(err) {
+      showSyncMsg('syncSchedMsg', 'err', 'Invalid JSON: ' + err.message);
     }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
 
-    // ── Admin settings bindings ───────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('exportImgBlocksBtn')?.addEventListener('click', () => {
-        window.imageBlocksAdmin?.exportImageBlocks();
-      });
+// GitHub sync
+document.getElementById('schedSyncBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('schedSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    await ghPutJSON('data/schedule.json', adminSchedule, 'admin: update schedule');
+    showSyncMsg('syncSchedMsg', 'ok', 'schedule.json pushed to GitHub — deploy will start automatically.');
+  } catch(e) {
+    showSyncMsg('syncSchedMsg', 'err', e.message);
+  } finally {
+    btn.textContent = 'Push to GitHub'; btn.disabled = false;
+  }
+});
 
-      document.getElementById('changePwBtn')?.addEventListener('click', () => {
-        lockAdminSession();
-        showSetPasswordModal(unlockDashboard);
-      });
+/* ════════════════════════════════════════════════════════
+   SITE INFO EDITOR
+   ════════════════════════════════════════════════════════ */
 
-      document.getElementById('exportAdminConfigBtn')?.addEventListener('click', exportAdminConfig);
+async function loadInfoData() {
+  try {
+    const { data, sha } = await ghGetJSON('data/info.json');
+    adminInfo    = data;
+    adminInfoSha = sha;
+  } catch(e) {
+    try {
+      const r = await fetch('data/info.json');
+      if (r.ok) adminInfo = await r.json();
+    } catch(e2) {}
+  }
+  // Merge localStorage override
+  try {
+    const ls = localStorage.getItem(INFO_LS);
+    if (ls) Object.assign(adminInfo, JSON.parse(ls));
+  } catch(e) {}
+  populateInfoForm(adminInfo);
+}
 
-      document.getElementById('openSetupBtn')?.addEventListener('click', () => {
-        window.open('setup.html', '_blank');
-      });
+function populateInfoForm(info) {
+  const set = (id, val) => { if (document.getElementById(id)) document.getElementById(id).value = val || ''; };
+  set('infoName',      info.name);
+  set('infoTagline',   info.tagline);
+  set('infoDay1',      info.day1);
+  set('infoDay2',      info.day2);
+  set('infoVenue',     info.venue);
+  set('infoLocation',  info.location);
+  set('infoAddress',   info.address);
+  set('infoTickets',   info.tickets);
+  set('infoInstagram', info.instagram);
+  set('infoFacebook',  info.facebook);
+}
 
-      document.getElementById('lockAdminBtn')?.addEventListener('click', () => {
-        lockAdminSession();
-        location.reload();
-      });
+function collectInfoForm() {
+  const g = id => document.getElementById(id)?.value.trim() || '';
+  return {
+    name:      g('infoName'),
+    tagline:   g('infoTagline'),
+    day1:      g('infoDay1'),
+    day2:      g('infoDay2'),
+    venue:     g('infoVenue'),
+    location:  g('infoLocation'),
+    address:   g('infoAddress'),
+    tickets:   g('infoTickets'),
+    instagram: g('infoInstagram'),
+    facebook:  g('infoFacebook'),
+  };
+}
 
-      // Load widget editor with current data for default page selection
-      loadWidgetForPage('index');
-    });
-  </script>
+document.getElementById('infoPreviewBtn').addEventListener('click', () => {
+  const info = collectInfoForm();
+  localStorage.setItem(INFO_LS, JSON.stringify(info));
+  showSyncMsg('syncInfoMsg', 'ok', 'Saved to localStorage — visible immediately on public pages.');
+});
+
+document.getElementById('infoClearLocalBtn').addEventListener('click', () => {
+  localStorage.removeItem(INFO_LS);
+  showSyncMsg('syncInfoMsg', 'ok', 'Local override cleared — pages will use data/info.json.');
+});
+
+document.getElementById('infoReloadBtn').addEventListener('click', () => loadInfoData());
+
+document.getElementById('infoSyncBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('infoSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    const info = collectInfoForm();
+    await ghPutJSON('data/info.json', info, 'admin: update site info');
+    localStorage.setItem(INFO_LS, JSON.stringify(info));
+    showSyncMsg('syncInfoMsg', 'ok', 'info.json pushed to GitHub.');
+  } catch(e) {
+    showSyncMsg('syncInfoMsg', 'err', e.message);
+  } finally {
+    btn.textContent = 'Push to GitHub'; btn.disabled = false;
+  }
+});
+
+/* ════════════════════════════════════════════════════════
+   IMAGES EDITOR
+   ════════════════════════════════════════════════════════ */
+
+const IMAGE_SLOTS = [
+  { slot: 'home-banner',         label: 'Home Banner' },
+  { slot: 'home-lineup-poster',  label: 'Home Lineup Poster' },
+  { slot: 'schedule-banner',     label: 'Schedule Banner' },
+  { slot: 'map-banner',          label: 'Map Banner' },
+];
+
+function loadImageSlots() {
+  const grid = document.getElementById('imgSlotGrid');
+  let blocks = {};
+  try { blocks = JSON.parse(localStorage.getItem('mpf_image_blocks') || '{}'); } catch(e) {}
+  const bgUrl = localStorage.getItem('mpf_bg_image') || '';
+  document.getElementById('bgUrl').value = bgUrl;
+  document.getElementById('bgOpacity').value = Math.round(parseFloat(localStorage.getItem('mpf_bg_opacity') || '0.85') * 100);
+  document.getElementById('bgOpacityLbl').textContent = document.getElementById('bgOpacity').value + '%';
+
+  grid.innerHTML = IMAGE_SLOTS.map(s => {
+    const data = blocks[s.slot];
+    return `
+      <div class="img-slot-card ${data?.image ? 'has-image' : ''}"
+           onclick="editImageSlot('${s.slot}', '${s.label}')">
+        ${data?.image
+          ? `<img src="${escAttr(data.image)}" alt="${escAttr(s.label)}" />`
+          : `<div class="img-slot-empty">🖼</div>`}
+        <div class="img-slot-name">${s.label}</div>
+        <div class="text-xs text-muted" style="margin-top:4px;">
+          ${data?.image ? '✓ Image set — click to change' : 'No image — click to add'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function editImageSlot(slot, label) {
+  openEditBanner?.(slot) || openEditBlock?.(slot);
+  // Re-render after a short delay to pick up changes
+  setTimeout(loadImageSlots, 500);
+}
+
+// Background editor inline
+document.getElementById('bgOpacity').addEventListener('input', e => {
+  document.getElementById('bgOpacityLbl').textContent = e.target.value + '%';
+});
+document.getElementById('bgFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById('bgUrl').value = ev.target.result; };
+  reader.readAsDataURL(file);
+});
+document.getElementById('bgApplyBtn').addEventListener('click', () => {
+  const url = document.getElementById('bgUrl').value.trim();
+  const op  = parseInt(document.getElementById('bgOpacity').value) / 100;
+  if (typeof setBackground === 'function') setBackground(url || null, op);
+  else {
+    if (url) { localStorage.setItem('mpf_bg_image', url); localStorage.setItem('mpf_bg_opacity', String(op)); }
+  }
+  showSyncMsg('syncImgMsg', 'ok', 'Background applied.');
+});
+document.getElementById('bgClearBtn').addEventListener('click', () => {
+  if (typeof setBackground === 'function') setBackground(null);
+  else { localStorage.removeItem('mpf_bg_image'); localStorage.removeItem('mpf_bg_opacity'); }
+  document.getElementById('bgUrl').value = '';
+  showSyncMsg('syncImgMsg', 'ok', 'Background removed.');
+});
+
+// Logo
+document.getElementById('logoFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById('logoUrl').value = ev.target.result; };
+  reader.readAsDataURL(file);
+});
+document.getElementById('logoApplyBtn').addEventListener('click', () => {
+  const url = document.getElementById('logoUrl').value.trim();
+  if (url) localStorage.setItem('mpf_logo', url);
+});
+document.getElementById('logoClearBtn').addEventListener('click', () => {
+  localStorage.removeItem('mpf_logo');
+  document.getElementById('logoUrl').value = '';
+});
+
+// Export image-blocks
+document.getElementById('imgExportBtn').addEventListener('click', () => {
+  if (typeof exportImageBlocks === 'function') exportImageBlocks();
+  else {
+    const data = localStorage.getItem('mpf_image_blocks') || '{}';
+    dlJson(JSON.parse(data), 'image-blocks.json');
+  }
+});
+
+// Sync image-blocks to GitHub
+document.getElementById('imgSyncBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('imgSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    const blocks = JSON.parse(localStorage.getItem('mpf_image_blocks') || '{}');
+    await ghPutJSON('data/image-blocks.json', blocks, 'admin: update image blocks');
+    showSyncMsg('syncImgMsg', 'ok', 'image-blocks.json pushed to GitHub.');
+  } catch(e) {
+    showSyncMsg('syncImgMsg', 'err', e.message);
+  } finally {
+    btn.textContent = 'Push to GitHub'; btn.disabled = false;
+  }
+});
+
+/* ════════════════════════════════════════════════════════
+   MAP MARKERS EDITOR
+   ════════════════════════════════════════════════════════ */
+
+const MARKER_TYPE_COLORS = {
+  stage: '#ff3cac', camping: '#4fffb0', bar: '#f9c80e',
+  food: '#ff7043', entrance: '#7c4dff', parking: '#29b6f6',
+  restroom: '#aaaaaa', info: '#ffffff',
+};
+
+async function loadMarkersData() {
+  try {
+    const ls = localStorage.getItem(MARKERS_LS);
+    if (ls) adminMarkers = JSON.parse(ls);
+  } catch(e) {}
+  if (!adminMarkers.length) {
+    try {
+      const { data, sha } = await ghGetJSON('data/markers.json');
+      adminMarkers = Array.isArray(data) ? data : [];
+      adminMarkersSha = sha;
+    } catch(e) {
+      try {
+        const r = await fetch('data/markers.json');
+        if (r.ok) adminMarkers = await r.json();
+      } catch(e2) {}
+    }
+  }
+  renderMarkersTable();
+}
+
+function renderMarkersTable() {
+  const tbody = document.getElementById('markersBody');
+  tbody.innerHTML = adminMarkers.map((m, i) => {
+    const color = MARKER_TYPE_COLORS[m.type] || '#fff';
+    return `<tr>
+      <td>${escHtml(m.name || '')}</td>
+      <td>
+        <span class="marker-type-dot" style="background:${color};"></span>
+        ${escHtml(m.type || '')}
+      </td>
+      <td style="color:var(--color-text-muted);font-size:0.78rem;">${escHtml(m.description || '')}</td>
+      <td style="font-size:0.78rem;">${m.lat ?? ''}</td>
+      <td style="font-size:0.78rem;">${m.lng ?? ''}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" style="padding:3px 8px;"
+                onclick="openMarkerEdit(${i})">Edit</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="color:var(--color-text-muted);padding:20px;text-align:center;">No markers.</td></tr>';
+}
+
+function openMarkerEdit(idx) {
+  const m = idx === -1 ? {} : adminMarkers[idx];
+  editingMarkerIdx = idx;
+  document.getElementById('markerFormTitle').textContent = idx === -1 ? 'Add Marker' : 'Edit Marker';
+  document.getElementById('mIdx').value  = idx;
+  document.getElementById('mName').value = m.name  || '';
+  document.getElementById('mType').value = m.type  || 'stage';
+  document.getElementById('mDesc').value = m.description || '';
+  document.getElementById('mLat').value  = m.lat   ?? '';
+  document.getElementById('mLng').value  = m.lng   ?? '';
+  document.getElementById('markerEditForm').style.display = 'block';
+  document.getElementById('markerDelete').style.display   = idx === -1 ? 'none' : '';
+  document.getElementById('markerEditForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('addMarkerBtn').addEventListener('click', () => openMarkerEdit(-1));
+
+document.getElementById('markerSave').addEventListener('click', () => {
+  const entry = {
+    name:        document.getElementById('mName').value.trim(),
+    type:        document.getElementById('mType').value,
+    description: document.getElementById('mDesc').value.trim(),
+    lat:         parseFloat(document.getElementById('mLat').value) || 0,
+    lng:         parseFloat(document.getElementById('mLng').value) || 0,
+  };
+  if (editingMarkerIdx === -1) {
+    adminMarkers.push(entry);
+  } else {
+    adminMarkers[editingMarkerIdx] = entry;
+  }
+  localStorage.setItem(MARKERS_LS, JSON.stringify(adminMarkers));
+  renderMarkersTable();
+  document.getElementById('markerEditForm').style.display = 'none';
+});
+
+document.getElementById('markerDelete').addEventListener('click', () => {
+  if (editingMarkerIdx === -1 || !confirm('Delete this marker?')) return;
+  adminMarkers.splice(editingMarkerIdx, 1);
+  localStorage.setItem(MARKERS_LS, JSON.stringify(adminMarkers));
+  renderMarkersTable();
+  document.getElementById('markerEditForm').style.display = 'none';
+});
+
+document.getElementById('markerCancel').addEventListener('click', () => {
+  document.getElementById('markerEditForm').style.display = 'none';
+});
+
+document.getElementById('mapExportBtn').addEventListener('click', () => dlJson(adminMarkers, 'markers.json'));
+
+document.getElementById('mapSyncBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('mapSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    await ghPutJSON('data/markers.json', adminMarkers, 'admin: update map markers');
+    showSyncMsg('syncMapMsg', 'ok', 'markers.json pushed to GitHub.');
+  } catch(e) {
+    showSyncMsg('syncMapMsg', 'err', e.message);
+  } finally {
+    btn.textContent = 'Push to GitHub'; btn.disabled = false;
+  }
+});
+
+/* ════════════════════════════════════════════════════════
+   STAGES EDITOR
+   ════════════════════════════════════════════════════════ */
+
+async function loadStagesEditor() {
+  await loadStages(); // from stages.js
+  const stages = getAllStages();
+  const container = document.getElementById('stagesEditorList');
+  if (!Object.keys(stages).length) {
+    container.innerHTML = '<p class="text-muted text-xs">No stages loaded. Import a schedule first.</p>';
+    return;
+  }
+  container.innerHTML = Object.entries(stages).map(([id, name]) => `
+    <div class="form-row" style="align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="min-width:180px;">
+        <code style="font-size:0.72rem;color:var(--color-text-muted);">${escHtml(id)}</code>
+      </div>
+      <input type="text" data-stage-id="${escHtml(id)}" value="${escAttr(name)}"
+             class="stage-name-input" style="flex:1;" />
+    </div>`).join('');
+}
+
+document.getElementById('stagesSaveLocalBtn').addEventListener('click', () => {
+  const inputs = document.querySelectorAll('#stagesEditorList input[data-stage-id]');
+  const obj = {};
+  inputs.forEach(inp => { obj[inp.dataset.stageId] = inp.value.trim() || inp.dataset.stageId; });
+  saveStages(obj);
+  showSyncMsg('syncStagesMsg', 'ok', 'Stage names saved locally.');
+});
+
+document.getElementById('stagesExportBtn').addEventListener('click', () => {
+  dlJson(getAllStages(), 'stages.json');
+});
+
+document.getElementById('stagesSyncBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('stagesSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    // Save locally first
+    document.getElementById('stagesSaveLocalBtn').click();
+    await ghPutJSON('data/stages.json', getAllStages(), 'admin: update stage names');
+    showSyncMsg('syncStagesMsg', 'ok', 'stages.json pushed to GitHub.');
+  } catch(e) {
+    showSyncMsg('syncStagesMsg', 'err', e.message);
+  } finally {
+    btn.textContent = 'Push to GitHub'; btn.disabled = false;
+  }
+});
+
+/* ════════════════════════════════════════════════════════
+   WIDGETS
+   ════════════════════════════════════════════════════════ */
+
+function loadWidgetEditor() {
+  const page = document.getElementById('widgetPage').value;
+  const w    = getAllWidgets()[page] || {};
+  document.getElementById('widgetCode').value     = w.code     || '';
+  document.getElementById('widgetPosition').value = w.position || 'below';
+  renderWidgetList();
+}
+
+function renderWidgetList() {
+  const all = getAllWidgets();
+  const container = document.getElementById('widgetCurrentList');
+  const entries = Object.entries(all);
+  if (!entries.length) { container.innerHTML = ''; return; }
+  container.innerHTML = '<h3 style="font-size:0.78rem;text-transform:uppercase;color:var(--color-text-muted);letter-spacing:0.05em;margin-bottom:8px;">Active Widgets</h3>' +
+    entries.map(([page, w]) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border);">
+        <span style="min-width:80px;font-size:0.82rem;">${escHtml(page)}</span>
+        <span style="font-size:0.75rem;color:var(--color-text-muted);">${escHtml(w.position || '')}</span>
+        <code style="font-size:0.7rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          ${escHtml((w.code || '').slice(0,60))}
+        </code>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 8px;"
+                onclick="selectWidgetPage('${escHtml(page)}')">Edit</button>
+      </div>`).join('');
+}
+
+function selectWidgetPage(page) {
+  document.getElementById('widgetPage').value = page;
+  loadWidgetEditor();
+}
+
+document.getElementById('widgetPage').addEventListener('change', loadWidgetEditor);
+
+document.getElementById('widgetSaveBtn').addEventListener('click', () => {
+  const page     = document.getElementById('widgetPage').value;
+  const code     = document.getElementById('widgetCode').value;
+  const position = document.getElementById('widgetPosition').value;
+  saveWidget(page, code, position);
+  renderWidgetList();
+  const btn = document.getElementById('widgetSaveBtn');
+  const orig = btn.textContent; btn.textContent = '✓ Saved';
+  setTimeout(() => btn.textContent = orig, 1500);
+});
+
+document.getElementById('widgetClearBtn').addEventListener('click', () => {
+  const page = document.getElementById('widgetPage').value;
+  clearWidget(page);
+  document.getElementById('widgetCode').value = '';
+  renderWidgetList();
+});
+
+/* ════════════════════════════════════════════════════════
+   SETTINGS
+   ════════════════════════════════════════════════════════ */
+
+// PAT management
+const savedPat = ghPat();
+if (savedPat) document.getElementById('settingsPat').value = savedPat.slice(0,4) + '●●●●●●●●●●●●';
+
+document.getElementById('patVerifyBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('patVerifyBtn');
+  const rawPat = document.getElementById('settingsPat').value.trim();
+  const pat = rawPat.includes('●') ? ghPat() : rawPat;
+  if (!pat) { document.getElementById('patStatus').innerHTML = '<span style="color:#ff7070;">Enter a token.</span>'; return; }
+  btn.textContent = 'Verifying…'; btn.disabled = true;
+  try {
+    const user = await ghVerifyPat(pat);
+    ghSetPat(pat);
+    document.getElementById('patStatus').innerHTML =
+      `<span style="color:var(--color-accent);">✓ Verified as @${user.login}</span>`;
+    document.getElementById('settingsPat').value = pat.slice(0,4) + '●●●●●●●●●●●●';
+  } catch(e) {
+    document.getElementById('patStatus').innerHTML = `<span style="color:#ff7070;">✗ ${e.message}</span>`;
+  } finally {
+    btn.textContent = 'Verify & Save Token'; btn.disabled = false;
+  }
+});
+
+document.getElementById('patClearBtn').addEventListener('click', () => {
+  ghSetPat(null);
+  document.getElementById('settingsPat').value = '';
+  document.getElementById('patStatus').innerHTML = '<span style="color:var(--color-text-muted);">Token removed.</span>';
+});
+
+// Change password
+document.getElementById('chPwBtn').addEventListener('click', async () => {
+  const pw1   = document.getElementById('chPw1').value;
+  const pw2   = document.getElementById('chPw2').value;
+  const errEl = document.getElementById('chPwError');
+  errEl.style.display = 'none';
+  if (!pw1) { errEl.textContent = 'Enter a password.'; errEl.style.display = 'block'; return; }
+  if (pw1 !== pw2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+  const hash = await sha256(pw1);
+  localStorage.setItem('mpf_admin_pw', hash);
+  try {
+    await ghWritePasswordHash(hash);
+    errEl.textContent = '✓ Password updated and pushed to GitHub.';
+    errEl.style.background = 'rgba(79,255,176,0.08)';
+    errEl.style.color      = 'var(--color-accent)';
+    errEl.style.borderColor = 'rgba(79,255,176,0.3)';
+    errEl.style.display    = 'block';
+  } catch(e) {
+    errEl.textContent = '✓ Password updated locally. GitHub push failed: ' + e.message;
+    errEl.style.display = 'block';
+  }
+  document.getElementById('chPw1').value = '';
+  document.getElementById('chPw2').value = '';
+});
+
+// Export helpers
+document.getElementById('exportAdminCfgBtn').addEventListener('click', () => {
+  const cfg = {
+    _note: 'MPF admin config — import via flash.html to restore credentials',
+    mpf_admin_pw:    localStorage.getItem('mpf_admin_pw')    || '',
+    mpf_admin_email: localStorage.getItem('mpf_admin_email') || '',
+  };
+  dlJson(cfg, 'admin-config.json');
+});
+document.getElementById('exportScheduleBtn2').addEventListener('click',
+  () => dlJson(adminSchedule, 'schedule.json'));
+document.getElementById('exportMarkersBtn2').addEventListener('click',
+  () => dlJson(adminMarkers, 'markers.json'));
+document.getElementById('exportInfoBtn2').addEventListener('click',
+  () => dlJson(collectInfoForm(), 'info.json'));
+document.getElementById('exportAllBtn').addEventListener('click', exportAll);
+document.getElementById('settingsSetupBtn').addEventListener('click',
+  () => window.open('setup.html', '_blank'));
+
+function exportAll() {
+  dlJson({
+    schedule:     adminSchedule,
+    markers:      adminMarkers,
+    info:         collectInfoForm(),
+    stages:       getAllStages(),
+    image_blocks: JSON.parse(localStorage.getItem('mpf_image_blocks') || '{}'),
+    widgets:      getAllWidgets(),
+  }, 'mpf-admin-export.json');
+}
+
+/* ════════════════════════════════════════════════════════
+   DASHBOARD SUMMARY
+   ════════════════════════════════════════════════════════ */
+
+function updateDashboardSummary() {
+  const el = document.getElementById('dashSchedSummary');
+  if (!el) return;
+  const total     = adminSchedule.length;
+  const confirmed = adminSchedule.filter(s => s.status === 'confirmed').length;
+  const pending   = adminSchedule.filter(s => s.status === 'pending').length;
+  const day1      = adminSchedule.filter(s => s.day?.includes('May 8')).length;
+  const day2      = adminSchedule.filter(s => s.day?.includes('May 9')).length;
+  el.innerHTML = `
+    <div>Total sets: <strong style="color:var(--color-text);">${total}</strong></div>
+    <div>Confirmed: <strong style="color:var(--color-accent);">${confirmed}</strong></div>
+    ${pending ? `<div>Pending: <strong style="color:var(--color-secondary);">${pending}</strong></div>` : ''}
+    <div>Friday, May 8: <strong style="color:var(--color-text);">${day1}</strong></div>
+    <div>Saturday, May 9: <strong style="color:var(--color-text);">${day2}</strong></div>
+  `;
+}
+
+/* ════════════════════════════════════════════════════════
+   UTILITIES
+   ════════════════════════════════════════════════════════ */
+
+function showSyncMsg(elId, type, msg) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'sync-msg ' + type;
+  el.textContent = msg;
+  setTimeout(() => { el.className = 'sync-msg'; }, 6000);
+}
+
+function dlJson(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2) + '\n'], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) { return escHtml(s); }
+
+function toDisplayTime(t24) {
+  if (!t24) return '';
+  const [h, m] = t24.split(':').map(Number);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour   = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2,'0')} ${suffix}`;
+}
+
+/* ── Boot ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', initAuth);
+</script>
 </body>
 </html>
