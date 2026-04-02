@@ -1,12 +1,12 @@
 {
   "name": "Midwest Psych Fest",
+  "tagline": "Two days of psychedelic music, art & magic",
   "day1": "2026-05-08",
   "day2": "2026-05-09",
-  "venue": "",
-  "location": "Central Ohio",
-  "address": "",
-  "instagram": "",
-  "facebook": "",
-  "tagline": "Two days of psychedelic music, art & magic",
-  "tickets": ""
+  "venue": "Troubadour Farm",
+  "location": "Galena, Ohio",
+  "address": "861 South Three B's & K Road",
+  "tickets": "https://theticketing.co/e/springmpf",
+  "instagram": "https://www.instagram.com/midwestpsychfest/",
+  "facebook": ""
 }
