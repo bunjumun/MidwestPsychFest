@@ -149,7 +149,6 @@
 </head>
 <body>
 
-  <!-- NAV -->
   <nav class="site-nav">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
@@ -166,7 +165,6 @@
     </div>
   </nav>
 
-  <!-- HERO -->
   <div class="info-hero">
     <div class="info-hero-orbs">
       <div class="info-orb info-orb-1"></div>
@@ -177,22 +175,28 @@
     <p>FAQs, infographics, and everything you need to know before the fest.</p>
   </div>
 
-  <!-- SLIDESHOW -->
   <div class="info-sections">
-    <div class="info-section" style="padding:0;overflow:hidden;border-radius:12px;">
-      <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vSzlurUyAtSAPpTmEzQvPnbR5rgF7uj980kIFyJtNgVXrw9faNdpJsaSbrzg8oJBb7THokTwNnmXfte/pub?start=true&loop=true&delayms=3000" frameborder="0" width="100%" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true" style="display:block;"></iframe>
+    <div class="info-section" style="padding:0;overflow:hidden;border-radius:12px; aspect-ratio: 16/9; background: #000;">
+      <iframe 
+        src="https://docs.google.com/presentation/d/e/2PACX-1vSzlurUyAtSAPpTmEzQvPnbR5rgF7uj980kIFyJtNgVXrw9faNdpJsaSbrzg8oJBb7THokTwNnmXfte/embed?start=true&loop=true&delayms=3000" 
+        frameborder="0" 
+        width="100%" 
+        height="100%" 
+        allowfullscreen="true" 
+        mozallowfullscreen="true" 
+        webkitallowfullscreen="true" 
+        style="display:block;">
+      </iframe>
     </div>
+    
+    <div class="info-image-gallery" id="infoGallery"></div>
   </div>
 
-  <!-- Admin link (images are managed via admin.html) -->
-
-  <!-- LIGHTBOX -->
   <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
     <button class="lightbox-close" onclick="closeLightbox()">✕</button>
     <img class="lightbox-img" id="lightboxImg" src="" alt="" />
   </div>
 
-  <!-- FOOTER -->
   <footer class="site-footer">
     <div>
       <span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span>
