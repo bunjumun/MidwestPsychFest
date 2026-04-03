@@ -200,20 +200,21 @@
   {
     "id": "high-definitions-friday",
     "band": "HIGH DEFINITIONS",
-    "stage": "Outdoor Stage A",
     "stage_id": "outdoor-stage-a",
+    "stage": "Outdoor Stage A",
     "day": "Friday, May 8",
     "date": "2026-05-08",
     "set_time": "23:00",
     "set_time_display": "11:00 PM",
-    "arrive_by": "21:30",
-    "arrive_by_display": "9:30 PM",
-    "email": "thehighdefinitions@gmail.com",
     "status": "confirmed",
     "bio": "",
-    "social": {},
-    "streaming": "",
-    "image": ""
+    "image": "",
+    "social": {
+      "link": "https://www.instagram.com/thehighdefinitions/"
+    },
+    "_email": "",
+    "_arrive_by": "",
+    "_arrive_by_display": ""
   },
   {
     "id": "frederick-foxtrot-friday",
