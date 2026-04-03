@@ -597,20 +597,19 @@
   {
     "id": "burning-brain-band-saturday",
     "band": "BURNING BRAIN BAND",
-    "stage": "Barn Stage",
     "stage_id": "barn-stage",
+    "stage": "Barn Stage",
     "day": "Saturday, May 9",
     "date": "2026-05-09",
     "set_time": "00:30",
     "set_time_display": "12:30 AM",
-    "arrive_by": "23:00",
-    "arrive_by_display": "11:00 PM",
-    "email": "druidohio@gmail.com",
-    "status": "sent",
+    "status": "confirmed",
     "bio": "",
+    "image": "",
     "social": {},
-    "streaming": "",
-    "image": ""
+    "_email": "",
+    "_arrive_by": "",
+    "_arrive_by_display": ""
   },
   {
     "id": "dj-tactic-saturday",
