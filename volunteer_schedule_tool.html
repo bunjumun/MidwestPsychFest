@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPF 2026 — Volunteer Schedule Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,400;0,500;1,400&display=swap');
+  :root {
+    --bg: #0e0c09; --surface: #1a1710; --border: #2e2b22;
+    --accent: #4fffb0; --accent2: #ff3cac; --text: #e8e2d4;
+    --muted: #7a7567; --ok: #4fffb0; --err: #e07070; --warn: #f9c80e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* HEADER */
+  header { padding: 14px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  .header-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-family: 'Archivo Black', sans-serif; font-size: 18px; letter-spacing: 0.04em; color: var(--accent); text-transform: uppercase; }
+  header .subtitle { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .hdr-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 14px; border-radius: 2px; cursor: pointer; transition: all 0.15s; }
+  .hdr-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .hdr-btn.save { background: var(--accent); color: #0e0c09; border-color: var(--accent); }
+  .hdr-btn.save:hover { opacity: 0.85; }
+  .hdr-btn.danger { border-color: rgba(224,112,112,0.4); color: var(--err); }
+  .hdr-btn.danger:hover { border-color: var(--err); }
+  .sync-indicator { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); transition: color 0.4s; white-space: nowrap; }
+  .sync-indicator.saved { color: var(--ok); }
+  .sync-indicator.err { color: var(--err); }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 53px); }
+  .sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 8px 0; }
+  .main { overflow-y: auto; padding: 24px 32px; }
+
+  /* SIDEBAR */
+  .sidebar-section { padding: 12px 16px 6px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .vol-btn { display: block; width: 100%; text-align: left; background: none; border: none; padding: 8px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .vol-btn:hover { background: var(--surface); }
+  .vol-btn.active { background: var(--surface); border-left-color: var(--accent); }
+  .vname { display: block; font-family: 'Archivo Black', sans-serif; font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text); margin-bottom: 2px; }
+  .vmeta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 9px; color: var(--muted); }
+  .vtag { font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 5px; border-radius: 2px; }
+  .vtag.done { background: rgba(79,255,176,0.15); color: var(--ok); }
+  .vtag.pending { background: rgba(249,200,14,0.12); color: var(--warn); }
+  .sidebar-add { padding: 10px 16px; }
+  .sidebar-add button { width: 100%; }
+
+  /* MAIN PANEL */
+  .empty-state { text-align: center; padding: 80px 24px; color: var(--muted); }
+  .empty-state h2 { font-family: 'Archivo Black', sans-serif; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text); margin-bottom: 10px; }
+
+  .vol-detail-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .vol-detail-header h2 { font-family: 'Archivo Black', sans-serif; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .field-grid.full { grid-template-columns: 1fr; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .field-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 13px; padding: 7px 10px; border-radius: 2px; outline: none; transition: border-color 0.15s; width: 100%; }
+  .field-input:focus { border-color: var(--accent); }
+  .field-input::placeholder { color: var(--muted); }
+  select.field-input { cursor: pointer; }
+  .field-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+
+  /* Completion badge */
+  .comp-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 10px; border-radius: 2px; margin-bottom: 16px; }
+  .comp-badge.done { background: rgba(79,255,176,0.12); color: var(--ok); border: 1px solid rgba(79,255,176,0.3); }
+  .comp-badge.pending { background: rgba(249,200,14,0.08); color: var(--warn); border: 1px solid rgba(249,200,14,0.25); }
+
+  /* Config panel */
+  .config-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 20px 24px; margin-bottom: 24px; }
+  .config-panel h3 { font-family: 'Archivo Black', sans-serif; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .config-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .config-status { font-size: 11px; margin-top: 8px; color: var(--muted); min-height: 16px; }
+  .config-status.ok { color: var(--ok); }
+  .config-status.err { color: var(--err); }
+
+  /* PAT panel */
+  .pat-notice { background: rgba(255,60,172,0.06); border: 1px solid rgba(255,60,172,0.2); border-radius: 3px; padding: 12px 16px; font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.7; }
+  .pat-notice strong { color: var(--text); }
+  .pat-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 6px 10px; border-radius: 2px; outline: none; transition: border-color 0.15s; width: 280px; }
+  .pat-input:focus { border-color: var(--accent2); }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.15s; margin-bottom: -1px; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Table */
+  .vol-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .vol-table th { text-align: left; padding: 7px 10px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); white-space: nowrap; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .vol-table td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .vol-table tr:hover td { background: rgba(255,255,255,0.02); cursor: pointer; }
+  .vol-table tr.active-row td { background: rgba(79,255,176,0.04); }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 240px; }
+    .field-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Volunteer Schedule Tool</h1>
+    <span class="subtitle">Midwest Psych Fest 2026</span>
+  </div>
+  <div class="header-right">
+    <span class="sync-indicator" id="syncIndicator">No changes</span>
+    <button class="hdr-btn" id="btnImportSheet">Import from Sheet</button>
+    <button class="hdr-btn" id="btnExportCSV">Export CSV</button>
+    <button class="hdr-btn" id="btnExportJSON">Export JSON</button>
+    <button class="hdr-btn save" id="btnSave">Save to GitHub</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-add">
+      <button class="hdr-btn" id="btnAddVol" style="width:100%;">+ Add Volunteer</button>
+    </div>
+
+    <!-- Search -->
+    <div style="padding:4px 16px 8px;">
+      <input type="text" class="field-input" id="sidebarSearch" placeholder="Search name…" style="font-size:12px;padding:5px 8px;" />
+    </div>
+
+    <div id="volList">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Config / Settings tab -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="editor">Editor</button>
+      <button class="tab-btn" data-tab="config">Sheet Config</button>
+      <button class="tab-btn" data-tab="completions">Completions</button>
+    </div>
+
+    <!-- EDITOR TAB -->
+    <div class="tab-panel active" id="tab-editor">
+      <div id="editorEmpty" class="empty-state">
+        <h2>Select a volunteer</h2>
+        <p>Choose a volunteer from the sidebar to edit their shift details,<br>or click "+ Add Volunteer" to create a new entry.</p>
+      </div>
+      <div id="editorForm" style="display:none;">
+        <div class="vol-detail-header">
+          <h2 id="editorName">—</h2>
+          <div id="editorCompBadge"></div>
+        </div>
+        <div class="field-grid">
+          <div class="field-group">
+            <label>Full Name</label>
+            <input type="text" class="field-input" id="fName" placeholder="First Last" />
+          </div>
+          <div class="field-group">
+            <label>Role / Position</label>
+            <input type="text" class="field-input" id="fRole" placeholder="e.g. Gate Check, Stage Crew" />
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field-group">
+            <label>Date</label>
+            <input type="text" class="field-input" id="fDate" placeholder="e.g. Friday, May 8" />
+          </div>
+          <div class="field-group">
+            <label>Shift Time</label>
+            <input type="text" class="field-input" id="fTime" placeholder="e.g. 2:00 PM – 5:00 PM" />
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field-group">
+            <label>Location / Station</label>
+            <input type="text" class="field-input" id="fLocation" placeholder="e.g. Main Entrance, Barn Stage" />
+          </div>
+          <div class="field-group">
+            <label>Status</label>
+            <select class="field-input" id="fStatus">
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="no-show">No Show</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-grid full">
+          <div class="field-group">
+            <label>Notes</label>
+            <input type="text" class="field-input" id="fNotes" placeholder="Any special instructions…" />
+          </div>
+        </div>
+        <input type="hidden" id="fIdx" />
+        <div class="field-actions">
+          <button class="hdr-btn save" id="btnSaveVol">Save Volunteer</button>
+          <button class="hdr-btn danger" id="btnDeleteVol">Delete</button>
+          <button class="hdr-btn" id="btnCancelEdit">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG TAB -->
+    <div class="tab-panel" id="tab-config">
+
+      <div class="pat-notice">
+        <strong>GitHub PAT required to push changes.</strong> Enter a Personal Access Token with
+        <code>repo</code> + <code>workflow</code> scopes. This is stored in your browser only and
+        never sent anywhere except GitHub's API.
+      </div>
+
+      <div class="config-panel">
+        <h3>GitHub Access Token</h3>
+        <div class="config-row">
+          <input type="password" class="pat-input" id="patInput" placeholder="ghp_…" autocomplete="off" />
+          <button class="hdr-btn" id="btnVerifyPat">Verify &amp; Save</button>
+          <button class="hdr-btn danger" id="btnClearPat">Remove</button>
+        </div>
+        <div class="config-status" id="patStatus"></div>
+      </div>
+
+      <div class="config-panel">
+        <h3>Google Sheet CSV URL</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+          Publish your volunteer Google Sheet as CSV: <em>File → Share → Publish to web → select the volunteers tab → CSV format</em>.
+          Paste the link below and click "Import from Sheet" (header button) to load volunteer data.
+        </p>
+        <div class="config-row">
+          <input type="url" class="field-input" id="cfgSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/…/export?format=csv" style="flex:1;" />
+          <button class="hdr-btn" id="btnTestSheet">Test</button>
+          <button class="hdr-btn save" id="btnSaveSheetUrl">Save URL</button>
+        </div>
+        <div class="config-status" id="sheetStatus"></div>
+      </div>
+
+      <div class="config-panel">
+        <h3>Column Mapping</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Map sheet column letters to data fields. Row 1 is assumed to be a header row and is skipped.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;">
+          <div class="field-group"><label>Name</label><input type="text" class="field-input" id="cfgColName" placeholder="A" maxlength="2" /></div>
+          <div class="field-group"><label>Date</label><input type="text" class="field-input" id="cfgColDate" placeholder="B" maxlength="2" /></div>
+          <div class="field-group"><label>Time</label><input type="text" class="field-input" id="cfgColTime" placeholder="C" maxlength="2" /></div>
+          <div class="field-group"><label>Location</label><input type="text" class="field-input" id="cfgColLoc" placeholder="D" maxlength="2" /></div>
+          <div class="field-group"><label>Role</label><input type="text" class="field-input" id="cfgColRole" placeholder="E" maxlength="2" /></div>
+          <div class="field-group"><label>Notes</label><input type="text" class="field-input" id="cfgColNotes" placeholder="F" maxlength="2" /></div>
+        </div>
+        <div class="field-actions" style="margin-top:14px;">
+          <button class="hdr-btn save" id="btnSaveCols">Save Mapping</button>
+        </div>
+        <div class="config-status" id="colsStatus"></div>
+      </div>
+    </div>
+
+    <!-- COMPLETIONS TAB -->
+    <div class="tab-panel" id="tab-completions">
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);">Volunteers who marked their shift complete on the check-in page.</span>
+        <button class="hdr-btn" id="btnExportCompCSV" style="margin-left:auto;">Export CSV</button>
+        <button class="hdr-btn save" id="btnSyncComps">Push to GitHub</button>
+      </div>
+      <div id="compSyncMsg" style="font-size:11px;color:var(--muted);margin-bottom:12px;min-height:16px;"></div>
+      <div id="compTableWrap">
+        <span style="color:var(--muted);font-size:12px;">No completions recorded yet.</span>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+/* ══════════════════════════════════════════════════════
+   MPF Volunteer Schedule Tool
+   ══════════════════════════════════════════════════════ */
+
+const LS_VOLS   = 'mpf_vol_schedule';
+const LS_URL    = 'mpf_vol_sheet_url';
+const LS_COLS   = 'mpf_vol_col_map';
+const LS_COMPS  = 'mpf_vol_completions';
+const LS_PAT    = 'mpf_github_pat';
+const GH_REPO   = 'bunjumun/MidwestPsychFest';
+const GH_BRANCH = 'main';
+
+let volunteers = [];
+let dirty = false;
+let selectedIdx = null;
+
+/* ── Storage ───────────────────────────────────────── */
+function getVols()  { try { return JSON.parse(localStorage.getItem(LS_VOLS)) || []; } catch { return []; } }
+function saveVols(v) { localStorage.setItem(LS_VOLS, JSON.stringify(v)); }
+function getCols()  { try { return JSON.parse(localStorage.getItem(LS_COLS)) || {}; } catch { return {}; } }
+function getPat()   { return localStorage.getItem(LS_PAT) || ''; }
+function getComps() { try { return JSON.parse(localStorage.getItem(LS_COMPS)) || []; } catch { return []; } }
+
+/* ── GitHub API ────────────────────────────────────── */
+async function ghGet(path) {
+  const pat = getPat();
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (pat) headers.Authorization = 'token ' + pat;
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, { headers });
+  if (!r.ok) throw new Error('GitHub ' + r.status);
+  return r.json();
+}
+
+async function ghPut(path, content, message) {
+  const pat = getPat();
+  if (!pat) throw new Error('No GitHub PAT — set one in Sheet Config tab');
+  let sha = '';
+  try { const existing = await ghGet(path); sha = existing.sha; } catch {}
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: 'token ' + pat, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2) + '\n'))), sha, branch: GH_BRANCH }),
+  });
+  if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || 'HTTP ' + r.status); }
+  return r.json();
+}
+
+/* ── Mark dirty ────────────────────────────────────── */
+function markDirty() {
+  dirty = true;
+  setSyncIndicator('unsaved', '● Unsaved changes');
+}
+function markSaved() {
+  dirty = false;
+  setSyncIndicator('saved', '✓ Saved to GitHub');
+  setTimeout(() => { if (!dirty) setSyncIndicator('', 'No changes'); }, 4000);
+}
+function setSyncIndicator(cls, msg) {
+  const el = document.getElementById('syncIndicator');
+  el.className = 'sync-indicator ' + cls;
+  el.textContent = msg;
+}
+
+/* ── Render sidebar ────────────────────────────────── */
+function renderSidebar() {
+  const search = document.getElementById('sidebarSearch').value.toLowerCase();
+  const list = document.getElementById('volList');
+  const filtered = volunteers.filter(v => !search || (v.name||'').toLowerCase().includes(search));
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:16px;font-size:11px;color:var(--muted);text-align:center;">No volunteers.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map((v, fi) => {
+    const realIdx = volunteers.indexOf(v);
+    const isActive = selectedIdx === realIdx;
+    const isDone = v.status === 'completed';
+    return `<button class="vol-btn ${isActive ? 'active' : ''}" onclick="selectVol(${realIdx})">
+      <span class="vname">${escHtml(v.name || '(no name)')}</span>
+      <span class="vmeta">
+        <span class="vtag ${isDone ? 'done' : 'pending'}">${escHtml(v.status || 'pending')}</span>
+        ${v.date ? `<span>${escHtml(v.date)}</span>` : ''}
+        ${v.location ? `<span>${escHtml(v.location)}</span>` : ''}
+      </span>
+    </button>`;
+  }).join('');
+}
+
+/* ── Select volunteer ──────────────────────────────── */
+function selectVol(idx) {
+  selectedIdx = idx;
+  const v = volunteers[idx];
+  document.getElementById('editorEmpty').style.display = 'none';
+  document.getElementById('editorForm').style.display  = 'block';
+  document.getElementById('editorName').textContent    = v.name || '(no name)';
+  document.getElementById('fName').value     = v.name     || '';
+  document.getElementById('fRole').value     = v.role     || '';
+  document.getElementById('fDate').value     = v.date     || '';
+  document.getElementById('fTime').value     = v.time     || '';
+  document.getElementById('fLocation').value = v.location || '';
+  document.getElementById('fStatus').value   = v.status   || 'pending';
+  document.getElementById('fNotes').value    = v.notes    || '';
+  document.getElementById('fIdx').value      = idx;
+  const badge = document.getElementById('editorCompBadge');
+  if (v.status === 'completed') {
+    badge.innerHTML = '<span class="comp-badge done">✓ Shift Complete</span>';
+  } else {
+    badge.innerHTML = '<span class="comp-badge pending">⏳ Not yet completed</span>';
+  }
+  renderSidebar();
+  // Switch to editor tab
+  switchTab('editor');
+}
+
+/* ── Save volunteer edits ──────────────────────────── */
+document.getElementById('btnSaveVol').addEventListener('click', () => {
+  const idx = parseInt(document.getElementById('fIdx').value);
+  if (isNaN(idx)) return;
+  volunteers[idx] = {
+    ...volunteers[idx],
+    name:     document.getElementById('fName').value.trim(),
+    role:     document.getElementById('fRole').value.trim(),
+    date:     document.getElementById('fDate').value.trim(),
+    time:     document.getElementById('fTime').value.trim(),
+    location: document.getElementById('fLocation').value.trim(),
+    status:   document.getElementById('fStatus').value,
+    notes:    document.getElementById('fNotes').value.trim(),
+  };
+  saveVols(volunteers);
+  markDirty();
+  document.getElementById('editorName').textContent = volunteers[idx].name || '(no name)';
+  renderSidebar();
+  const btn = document.getElementById('btnSaveVol');
+  const orig = btn.textContent; btn.textContent = '✓ Saved locally';
+  setTimeout(() => btn.textContent = orig, 1500);
+});
+
+document.getElementById('btnDeleteVol').addEventListener('click', () => {
+  if (selectedIdx === null) return;
+  if (!confirm('Delete this volunteer?')) return;
+  volunteers.splice(selectedIdx, 1);
+  saveVols(volunteers);
+  markDirty();
+  selectedIdx = null;
+  document.getElementById('editorForm').style.display  = 'none';
+  document.getElementById('editorEmpty').style.display = 'block';
+  renderSidebar();
+});
+
+document.getElementById('btnCancelEdit').addEventListener('click', () => {
+  selectedIdx = null;
+  document.getElementById('editorForm').style.display  = 'none';
+  document.getElementById('editorEmpty').style.display = 'block';
+  renderSidebar();
+});
+
+/* ── Add volunteer ─────────────────────────────────── */
+document.getElementById('btnAddVol').addEventListener('click', () => {
+  volunteers.push({ name: '', role: '', date: '', time: '', location: '', status: 'pending', notes: '' });
+  saveVols(volunteers);
+  markDirty();
+  selectVol(volunteers.length - 1);
+  document.getElementById('fName').focus();
+});
+
+/* ── Search ────────────────────────────────────────── */
+document.getElementById('sidebarSearch').addEventListener('input', renderSidebar);
+
+/* ── Save to GitHub ────────────────────────────────── */
+document.getElementById('btnSave').addEventListener('click', saveToGitHub);
+async function saveToGitHub() {
+  const btn = document.getElementById('btnSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await ghPut('data/volunteers.json', volunteers, 'volunteers: update schedule via tool');
+    saveVols(volunteers);
+    markSaved();
+  } catch(e) {
+    setSyncIndicator('err', '✗ ' + e.message);
+    alert('Save failed: ' + e.message + '\n\nMake sure your PAT is set in the Sheet Config tab.');
+  } finally { btn.textContent = 'Save to GitHub'; btn.disabled = false; }
+}
+
+/* ── Import from Google Sheet ──────────────────────── */
+document.getElementById('btnImportSheet').addEventListener('click', importFromSheet);
+async function importFromSheet() {
+  const url = localStorage.getItem(LS_URL) || '';
+  if (!url) {
+    alert('No sheet URL configured. Go to the Sheet Config tab and set a Google Sheet CSV URL first.');
+    switchTab('config'); return;
+  }
+  const btn = document.getElementById('btnImportSheet');
+  btn.textContent = 'Importing…'; btn.disabled = true;
+  try {
+    const r = await fetch(url + (url.includes('?') ? '&' : '?') + '_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    const cols  = getCols();
+    const colIdx = c => (c || 'A').toUpperCase().charCodeAt(0) - 65;
+    const rows = text.trim().split('\n').slice(1); // skip header
+    const imported = rows.map(row => {
+      const cells = parseCSVRow(row);
+      return {
+        name:     (cells[colIdx(cols.name)]     || '').trim(),
+        date:     (cells[colIdx(cols.date)]     || '').trim(),
+        time:     (cells[colIdx(cols.time)]     || '').trim(),
+        location: (cells[colIdx(cols.location)] || '').trim(),
+        role:     (cells[colIdx(cols.role)]     || '').trim(),
+        notes:    (cells[colIdx(cols.notes)]    || '').trim(),
+        status:   'pending',
+      };
+    }).filter(v => v.name);
+
+    // Merge: preserve status/completions for existing volunteers by name
+    const existing = volunteers.reduce((m,v) => { if (v.name) m[v.name.toLowerCase()] = v; return m; }, {});
+    volunteers = imported.map(v => {
+      const prev = existing[v.name.toLowerCase()];
+      return prev ? { ...v, status: prev.status } : v;
+    });
+    saveVols(volunteers);
+    markDirty();
+    renderSidebar();
+    const n = volunteers.length;
+    btn.textContent = `✓ Imported ${n}`;
+    setTimeout(() => { btn.textContent = 'Import from Sheet'; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.textContent = 'Import from Sheet'; btn.disabled = false;
+    alert('Import failed: ' + e.message);
+  }
+}
+
+/* ── Export CSV ────────────────────────────────────── */
+document.getElementById('btnExportCSV').addEventListener('click', () => {
+  const header = 'Name,Date,Time,Location,Role,Status,Notes\n';
+  const rows = volunteers.map(v =>
+    [v.name,v.date,v.time,v.location,v.role,v.status,v.notes]
+    .map(x => `"${String(x||'').replace(/"/g,'""')}"`)
+    .join(',')
+  ).join('\n');
+  dlFile(header + rows, 'volunteers.csv', 'text/csv');
+});
+
+/* ── Export JSON ───────────────────────────────────── */
+document.getElementById('btnExportJSON').addEventListener('click', () => {
+  dlFile(JSON.stringify(volunteers, null, 2) + '\n', 'volunteers.json', 'application/json');
+});
+
+/* ── Completions tab ───────────────────────────────── */
+function renderCompletions() {
+  const comps = getComps();
+  const wrap  = document.getElementById('compTableWrap');
+  if (!comps.length) {
+    wrap.innerHTML = '<span style="color:var(--muted);font-size:12px;">No completions recorded yet.</span>';
+    return;
+  }
+  wrap.innerHTML = `<table class="vol-table">
+    <thead><tr><th>Name</th><th>Role</th><th>Location</th><th>Date</th><th>Completed At</th></tr></thead>
+    <tbody>${comps.map(c => `
+      <tr>
+        <td>${escHtml(c.name||'')}</td>
+        <td style="color:var(--muted);">${escHtml(c.role||'')}</td>
+        <td style="color:var(--muted);">${escHtml(c.location||'')}</td>
+        <td style="color:var(--muted);">${escHtml(c.date||'')}</td>
+        <td style="color:var(--muted);font-size:11px;">${c.completedAt ? new Date(c.completedAt).toLocaleString() : ''}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+document.getElementById('btnExportCompCSV').addEventListener('click', () => {
+  const comps = getComps();
+  const header = 'Name,Role,Location,Date,Completed At\n';
+  const rows = comps.map(c =>
+    [c.name,c.role,c.location,c.date,c.completedAt ? new Date(c.completedAt).toLocaleString() : '']
+    .map(x => `"${String(x||'').replace(/"/g,'""')}"`)
+    .join(',')
+  ).join('\n');
+  dlFile(header + rows, 'volunteer-completions.csv', 'text/csv');
+});
+
+document.getElementById('btnSyncComps').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSyncComps');
+  const msg = document.getElementById('compSyncMsg');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    await ghPut('data/volunteer-completions.json', getComps(), 'volunteers: sync completions');
+    msg.textContent = '✓ Pushed to GitHub'; msg.style.color = 'var(--ok)';
+  } catch(e) {
+    msg.textContent = '✗ ' + e.message; msg.style.color = 'var(--err)';
+  } finally { btn.textContent = 'Push to GitHub'; btn.disabled = false; }
+  setTimeout(() => { msg.textContent = ''; }, 5000);
+});
+
+/* ── Config tab ────────────────────────────────────── */
+function loadConfig() {
+  const url  = localStorage.getItem(LS_URL) || '';
+  const cols = getCols();
+  const pat  = getPat();
+  document.getElementById('cfgSheetUrl').value  = url;
+  document.getElementById('cfgColName').value   = cols.name     || 'A';
+  document.getElementById('cfgColDate').value   = cols.date     || 'B';
+  document.getElementById('cfgColTime').value   = cols.time     || 'C';
+  document.getElementById('cfgColLoc').value    = cols.location || 'D';
+  document.getElementById('cfgColRole').value   = cols.role     || 'E';
+  document.getElementById('cfgColNotes').value  = cols.notes    || 'F';
+  if (pat) document.getElementById('patInput').value = pat.slice(0,4) + '●●●●●●●●●●●●';
+}
+
+document.getElementById('btnSaveSheetUrl').addEventListener('click', () => {
+  localStorage.setItem(LS_URL, document.getElementById('cfgSheetUrl').value.trim());
+  showCfgStatus('sheetStatus', 'ok', '✓ Saved');
+});
+
+document.getElementById('btnTestSheet').addEventListener('click', async () => {
+  const url = document.getElementById('cfgSheetUrl').value.trim();
+  if (!url) { showCfgStatus('sheetStatus', 'err', 'Enter a URL first.'); return; }
+  showCfgStatus('sheetStatus', '', 'Testing…');
+  try {
+    const r = await fetch(url + (url.includes('?') ? '&' : '?') + '_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    const rows = text.trim().split('\n').length;
+    showCfgStatus('sheetStatus', 'ok', `✓ Connected — ${rows} rows`);
+  } catch(e) {
+    showCfgStatus('sheetStatus', 'err', '✗ ' + e.message);
+  }
+});
+
+document.getElementById('btnSaveCols').addEventListener('click', () => {
+  localStorage.setItem(LS_COLS, JSON.stringify({
+    name:     document.getElementById('cfgColName').value.trim().toUpperCase()  || 'A',
+    date:     document.getElementById('cfgColDate').value.trim().toUpperCase()  || 'B',
+    time:     document.getElementById('cfgColTime').value.trim().toUpperCase()  || 'C',
+    location: document.getElementById('cfgColLoc').value.trim().toUpperCase()   || 'D',
+    role:     document.getElementById('cfgColRole').value.trim().toUpperCase()  || 'E',
+    notes:    document.getElementById('cfgColNotes').value.trim().toUpperCase() || 'F',
+  }));
+  showCfgStatus('colsStatus', 'ok', '✓ Saved');
+});
+
+document.getElementById('btnVerifyPat').addEventListener('click', async () => {
+  const rawPat = document.getElementById('patInput').value.trim();
+  const pat = rawPat.includes('●') ? getPat() : rawPat;
+  if (!pat) { showCfgStatus('patStatus', 'err', 'Enter a token.'); return; }
+  showCfgStatus('patStatus', '', 'Verifying…');
+  try {
+    const r = await fetch('https://api.github.com/user', {
+      headers: { Authorization: 'token ' + pat, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) throw new Error('Invalid token (HTTP ' + r.status + ')');
+    const u = await r.json();
+    localStorage.setItem(LS_PAT, pat);
+    document.getElementById('patInput').value = pat.slice(0,4) + '●●●●●●●●●●●●';
+    showCfgStatus('patStatus', 'ok', `✓ Verified as @${u.login}`);
+  } catch(e) {
+    showCfgStatus('patStatus', 'err', '✗ ' + e.message);
+  }
+});
+
+document.getElementById('btnClearPat').addEventListener('click', () => {
+  localStorage.removeItem(LS_PAT);
+  document.getElementById('patInput').value = '';
+  showCfgStatus('patStatus', 'ok', 'Token removed.');
+});
+
+function showCfgStatus(elId, type, msg) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'config-status ' + type;
+  el.textContent = msg;
+  if (type === 'ok') setTimeout(() => { el.textContent = ''; el.className = 'config-status'; }, 4000);
+}
+
+/* ── Tabs ──────────────────────────────────────────── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  if (name === 'completions') renderCompletions();
+}
+document.querySelectorAll('.tab-btn').forEach(btn =>
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+);
+
+/* ── Load volunteers.json from repo on first run ───── */
+async function loadInitial() {
+  const ls = localStorage.getItem(LS_VOLS);
+  if (ls) {
+    try { volunteers = JSON.parse(ls); } catch { volunteers = []; }
+  } else {
+    try {
+      const r = await fetch('data/volunteers.json?_=' + Date.now());
+      if (r.ok) { volunteers = await r.json(); saveVols(volunteers); }
+    } catch {}
+  }
+  renderSidebar();
+  loadConfig();
+}
+
+/* ── CSV row parser (handles quoted fields) ────────── */
+function parseCSVRow(row) {
+  const cells = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i];
+    if (ch === '"') { if (inQ && row[i+1] === '"') { cur += '"'; i++; } else { inQ = !inQ; } }
+    else if (ch === ',' && !inQ) { cells.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  cells.push(cur);
+  return cells;
+}
+
+function dlFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadInitial();
+</script>
+</body>
+</html>
