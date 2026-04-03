@@ -140,3 +140,59 @@ async function ghWritePasswordHash(hash) {
   const cfg = { pw_hash: hash, _updated: new Date().toISOString() };
   return ghPutJSON(ADMIN_CFG_PATH, cfg, 'chore: update admin password hash');
 }
+
+// ── Cloud Draft ───────────────────────────────
+// Saves transient editor state to data/draft-state.json on GitHub
+// so edits survive across devices and browser clears without
+// permanently committing to the live data files.
+const DRAFT_PATH = 'data/draft-state.json';
+
+async function ghSaveDraft(toolId, stateObj) {
+  const draft = {
+    toolId,
+    savedAt: new Date().toISOString(),
+    state: stateObj,
+  };
+  return ghPutJSON(DRAFT_PATH, draft, `draft: save ${toolId} in-progress edits`);
+}
+
+async function ghLoadDraft() {
+  try {
+    const { data } = await ghGetJSON(DRAFT_PATH);
+    return data; // { toolId, savedAt, state }
+  } catch(e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
+}
+
+async function ghDeleteDraft() {
+  try {
+    const { sha } = await ghGetFile(DRAFT_PATH);
+    const [owner, repo] = ghRepo().split('/');
+    const res = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/${DRAFT_PATH}`, {
+      method: 'DELETE',
+      headers: { ..._ghHeaders(true), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'draft: clear draft after commit', sha, branch: GH_BRANCH }),
+    });
+    if (!res.ok && res.status !== 404) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Delete draft failed (${res.status})`);
+    }
+  } catch(e) {
+    if (e.status !== 404) throw e;
+  }
+}
+
+// ── PAT status check — call on admin init ─────
+// Returns { valid: bool, login: string|null, error: string|null }
+async function ghCheckPatStatus() {
+  const pat = ghPat();
+  if (!pat) return { valid: false, login: null, error: 'No PAT configured' };
+  try {
+    const user = await ghVerifyPat(pat);
+    return { valid: true, login: user.login, error: null };
+  } catch(e) {
+    return { valid: false, login: null, error: e.message };
+  }
+}

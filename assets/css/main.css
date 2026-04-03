@@ -103,11 +103,10 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; }
   list-style: none;
 }
 
-/* The anchor wrapper — also serves as hover trigger */
+/* The anchor wrapper */
 a.menu {
   display: block;
   text-decoration: none;
-  position: relative;
 }
 
 /* Trigger label */
@@ -133,17 +132,17 @@ a.menu {
   opacity: 0.6;
   transition: transform 0.2s;
 }
-a.menu:hover .menu-title,
-a.menu:focus-within .menu-title {
+.hList > li:hover .menu-title,
+.hList > li:focus-within .menu-title {
   color: var(--color-primary);
   background: rgba(255, 60, 172, 0.08);
 }
-a.menu:hover .menu-title::after,
-a.menu:focus-within .menu-title::after {
+.hList > li:hover .menu-title::after,
+.hList > li:focus-within .menu-title::after {
   transform: rotate(180deg);
 }
 
-/* Dropdown panel — hidden until hover/focus */
+/* Dropdown panel — hidden until li:hover/focus */
 .menu-dropdown {
   display: block;
   list-style: none;
@@ -164,8 +163,8 @@ a.menu:focus-within .menu-title::after {
   transform: translateY(-6px);
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
-a.menu:hover .menu-dropdown,
-a.menu:focus-within .menu-dropdown {
+.hList > li:hover .menu-dropdown,
+.hList > li:focus-within .menu-dropdown {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
