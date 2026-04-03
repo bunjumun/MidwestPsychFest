@@ -89,63 +89,110 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; }
 }
 .nav-logo span { color: var(--color-primary); }
 
-.nav-links {
+/* ── hList nav (hover dropdown pattern) ── */
+.hList {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  list-style: none;
+  align-items: center;
+  margin: 0; padding: 0;
+}
+
+.hList > li {
+  position: relative;
   list-style: none;
 }
 
-.nav-links a {
+/* The anchor wrapper — also serves as hover trigger */
+a.menu {
+  display: block;
+  text-decoration: none;
+  position: relative;
+}
+
+/* Trigger label */
+.menu-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   color: var(--color-text);
-  font-weight: 500;
-  font-size: 0.95rem;
+  margin: 0;
   padding: 6px 14px;
   border-radius: var(--radius);
-  transition: all 0.2s;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.nav-links a:hover,
-.nav-links a.active {
+.menu-title::after {
+  content: '▾';
+  font-size: 0.6rem;
+  opacity: 0.6;
+  transition: transform 0.2s;
+}
+a.menu:hover .menu-title,
+a.menu:focus-within .menu-title {
+  color: var(--color-primary);
+  background: rgba(255, 60, 172, 0.08);
+}
+a.menu:hover .menu-title::after,
+a.menu:focus-within .menu-title::after {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel — hidden until hover/focus */
+.menu-dropdown {
+  display: block;
+  list-style: none;
+  margin: 0; padding: 8px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  background: rgba(10, 0, 18, 0.97);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,60,172,0.08);
+  z-index: 200;
+  /* hidden state */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+a.menu:hover .menu-dropdown,
+a.menu:focus-within .menu-dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.menu-dropdown li { list-style: none; }
+.menu-dropdown a {
+  display: block;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.menu-dropdown a:hover {
   color: var(--color-secondary);
   background: rgba(249, 200, 14, 0.1);
 }
-
-/* Legacy — kept for any old references */
-.nav-admin-btn {
-  background: none;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-/* ── Gear Icon Admin Button ── */
-.nav-admin-gear {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 1.25rem;
-  line-height: 1;
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: color 0.2s, transform 0.3s;
-  display: flex;
-  align-items: center;
-}
-.nav-admin-gear:hover {
-  color: var(--color-primary);
-  transform: rotate(45deg);
-}
-.nav-admin-gear.active {
-  color: var(--color-primary);
-  transform: rotate(90deg);
+.menu-dropdown a.active {
+  color: var(--color-secondary);
+  background: rgba(249, 200, 14, 0.12);
+  font-weight: 700;
 }
 
 /* ── Mobile Nav ── */
@@ -168,19 +215,40 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; }
 
 @media (max-width: 640px) {
   .nav-hamburger { display: flex; }
-  .nav-links {
+  .hList {
     display: none;
     position: absolute;
     top: var(--nav-height);
-    left: 0;
-    right: 0;
-    background: rgba(13, 0, 16, 0.98);
+    left: 0; right: 0;
+    background: rgba(10, 0, 18, 0.98);
     flex-direction: column;
-    padding: 16px;
+    align-items: stretch;
+    padding: 12px;
+    gap: 2px;
     border-bottom: 1px solid var(--color-border);
+    z-index: 150;
   }
-  .nav-links.open { display: flex; }
-  .nav-links a { padding: 10px 14px; }
+  .hList.open { display: flex; }
+  .hList > li { width: 100%; }
+
+  a.menu { display: block; }
+  .menu-title { width: 100%; padding: 10px 14px; }
+
+  /* On mobile — always show submenus, no animation */
+  .menu-dropdown {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    background: rgba(255,255,255,0.03);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: none;
+    padding: 4px 0 4px 12px;
+    margin-top: 2px;
+    transition: none;
+  }
+  .menu-dropdown a { padding: 8px 14px; }
 }
 
 /* ── Page Wrapper ── */
@@ -529,6 +597,27 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; }
 body.admin-mode .ticket-btn {
   right: 388px;
   transition: right 0.3s ease;
+}
+
+/* ── FAB Row (bar mug + ticket button, index.html) ── */
+#fabRow {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 800;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+body.admin-mode #fabRow {
+  right: 388px;
+  transition: right 0.3s ease;
+}
+/* ticketBtn inside fabRow should not re-position itself */
+#fabRow .ticket-btn {
+  position: relative;
+  bottom: auto;
+  right: auto;
 }
 
 /* ── Page Banner (admin-managed) ── */

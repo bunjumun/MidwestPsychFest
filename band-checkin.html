@@ -320,6 +320,9 @@
       );
     }
 
+    .band-card-img-wrap { text-align: center; margin-bottom: 16px; }
+    .band-card-img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #ff3cac; box-shadow: 0 0 24px rgba(255,60,172,0.3); }
+
     .shift-name {
       font-family: var(--font-display);
       font-size: 1.6rem;
@@ -572,13 +575,29 @@
     <div class="nav-inner">
       <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
       <button class="nav-hamburger" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="schedule.html">Schedule</a></li>
-        <li><a href="map.html">Map</a></li>
-        <li><a href="volunteer.html">Volunteer</a></li>
-        <li><a href="band-checkin.html" class="active">Band Check-In</a></li>
-        <li><a href="more-info.html">More Info</a></li>
+      <ul class="hList" id="navLinks">
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Festival</h2>
+            <ul class="menu-dropdown">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="schedule.html">Schedule</a></li>
+              <li><a href="map.html">Map</a></li>
+              <li><a href="more-info.html">More Info</a></li>
+              <li><a href="applications.html">Applications</a></li>
+              <li><a href="vendors.html">Vendors</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Check-In</h2>
+            <ul class="menu-dropdown">
+              <li><a href="volunteer.html">Volunteer Check-In</a></li>
+              <li><a href="band-checkin.html" class="active">Band Check-In</a></li>
+            </ul>
+          </a>
+        </li>
       </ul>
     </div>
   </nav>
@@ -767,6 +786,7 @@ function doGet(e) {
     <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
   </footer>
 
+  <script src="assets/js/nav.js"></script>
   <script src="assets/js/site-info.js"></script>
   <script>
   /* Config key separate from volunteer page */
@@ -781,6 +801,7 @@ function doGet(e) {
     scriptUrl:'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
     nameCol:'A', checkinCol:'Q', checkinLabel:'Band Arrived',
     completeCol:'', completeLabel:'',
+    imageCol: 'K',
     fields:[
       { label:'Date',   col:'B' },
       { label:'Time',   col:'C' },
@@ -822,6 +843,7 @@ function doGet(e) {
         name: getCol(cols, config.nameCol),
         checkinValue:  config.checkinCol  ? getCol(cols, config.checkinCol)  : '',
         completeValue: config.completeCol ? getCol(cols, config.completeCol) : '',
+        imageUrl: config.imageCol ? getCol(cols, config.imageCol) : '',
         fields: {}
       };
       config.fields.forEach(f => { rec.fields[f.col] = getCol(cols, f.col); });
@@ -949,7 +971,11 @@ function doGet(e) {
       else { actions += `<button class="complete-btn complete-btn--gold" disabled>✓ ${escHtml(config.completeLabel || 'Load-Out')}</button>`; actions += `<button class="undo-btn" onclick="undoComplete(${record._row})">Undo</button>`; }
     }
 
+    const imgHtml = record.imageUrl
+      ? `<div class="band-card-img-wrap"><img class="band-card-img" src="${escHtml(record.imageUrl)}" alt="${escHtml(record.name)}" loading="lazy" onerror="this.parentElement.style.display='none'" /></div>`
+      : '';
     return `<div class="shift-card ${isDone ? 'completed' : isIn ? 'checked-in' : ''}" id="bcard-${record._row}">
+      ${imgHtml}
       <div class="shift-name">${escHtml(record.name)}</div>
       <div class="shift-meta">${meta}</div>
       ${statusHtml ? `<div class="shift-status">${statusHtml}</div>` : ''}
@@ -1051,8 +1077,14 @@ function doGet(e) {
 
   function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
   document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') lookupBand(); });
   </script>
+  <div class="mpf-ticker-wrap">
+    <div class="mpf-ticker">
+      <span class="mpf-ticker-label">NEXT UP</span>
+      <div style="overflow:hidden;flex:1"><div class="mpf-ticker-track"></div></div>
+    </div>
+  </div>
+  <script src="assets/js/live-pulse.js"></script>
 </body>
 </html>
