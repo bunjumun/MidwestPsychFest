@@ -355,17 +355,16 @@ function doGet(e) {
   const CACHE_TTL     = 5 * 60 * 1000;
 
   const DEFAULT_CONFIG = {
-    sheetUrl: '', sheetId: '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI', sheetIndex: 0, scriptUrl: 'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
-    nameCol: 'A', checkinCol: '', checkinLabel: 'Checked In',
-    completeCol: '', completeLabel: 'Shift Complete',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI/export?format=csv&gid=1005442031',
+    sheetId: '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI', sheetIndex: 0,
+    scriptUrl: 'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
+    nameCol: 'E', checkinCol: 'L', checkinLabel: 'Checked In',
+    completeCol: 'M', completeLabel: 'Shift Complete',
     fields: [
-      { label: 'Date',                 col: 'B' },
-      { label: 'Shift Start Time',     col: 'C' },
-      { label: 'Shift End Time',       col: 'D' },
-      { label: 'Location',             col: 'E' },
-      { label: 'Shift Leader Contact', col: 'F' },
-      { label: 'Role',                 col: 'G' },
-      { label: 'Notes',                col: 'H' },
+      { label: 'Email',        col: 'B' },
+      { label: 'Phone',        col: 'F' },
+      { label: 'Facebook?',    col: 'C' },
+      { label: 'Availability', col: 'H' },
     ]
   };
 

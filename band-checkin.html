@@ -776,15 +776,17 @@ function doGet(e) {
   const CACHE_TTL    = 5 * 60 * 1000;
 
   const DEFAULT_CONFIG = {
-    sheetUrl:'', sheetId:'', sheetIndex:0, scriptUrl:'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
-    nameCol:'A', checkinCol:'', checkinLabel:'Band Arrived',
-    completeCol:'', completeLabel:'Load-Out Complete',
+    sheetUrl:'https://docs.google.com/spreadsheets/d/1j8CI6_xz2WLOupaTLtPt4L068I3g0qSeXpYOSAsqYjY/export?format=csv',
+    sheetId:'1j8CI6_xz2WLOupaTLtPt4L068I3g0qSeXpYOSAsqYjY', sheetIndex:0,
+    scriptUrl:'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
+    nameCol:'A', checkinCol:'L', checkinLabel:'Band Arrived',
+    completeCol:'M', completeLabel:'Load-Out Complete',
     fields:[
-      { label:'Set Time',          col:'B' },
-      { label:'Stage',             col:'C' },
-      { label:'Load-In Time',      col:'D' },
-      { label:'Sound Check',       col:'E' },
-      { label:'Hospitality Notes', col:'F' },
+      { label:'Date',   col:'B' },
+      { label:'Time',   col:'C' },
+      { label:'Stage',  col:'D' },
+      { label:'Type',   col:'E' },
+      { label:'Status', col:'G' },
     ]
   };
 
