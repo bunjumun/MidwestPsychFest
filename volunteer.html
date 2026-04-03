@@ -234,29 +234,40 @@
             <li>Set <em>Execute as:</em> <strong>Me</strong> · <em>Who has access:</em> <strong>Anyone</strong></li>
             <li>Click <strong>Deploy</strong>, copy the URL, and paste it above</li>
           </ol>
-          <div class="script-code-block">function doPost(e) {
+          <div class="script-code-block">// ── IMPORTANT DEPLOYMENT SETTINGS ──────────────────────────
+// Execute as: Me
+// Who has access: Anyone  (NOT "Anyone with a Google account")
+// This lets the browser POST without authentication.
+// ───────────────────────────────────────────────────────────
+
+function doPost(e) {
+  var output;
   try {
     var d = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.openById(d.sheetId);
     var sheet = ss.getSheets()[d.sheetIndex || 0];
     var col = d.col.toUpperCase().charCodeAt(0) - 64;
     var row = parseInt(d.row);
+    if (!col || !row) throw new Error('Bad col/row: ' + d.col + '/' + d.row);
     if (d.value === '' || d.value === null) {
       sheet.getRange(row, col).clearContent();
     } else {
       sheet.getRange(row, col).setValue(d.value);
     }
-    return ContentService
-      .createTextOutput(JSON.stringify({ok: true}))
-      .setMimeType(ContentService.MimeType.JSON);
+    output = JSON.stringify({ok: true});
   } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ok:false,error:String(err)}))
-      .setMimeType(ContentService.MimeType.JSON);
+    output = JSON.stringify({ok: false, error: String(err)});
   }
+  return ContentService
+    .createTextOutput(output)
+    .setMimeType(ContentService.MimeType.JSON);
 }
-function doGet() {
-  return ContentService.createTextOutput('MPF Check-In Sync — active');
+
+function doGet(e) {
+  // Used for CORS preflight / health check
+  return ContentService
+    .createTextOutput(JSON.stringify({ok: true, status: 'MPF Sync active'}))
+    .setMimeType(ContentService.MimeType.JSON);
 }</div>
         </div>
 
@@ -444,15 +455,18 @@ function doGet() {
   ══════════════════════════════════════════════ */
   async function writeToSheet(row, col, value) {
     const config = getConfig();
-    if (!config.scriptUrl || !config.sheetId) return false;
+    if (!config.scriptUrl || !config.sheetId || !col) return false;
     try {
-      await fetch(config.scriptUrl, {
+      // No 'mode: no-cors' — we need to read the response to know if it worked.
+      // Apps Script must be deployed as "Anyone can access" (no sign-in required).
+      const res = await fetch(config.scriptUrl, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ sheetId: config.sheetId, sheetIndex: config.sheetIndex || 0, row, col, value })
       });
-      return true;
+      if (!res.ok) { console.error('Sheet write HTTP error:', res.status); return false; }
+      const data = await res.json().catch(() => ({}));
+      return data.ok === true;
     } catch(e) { console.error('Sheet write error:', e); return false; }
   }
 
@@ -696,21 +710,41 @@ function doGet() {
     localStorage.removeItem(CACHE_KEY);
     localStorage.removeItem(CACHE_TS_KEY);
 
+    // Test sheet CSV connection
     if (sheetUrl) {
       const records = await fetchRecords(true);
       if (records && records.length) {
-        statusEl.textContent = `✓ Connected! ${records.length} records loaded.${cfg.sheetId ? ` Sheet ID: ${cfg.sheetId.substring(0,12)}…` : ''}`;
+        statusEl.textContent = `✓ Sheet connected — ${records.length} records loaded.`;
         statusEl.className = 'config-status ok';
       } else if (records) {
-        statusEl.textContent = 'Connected but no data found. Check URL and name column setting.';
+        statusEl.textContent = 'Sheet connected but no data found. Check URL and name column.';
         statusEl.className = 'config-status err';
       } else {
-        statusEl.textContent = 'Could not reach sheet. Make sure it is published publicly as CSV.';
+        statusEl.textContent = '✗ Could not reach sheet. Make sure it is published publicly as CSV.';
         statusEl.className = 'config-status err';
+        return;
       }
     } else {
       statusEl.textContent = 'Config saved (no sheet URL set).';
       statusEl.className = 'config-status ok';
+    }
+
+    // Test Apps Script write-back connection
+    if (cfg.scriptUrl && cfg.sheetId) {
+      statusEl.textContent += ' — Testing write-back…';
+      try {
+        const res = await fetch(cfg.scriptUrl + '?test=1');
+        if (res.ok) {
+          const d = await res.json().catch(() => ({}));
+          statusEl.textContent = statusEl.textContent.replace('Testing write-back…', '') + ' ✓ Apps Script reachable.';
+        } else {
+          statusEl.textContent += ` ⚠ Apps Script returned HTTP ${res.status}. Check deployment settings.`;
+          statusEl.className = 'config-status err';
+        }
+      } catch(e) {
+        statusEl.textContent += ' ⚠ Apps Script unreachable — check the URL and that access is set to "Anyone".';
+        statusEl.className = 'config-status err';
+      }
     }
   }
 

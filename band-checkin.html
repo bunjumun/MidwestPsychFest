@@ -657,29 +657,39 @@
             <li>Paste the script below, save, and deploy as a Web App (Execute as: Me, Anyone can access)</li>
             <li>Copy the deployment URL and paste above</li>
           </ol>
-          <div class="script-code-block">function doPost(e) {
+          <div class="script-code-block">// ── IMPORTANT DEPLOYMENT SETTINGS ──────────────────────────
+// Execute as: Me
+// Who has access: Anyone  (NOT "Anyone with a Google account")
+// This lets the browser POST without authentication.
+// ───────────────────────────────────────────────────────────
+
+function doPost(e) {
+  var output;
   try {
     var d = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.openById(d.sheetId);
     var sheet = ss.getSheets()[d.sheetIndex || 0];
     var col = d.col.toUpperCase().charCodeAt(0) - 64;
     var row = parseInt(d.row);
+    if (!col || !row) throw new Error('Bad col/row: ' + d.col + '/' + d.row);
     if (d.value === '' || d.value === null) {
       sheet.getRange(row, col).clearContent();
     } else {
       sheet.getRange(row, col).setValue(d.value);
     }
-    return ContentService
-      .createTextOutput(JSON.stringify({ok: true}))
-      .setMimeType(ContentService.MimeType.JSON);
+    output = JSON.stringify({ok: true});
   } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ok:false,error:String(err)}))
-      .setMimeType(ContentService.MimeType.JSON);
+    output = JSON.stringify({ok: false, error: String(err)});
   }
+  return ContentService
+    .createTextOutput(output)
+    .setMimeType(ContentService.MimeType.JSON);
 }
-function doGet() {
-  return ContentService.createTextOutput('MPF Band Check-In — active');
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ok: true, status: 'MPF Band Check-In active'}))
+    .setMimeType(ContentService.MimeType.JSON);
 }</div>
         </div>
 
@@ -824,11 +834,17 @@ function doGet() {
 
   async function writeToSheet(row, col, value) {
     const config = getConfig();
-    if (!config.scriptUrl || !config.sheetId) return false;
+    if (!config.scriptUrl || !config.sheetId || !col) return false;
     try {
-      await fetch(config.scriptUrl, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ sheetId: config.sheetId, sheetIndex: config.sheetIndex || 0, row, col, value }) });
-      return true;
-    } catch(e) { console.error(e); return false; }
+      const res = await fetch(config.scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ sheetId: config.sheetId, sheetIndex: config.sheetIndex || 0, row, col, value })
+      });
+      if (!res.ok) { console.error('Sheet write HTTP error:', res.status); return false; }
+      const data = await res.json().catch(() => ({}));
+      return data.ok === true;
+    } catch(e) { console.error('Sheet write error:', e); return false; }
   }
 
   async function lookupBand() {
