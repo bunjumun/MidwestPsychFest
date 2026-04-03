@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bar — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    #ageGate {
+      position:fixed;inset:0;z-index:999;
+      background:rgba(0,0,0,0.92);
+      display:flex;align-items:center;justify-content:center;padding:24px;
+    }
+    .age-card {
+      background:#0f0018;border:1px solid var(--color-primary);
+      border-radius:var(--radius-lg);padding:40px 32px;
+      max-width:380px;width:100%;text-align:center;
+      box-shadow:0 0 80px rgba(255,60,172,0.2);
+    }
+    .age-card .mug{font-size:3rem;margin-bottom:12px;}
+    .age-card h2{font-family:var(--font-display);font-size:1.5rem;color:var(--color-primary);margin-bottom:8px;}
+    .age-card p{color:var(--color-text-muted);font-size:0.9rem;margin-bottom:28px;}
+    .age-btn-row{display:flex;gap:12px;justify-content:center;}
+    .age-btn-row .btn{min-width:120px;}
+
+    #barClosed{display:none;text-align:center;padding:80px 24px;color:var(--color-text-muted);}
+    #barClosed .mug{font-size:3rem;opacity:0.3;}
+
+    #barMenu{display:none;max-width:660px;margin:0 auto;padding:32px 20px;}
+    .bar-title{font-family:var(--font-display);font-size:2rem;color:var(--color-primary);text-align:center;margin-bottom:4px;}
+    .bar-subtitle{text-align:center;color:var(--color-text-muted);font-size:0.85rem;margin-bottom:32px;}
+
+    .menu-category{margin-bottom:28px;}
+    .menu-cat-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--color-secondary);margin-bottom:10px;border-bottom:1px solid var(--color-border);padding-bottom:6px;}
+    .menu-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+    .menu-item-info{flex:1;}
+    .menu-item-name{font-weight:500;color:var(--color-text);font-size:0.95rem;}
+    .menu-item-desc{font-size:0.78rem;color:var(--color-text-muted);}
+    .menu-item-price{color:var(--color-accent);font-weight:600;font-size:0.95rem;min-width:48px;text-align:right;}
+    .menu-item-qty{width:46px;text-align:center;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:4px;font-size:0.9rem;}
+
+    #orderSummary{background:rgba(255,255,255,0.03);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:20px;margin-top:24px;}
+    #orderSummary h3{font-size:0.85rem;color:var(--color-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px;}
+    #orderLines{font-size:0.88rem;color:var(--color-text-muted);min-height:24px;}
+    .order-line{display:flex;justify-content:space-between;padding:3px 0;}
+    .order-total-row{display:flex;justify-content:space-between;font-weight:600;color:var(--color-text);font-size:1rem;border-top:1px solid var(--color-border);margin-top:10px;padding-top:10px;}
+
+    .tip-row{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap;align-items:center;}
+    .tip-row label{font-size:0.8rem;color:var(--color-text-muted);margin-right:4px;}
+    .tip-btn{padding:5px 14px;border-radius:99px;border:1px solid var(--color-border);background:none;color:var(--color-text-muted);font-size:0.82rem;cursor:pointer;}
+    .tip-btn.active{border-color:var(--color-accent);color:var(--color-accent);background:rgba(79,255,176,0.06);}
+    #customTip{width:72px;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:4px 8px;font-size:0.82rem;}
+
+    .checkout-btn{width:100%;margin-top:16px;font-size:1rem;padding:14px;}
+    .checkout-note{text-align:center;font-size:0.72rem;color:var(--color-text-muted);margin-top:8px;}
+  </style>
+</head>
+<body>
+
+<div id="ageGate">
+  <div class="age-card">
+    <div class="mug">🍺</div>
+    <h2>Bar is Open</h2>
+    <p>You must be 21 years of age or older to enter this page.</p>
+    <div class="age-btn-row">
+      <button class="btn btn-accent" id="ageYes">Yes, I'm 21+</button>
+      <button class="btn btn-ghost"  id="ageNo">No, take me back</button>
+    </div>
+  </div>
+</div>
+
+<div id="barClosed">
+  <div class="mug">🍺</div>
+  <h2 style="font-family:var(--font-display);color:var(--color-text-muted);margin-top:12px;">Bar is Closed</h2>
+  <p style="margin-top:8px;font-size:0.85rem;">Check back later — the bar opens when the music starts.</p>
+  <a href="index.html" class="btn btn-ghost btn-sm" style="margin-top:24px;">Back to Home</a>
+</div>
+
+<div id="barMenu">
+  <h1 class="bar-title">🍺 Bar Menu</h1>
+  <p class="bar-subtitle">Build your order — we'll handle the rest</p>
+  <div id="menuItems"></div>
+  <div id="orderSummary">
+    <h3>Your Order</h3>
+    <div id="orderLines"><span style="opacity:0.4;">Nothing added yet</span></div>
+    <div class="tip-row">
+      <label>Tip:</label>
+      <button class="tip-btn active" data-tip="0">No tip</button>
+      <button class="tip-btn" data-tip="15">15%</button>
+      <button class="tip-btn" data-tip="20">20%</button>
+      <button class="tip-btn" data-tip="25">25%</button>
+      <input type="number" id="customTip" placeholder="Other" min="0" max="100" />
+      <span style="font-size:0.78rem;color:var(--color-text-muted);">%</span>
+    </div>
+    <div class="order-total-row">
+      <span>Total (incl. tip)</span>
+      <span id="orderTotal">$0.00</span>
+    </div>
+    <button class="btn btn-accent checkout-btn" id="checkoutBtn" disabled>Proceed to Payment</button>
+    <p class="checkout-note">You'll be redirected to our secure Square payment page.</p>
+  </div>
+</div>
+
+<script>
+const AGE_KEY = 'mpf_bar_age_ok';
+let menu = [], qtys = {}, tipPct = 0, barCfg = {};
+
+async function init() {
+  // 1. Check bar_open
+  let info = {};
+  try { const ls = localStorage.getItem('mpf_info'); if (ls) info = JSON.parse(ls); } catch(e) {}
+  if (!info.bar_open) {
+    try { const r = await fetch('data/info.json'); if (r.ok) info = await r.json(); } catch(e) {}
+  }
+  if (!info.bar_open) {
+    document.getElementById('ageGate').style.display = 'none';
+    document.getElementById('barClosed').style.display = 'block';
+    return;
+  }
+
+  // 2. Load Square/bar config
+  try { const r = await fetch('data/bar-config.json'); if (r.ok) barCfg = await r.json(); } catch(e) {}
+
+  // 3. Load menu
+  try { const r = await fetch('data/menu.json'); if (r.ok) menu = await r.json(); } catch(e) {}
+
+  // 4. Age gate — skip if already confirmed this session
+  if (sessionStorage.getItem(AGE_KEY) === '1') {
+    document.getElementById('ageGate').style.display = 'none';
+    showMenu();
+    return;
+  }
+
+  document.getElementById('ageYes').addEventListener('click', () => {
+    sessionStorage.setItem(AGE_KEY, '1');
+    document.getElementById('ageGate').style.display = 'none';
+    showMenu();
+  });
+  document.getElementById('ageNo').addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
+}
+
+function showMenu() {
+  document.getElementById('barMenu').style.display = 'block';
+  renderMenu();
+}
+
+function renderMenu() {
+  const cats = {};
+  menu.forEach(item => {
+    if (!cats[item.category]) cats[item.category] = [];
+    cats[item.category].push(item);
+    qtys[item.id] = 0;
+  });
+
+  document.getElementById('menuItems').innerHTML = Object.entries(cats).map(([cat, items]) => `
+    <div class="menu-category">
+      <div class="menu-cat-label">${esc(cat)}</div>
+      ${items.map(item => `
+        <div class="menu-item">
+          <div class="menu-item-info">
+            <div class="menu-item-name">${esc(item.name)}</div>
+            ${item.description ? `<div class="menu-item-desc">${esc(item.description)}</div>` : ''}
+          </div>
+          <div class="menu-item-price">$${item.price.toFixed(2)}</div>
+          <input type="number" class="menu-item-qty" data-id="${esc(item.id)}" value="0" min="0" max="20" />
+        </div>`).join('')}
+    </div>`).join('');
+
+  document.querySelectorAll('.menu-item-qty').forEach(inp => {
+    inp.addEventListener('change', () => {
+      qtys[inp.dataset.id] = Math.max(0, parseInt(inp.value) || 0);
+      updateSummary();
+    });
+  });
+
+  document.querySelectorAll('.tip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      tipPct = parseInt(btn.dataset.tip);
+      document.getElementById('customTip').value = '';
+      updateSummary();
+    });
+  });
+
+  document.getElementById('customTip').addEventListener('input', e => {
+    document.querySelectorAll('.tip-btn').forEach(b => b.classList.remove('active'));
+    tipPct = Math.max(0, parseFloat(e.target.value) || 0);
+    updateSummary();
+  });
+
+  document.getElementById('checkoutBtn').addEventListener('click', checkout);
+}
+
+function updateSummary() {
+  const lines = [];
+  let subtotal = 0;
+  menu.forEach(item => {
+    const q = qtys[item.id] || 0;
+    if (q > 0) { subtotal += q * item.price; lines.push({ name: `${item.name} ×${q}`, total: q * item.price }); }
+  });
+  const tip = subtotal * (tipPct / 100);
+  const grand = subtotal + tip;
+
+  const linesEl = document.getElementById('orderLines');
+  linesEl.innerHTML = lines.length
+    ? lines.map(l => `<div class="order-line"><span>${esc(l.name)}</span><span>$${l.total.toFixed(2)}</span></div>`).join('')
+      + (tip > 0 ? `<div class="order-line" style="color:var(--color-accent)"><span>Tip (${tipPct}%)</span><span>$${tip.toFixed(2)}</span></div>` : '')
+    : '<span style="opacity:0.4">Nothing added yet</span>';
+
+  document.getElementById('orderTotal').textContent = `$${grand.toFixed(2)}`;
+  document.getElementById('checkoutBtn').disabled = lines.length === 0;
+}
+
+function checkout() {
+  const ordered = menu.filter(i => (qtys[i.id] || 0) > 0);
+  if (!ordered.length) return;
+  const subtotal = ordered.reduce((s, i) => s + qtys[i.id] * i.price, 0);
+  const tip      = subtotal * (tipPct / 100);
+  const grand    = subtotal + tip;
+  const notePrefix = barCfg.note || 'MPF Bar Order';
+  const itemList = ordered.map(i => `${qtys[i.id]}x ${i.name}`).join(', ');
+  const fullNote = `${notePrefix}: ${itemList} | Tip: $${tip.toFixed(2)} | Total: $${grand.toFixed(2)}`;
+
+  const payLink = barCfg.payment_link || '';
+  if (!payLink) {
+    alert(`Your order:\n${itemList}\n\nTotal: $${grand.toFixed(2)}\n\nNo payment link configured yet — see the bartender directly.`);
+    return;
+  }
+
+  try {
+    const url = new URL(payLink);
+    url.searchParams.set('note',   fullNote);
+    url.searchParams.set('amount', (grand * 100).toFixed(0)); // cents for Square
+    window.location.href = url.toString();
+  } catch(e) {
+    // Fallback if URL is malformed
+    window.location.href = payLink + '?note=' + encodeURIComponent(fullNote);
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+[
+  { "id": "beer-1",   "name": "Tallboy (Domestic)",   "category": "Beer",     "price": 5.00,  "description": "PBR, Bud Light, Miller Lite" },
+  { "id": "beer-2",   "name": "Tallboy (Craft)",       "category": "Beer",     "price": 7.00,  "description": "Rotating local taps" },
+  { "id": "beer-3",   "name": "IPA Pint",              "category": "Beer",     "price": 8.00,  "description": "Local craft IPA" },
+  { "id": "cider-1",  "name": "Hard Cider",            "category": "Cider",    "price": 7.00,  "description": "Angry Orchard or similar" },
+  { "id": "spirit-1", "name": "Well Cocktail",         "category": "Spirits",  "price": 9.00,  "description": "Vodka, rum, gin, or tequila + mixer" },
+  { "id": "spirit-2", "name": "Whiskey Neat / Rocks",  "category": "Spirits",  "price": 10.00, "description": "Bourbon or rye" },
+  { "id": "shot-1",   "name": "Shot",                  "category": "Shots",    "price": 6.00,  "description": "Well spirit" },
+  { "id": "na-1",     "name": "Sparkling Water",       "category": "Non-Alc",  "price": 2.00,  "description": "Canned" },
+  { "id": "na-2",     "name": "Soda",                  "category": "Non-Alc",  "price": 2.00,  "description": "Coke, Diet Coke, Sprite" }
+]

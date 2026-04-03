@@ -156,11 +156,31 @@
         <span></span><span></span><span></span>
       </button>
       <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="schedule.html">Schedule</a></li>
-        <li><a href="map.html">Map</a></li>
-        <li><a href="volunteer.html">Volunteer</a></li>
-        <li><a href="more-info.html" class="active">More Info</a></li>
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Festival <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="schedule.html">Schedule</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="more-info.html" class="active">More Info</a></li>
+            <li><a href="applications.html">Applications</a></li>
+            <li><a href="vendors.html">Vendors</a></li>
+          </ul>
+        </li>
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Organizers <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="volunteer.html">Volunteer Check-In</a></li>
+            <li><a href="band-checkin.html">Band Check-In</a></li>
+            <li><a href="volunteer_schedule_tool.html">Volunteer Tool</a></li>
+            <li><a href="mpf_schedule_tool.html">Band Email Tool</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+          </ul>
+        </li>
       </ul>
     </div>
   </nav>
@@ -204,6 +224,7 @@
     <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
   </footer>
 
+  <script src="assets/js/nav.js"></script>
   <script src="assets/js/site-info.js"></script>
   <script>
     const INFO_IMAGES_KEY = 'mpf_info_images';
@@ -260,11 +281,14 @@
     function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-    document.getElementById('navToggle').addEventListener('click', () => {
-      document.getElementById('navLinks').classList.toggle('open');
-    });
-
     loadImagesFromRepo().then(renderGallery);
   </script>
+  <div class="mpf-ticker-wrap">
+    <div class="mpf-ticker">
+      <span class="mpf-ticker-label">NEXT UP</span>
+      <div style="overflow:hidden;flex:1"><div class="mpf-ticker-track"></div></div>
+    </div>
+  </div>
+  <script src="assets/js/live-pulse.js"></script>
 </body>
 </html>

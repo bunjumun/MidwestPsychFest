@@ -17,11 +17,31 @@
         <span></span><span></span><span></span>
       </button>
       <ul class="nav-links" id="navLinks">
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="schedule.html">Schedule</a></li>
-        <li><a href="map.html">Map</a></li>
-        <li><a href="volunteer.html">Volunteer</a></li>
-        <li><a href="more-info.html">More Info</a></li>
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Festival <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="schedule.html">Schedule</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="more-info.html">More Info</a></li>
+            <li><a href="applications.html">Applications</a></li>
+            <li><a href="vendors.html">Vendors</a></li>
+          </ul>
+        </li>
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Organizers <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="volunteer.html">Volunteer Check-In</a></li>
+            <li><a href="band-checkin.html">Band Check-In</a></li>
+            <li><a href="volunteer_schedule_tool.html">Volunteer Tool</a></li>
+            <li><a href="mpf_schedule_tool.html">Band Email Tool</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+          </ul>
+        </li>
       </ul>
     </div>
   </nav>
@@ -53,6 +73,11 @@
     </div>
     <div class="hero-scroll-hint">scroll ↓</div>
   </section>
+
+  <!-- NOW PLAYING -->
+  <div id="mpf-now-playing" style="display:none" class="now-playing-widget">
+    <!-- populated by live-pulse.js -->
+  </div>
 
   <!-- INFO STRIP -->
   <section class="info-strip">
@@ -148,14 +173,11 @@
   </footer>
 
   <a id="ticketBtn" class="ticket-btn" href="#" target="_blank" rel="noopener" style="display:none">🎟 Get Tickets</a>
+  <script src="assets/js/nav.js"></script>
   <script src="assets/js/stages.js"></script>
   <script src="assets/js/image-blocks.js"></script>
   <script src="assets/js/site-info.js"></script>
   <script>
-    // Nav toggle
-    document.getElementById('navToggle').addEventListener('click', () => {
-      document.getElementById('navLinks').classList.toggle('open');
-    });
 
     // Load lineup teaser from schedule.json
     fetch('data/schedule.json')
@@ -183,5 +205,42 @@
   </script>
   <div id="widget-slot" style="display:none"></div>
   <script src="assets/js/widgets.js"></script>
+  <div class="mpf-ticker-wrap">
+    <div class="mpf-ticker">
+      <span class="mpf-ticker-label">NEXT UP</span>
+      <div style="overflow:hidden;flex:1"><div class="mpf-ticker-track"></div></div>
+    </div>
+  </div>
+  <script src="assets/js/live-pulse.js"></script>
+
+  <!-- ── Bar FAB (shown when bar_open = true) ── -->
+  <a id="barFab" href="bar.html" aria-label="Bar is open"
+     style="display:none;position:fixed;bottom:28px;right:24px;z-index:800;
+            width:62px;height:62px;border-radius:50%;
+            background:var(--color-primary);color:#fff;
+            font-size:1.9rem;text-decoration:none;
+            align-items:center;justify-content:center;
+            box-shadow:0 4px 24px rgba(255,60,172,0.45);
+            animation:barBounce 1.8s ease-in-out infinite;">🍺</a>
+  <style>
+    @keyframes barBounce {
+      0%,100% { transform:translateY(0); }
+      40%     { transform:translateY(-10px); }
+      60%     { transform:translateY(-5px); }
+    }
+  </style>
+  <script>
+    (async () => {
+      let info = {};
+      try { const ls = localStorage.getItem('mpf_info'); if (ls) info = JSON.parse(ls); } catch(e) {}
+      if (!info.bar_open) {
+        try { const r = await fetch('data/info.json'); if (r.ok) info = await r.json(); } catch(e) {}
+      }
+      if (info.bar_open) {
+        const fab = document.getElementById('barFab');
+        fab.style.display = 'flex';
+      }
+    })();
+  </script>
 </body>
 </html>

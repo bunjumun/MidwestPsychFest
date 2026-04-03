@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendors — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    /* ── Vendors Hero ── */
+    .vendors-hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(160deg, #150020 0%, #0d0010 60%);
+      border-bottom: 1px solid var(--color-border);
+      padding: 80px 24px 56px;
+      text-align: center;
+    }
+    .vendors-orbs { position: absolute; inset: 0; pointer-events: none; }
+    .vendors-orb {
+      position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.14;
+    }
+    .vendors-orb-1 {
+      width: 340px; height: 340px;
+      background: var(--color-secondary);
+      top: -100px; right: -60px;
+      animation: vnd-drift 11s ease-in-out infinite alternate;
+    }
+    .vendors-orb-2 {
+      width: 240px; height: 240px;
+      background: var(--color-primary);
+      bottom: -70px; left: -30px;
+      animation: vnd-drift 9s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes vnd-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(14px, 10px) scale(1.05); }
+    }
+
+    .vendors-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(249, 200, 14, 0.1);
+      border: 1px solid rgba(249, 200, 14, 0.3);
+      border-radius: 99px; padding: 5px 16px;
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--color-secondary); margin-bottom: 20px;
+    }
+    .vendors-hero h1 {
+      position: relative;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      color: var(--color-secondary);
+      text-shadow: 0 0 50px rgba(249, 200, 14, 0.3);
+      margin-bottom: 14px;
+    }
+    .vendors-hero p {
+      position: relative;
+      color: var(--color-text-muted);
+      font-size: 1.05rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── Vendors Grid ── */
+    .vendors-section {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .vendors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+      margin-top: 32px;
+    }
+
+    .vendor-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .vendor-card:hover {
+      border-color: rgba(249, 200, 14, 0.4);
+      box-shadow: 0 0 32px rgba(249, 200, 14, 0.06);
+      transform: translateY(-2px);
+    }
+
+    .vendor-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .vendor-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--color-secondary);
+      line-height: 1.2;
+    }
+    .vendor-type-badge {
+      flex-shrink: 0;
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(255, 60, 172, 0.12);
+      color: var(--color-primary);
+      border: 1px solid rgba(255, 60, 172, 0.25);
+      white-space: nowrap;
+    }
+    .vendor-type-badge.food    { background: rgba(249,200,14,0.12); color: #f9c80e; border-color: rgba(249,200,14,0.3); }
+    .vendor-type-badge.craft   { background: rgba(79,255,176,0.12); color: #4fffb0; border-color: rgba(79,255,176,0.3); }
+    .vendor-type-badge.art     { background: rgba(178,75,255,0.12); color: #b24bff; border-color: rgba(178,75,255,0.3); }
+    .vendor-type-badge.merch   { background: rgba(255,60,172,0.12); color: #ff3cac; border-color: rgba(255,60,172,0.3); }
+    .vendor-type-badge.other   { background: rgba(255,255,255,0.06); color: var(--color-text-muted); border-color: var(--color-border); }
+
+    .vendor-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .vendor-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.87rem;
+      color: var(--color-text-muted);
+    }
+    .vendor-meta-row .icon { font-size: 0.9rem; flex-shrink: 0; }
+    .vendor-meta-row a {
+      color: var(--color-text-muted);
+      transition: color 0.15s;
+      word-break: break-all;
+    }
+    .vendor-meta-row a:hover { color: var(--color-secondary); }
+
+    .vendor-social-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .vendor-social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 4px 10px;
+      transition: all 0.15s;
+    }
+    .vendor-social-link:hover {
+      color: var(--color-primary);
+      border-color: rgba(255,60,172,0.3);
+    }
+
+    .vendor-electrical {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      opacity: 0.7;
+    }
+
+    /* ── Empty State ── */
+    .vendors-empty {
+      text-align: center;
+      padding: 64px 24px;
+    }
+    .vendors-empty-icon { font-size: 3.5rem; margin-bottom: 20px; }
+    .vendors-empty h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--color-secondary);
+      margin-bottom: 12px;
+    }
+    .vendors-empty p {
+      color: var(--color-text-muted);
+      max-width: 420px;
+      margin: 0 auto 24px;
+    }
+
+    /* ── Admin Gear ── */
+    .nav-admin-gear {
+      margin-left: 8px;
+    }
+
+    /* ── Admin Panel ── */
+    #admin-panel {
+      position: fixed;
+      top: var(--nav-height);
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      background: #0f0018;
+      border-left: 2px solid var(--color-primary);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: -8px 0 32px rgba(178, 75, 255, 0.2);
+    }
+    #admin-panel.open { display: flex; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 0.84rem;
+      margin-top: 8px;
+    }
+    .status-bar.ok   { background: rgba(79,255,176,0.08); border: 1px solid rgba(79,255,176,0.3); color: #4fffb0; }
+    .status-bar.err  { background: rgba(255,68,68,0.08);  border: 1px solid rgba(255,68,68,0.3);  color: #ff7070; }
+    .status-bar.info { background: rgba(249,200,14,0.08); border: 1px solid rgba(249,200,14,0.3); color: #f9c80e; }
+
+    /* ── Admin Auth Overlay ── */
+    #vendor-auth-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(13, 0, 16, 0.92);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Festival <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="schedule.html">Schedule</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="more-info.html">More Info</a></li>
+            <li><a href="applications.html">Applications</a></li>
+          </ul>
+        </li>
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Organizers <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="volunteer.html">Volunteer Check-In</a></li>
+            <li><a href="band-checkin.html">Band Check-In</a></li>
+            <li><a href="volunteer_schedule_tool.html">Volunteer Tool</a></li>
+            <li><a href="mpf_schedule_tool.html">Band Email Tool</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+          </ul>
+        </li>
+      </ul>
+      <button class="nav-admin-gear" id="adminGearBtn" title="Admin config" aria-label="Admin config">⚙</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="vendors-hero">
+    <div class="vendors-orbs">
+      <div class="vendors-orb vendors-orb-1"></div>
+      <div class="vendors-orb vendors-orb-2"></div>
+    </div>
+    <div class="vendors-eyebrow">✦ Midwest Psych Fest 2026</div>
+    <h1>Vendors</h1>
+    <p>Food, craft, and art vendors at Midwest Psych Fest</p>
+  </section>
+
+  <!-- VENDORS SECTION -->
+  <div class="vendors-section">
+    <div id="vendorsGrid" class="vendors-grid">
+      <!-- Populated by JS -->
+    </div>
+    <div id="vendorsEmpty" class="vendors-empty" style="display:none">
+      <div class="vendors-empty-icon">🛒</div>
+      <h2>Vendors Coming Soon</h2>
+      <p>We're working on confirming our vendor lineup. Check back closer to the fest!</p>
+      <a href="applications.html" class="btn btn-secondary">Interested in vending? Apply →</a>
+    </div>
+    <div id="vendorsLoading" class="vendors-empty" style="display:none">
+      <div class="vendors-empty-icon">⏳</div>
+      <h2>Loading…</h2>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      <span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span>
+    </div>
+    <div style="margin-top:12px;">
+      <a href="#" data-info="instagram">Instagram</a> &nbsp;·&nbsp;
+      <a href="#" data-info="facebook">Facebook</a>
+    </div>
+    <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
+  </footer>
+
+  <!-- ── ADMIN PANEL ── -->
+  <div id="admin-panel">
+    <div class="admin-panel-header">
+      <h3>⚙ Vendor Config</h3>
+      <button class="admin-panel-close" id="adminClose">×</button>
+    </div>
+    <div class="admin-panel-body">
+
+      <div class="admin-section">
+        <h4>Google Sheet CSV URL</h4>
+        <div class="form-group">
+          <label>Sheet CSV Export URL</label>
+          <input type="text" id="cfgSheetUrl" placeholder="https://docs.google.com/spreadsheets/…/export?format=csv&gid=…" />
+        </div>
+        <p style="font-size:0.78rem;color:var(--color-text-muted);margin-top:4px;">
+          File &rarr; Share &rarr; Publish to web &rarr; CSV. Paste the URL above.
+        </p>
+      </div>
+
+      <div class="admin-section">
+        <h4>Column Mapping</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Name (Col)</label>
+            <input type="text" id="cfgColName" value="A" maxlength="2" style="width:60px" />
+          </div>
+          <div class="form-group">
+            <label>Phone (Col)</label>
+            <input type="text" id="cfgColPhone" value="B" maxlength="2" style="width:60px" />
+          </div>
+          <div class="form-group">
+            <label>Social (Col)</label>
+            <input type="text" id="cfgColSocial" value="C" maxlength="2" style="width:60px" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Website (Col)</label>
+            <input type="text" id="cfgColWebsite" value="D" maxlength="2" style="width:60px" />
+          </div>
+          <div class="form-group">
+            <label>Electrical (Col)</label>
+            <input type="text" id="cfgColElectrical" value="E" maxlength="2" style="width:60px" />
+          </div>
+          <div class="form-group">
+            <label>Type (Col)</label>
+            <input type="text" id="cfgColType" value="F" maxlength="2" style="width:60px" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Header Row</label>
+          <input type="number" id="cfgHeaderRow" value="1" min="0" max="10" style="width:70px" />
+          <span style="font-size:0.78rem;color:var(--color-text-muted);margin-left:6px;">rows to skip (0 = no header)</span>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <h4>Actions</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-primary" id="btnSaveTest">Save &amp; Test Connection</button>
+          <button class="btn btn-secondary" id="btnSync">Sync from Sheet</button>
+          <button class="btn btn-ghost" id="btnExportJSON">Export vendors.json</button>
+          <button class="btn btn-accent" id="btnSyncGitHub">Sync to GitHub</button>
+        </div>
+        <div id="adminStatus" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="admin-section">
+        <h4>Danger Zone</h4>
+        <button class="btn btn-danger btn-sm" id="btnClearConfig">Clear Config &amp; Logout</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ADMIN AUTH OVERLAY ── -->
+  <div id="vendor-auth-overlay" style="display:none">
+    <div class="admin-auth-box">
+      <div class="admin-auth-icon">🛒</div>
+      <h2>Vendor Admin</h2>
+      <p class="admin-auth-sub">Enter the admin password to configure vendor data.</p>
+      <div class="form-group" style="margin-top:20px;">
+        <input type="password" id="authPasswordInput" placeholder="Password" autocomplete="current-password" />
+      </div>
+      <div id="authError" class="admin-auth-error" style="display:none">Incorrect password</div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-primary w-full" id="authSubmitBtn">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/site-info.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ── Config ── */
+    var STORAGE_KEY = 'mpf_vendor_config';
+    var AUTH_KEY    = 'mpf_vendor_admin_auth';
+    var VENDORS_JSON = 'data/vendors.json';
+
+    /* ── DOM ── */
+    var grid         = document.getElementById('vendorsGrid');
+    var emptyState   = document.getElementById('vendorsEmpty');
+    var loadingState = document.getElementById('vendorsLoading');
+    var adminPanel   = document.getElementById('admin-panel');
+    var gearBtn      = document.getElementById('adminGearBtn');
+    var closeBtn     = document.getElementById('adminClose');
+    var authOverlay  = document.getElementById('vendor-auth-overlay');
+    var authInput    = document.getElementById('authPasswordInput');
+    var authErr      = document.getElementById('authError');
+    var authSubmit   = document.getElementById('authSubmitBtn');
+    var statusEl     = document.getElementById('adminStatus');
+
+    /* ── Config fields ── */
+    var cfgSheetUrl   = document.getElementById('cfgSheetUrl');
+    var cfgColName    = document.getElementById('cfgColName');
+    var cfgColPhone   = document.getElementById('cfgColPhone');
+    var cfgColSocial  = document.getElementById('cfgColSocial');
+    var cfgColWebsite = document.getElementById('cfgColWebsite');
+    var cfgColElec    = document.getElementById('cfgColElectrical');
+    var cfgColType    = document.getElementById('cfgColType');
+    var cfgHeaderRow  = document.getElementById('cfgHeaderRow');
+
+    /* ── Helpers ── */
+    function colLetterToIndex(l) {
+      l = (l || 'A').toUpperCase().trim();
+      var idx = 0;
+      for (var i = 0; i < l.length; i++) {
+        idx = idx * 26 + (l.charCodeAt(i) - 64);
+      }
+      return idx - 1;
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function setStatus(msg, type) {
+      statusEl.innerHTML = '<div class="status-bar ' + (type||'info') + '">' + escHtml(msg) + '</div>';
+    }
+
+    /* ── Load config from localStorage ── */
+    function loadConfig() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        var cfg = JSON.parse(raw);
+        if (cfg.sheetUrl)    cfgSheetUrl.value   = cfg.sheetUrl;
+        if (cfg.colName)     cfgColName.value    = cfg.colName;
+        if (cfg.colPhone)    cfgColPhone.value   = cfg.colPhone;
+        if (cfg.colSocial)   cfgColSocial.value  = cfg.colSocial;
+        if (cfg.colWebsite)  cfgColWebsite.value = cfg.colWebsite;
+        if (cfg.colElec)     cfgColElec.value    = cfg.colElec;
+        if (cfg.colType)     cfgColType.value    = cfg.colType;
+        if (cfg.headerRow !== undefined) cfgHeaderRow.value = cfg.headerRow;
+      } catch(e) {}
+    }
+
+    function saveConfig() {
+      var cfg = {
+        sheetUrl:  cfgSheetUrl.value.trim(),
+        colName:   cfgColName.value.trim() || 'A',
+        colPhone:  cfgColPhone.value.trim() || 'B',
+        colSocial: cfgColSocial.value.trim() || 'C',
+        colWebsite: cfgColWebsite.value.trim() || 'D',
+        colElec:   cfgColElec.value.trim() || 'E',
+        colType:   cfgColType.value.trim() || 'F',
+        headerRow: parseInt(cfgHeaderRow.value, 10) || 1,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+      return cfg;
+    }
+
+    function getConfig() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch(e) { return null; }
+    }
+
+    /* ── Parse CSV ── */
+    function parseCSV(text) {
+      var lines = text.split('\n').filter(function(l){ return l.trim(); });
+      return lines.map(function(line) {
+        var cells = [];
+        var inQuote = false;
+        var cell = '';
+        for (var i = 0; i < line.length; i++) {
+          var ch = line[i];
+          if (ch === '"') { inQuote = !inQuote; }
+          else if (ch === ',' && !inQuote) { cells.push(cell); cell = ''; }
+          else { cell += ch; }
+        }
+        cells.push(cell);
+        return cells.map(function(c){ return c.replace(/^"|"$/g,'').trim(); });
+      });
+    }
+
+    /* ── Build vendor object from row + config ── */
+    function rowToVendor(row, cfg) {
+      var iName    = colLetterToIndex(cfg.colName || 'A');
+      var iPhone   = colLetterToIndex(cfg.colPhone || 'B');
+      var iSocial  = colLetterToIndex(cfg.colSocial || 'C');
+      var iWebsite = colLetterToIndex(cfg.colWebsite || 'D');
+      var iElec    = colLetterToIndex(cfg.colElec || 'E');
+      var iType    = colLetterToIndex(cfg.colType || 'F');
+      return {
+        name:        row[iName]    || '',
+        phone:       row[iPhone]   || '',
+        social:      row[iSocial]  || '',
+        website:     row[iWebsite] || '',
+        electrical:  row[iElec]    || '',
+        type:        row[iType]    || '',
+      };
+    }
+
+    /* ── Fetch from Google Sheet CSV ── */
+    function fetchFromSheet(cfg) {
+      if (!cfg || !cfg.sheetUrl) return Promise.reject(new Error('No sheet URL configured'));
+      return fetch(cfg.sheetUrl)
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(function(text) {
+          var rows = parseCSV(text);
+          var skip = parseInt(cfg.headerRow, 10) || 1;
+          var dataRows = rows.slice(skip);
+          return dataRows
+            .map(function(row){ return rowToVendor(row, cfg); })
+            .filter(function(v){ return v.name; });
+        });
+    }
+
+    /* ── Type badge class ── */
+    function typeBadgeClass(type) {
+      var t = (type || '').toLowerCase();
+      if (t.indexOf('food') !== -1) return 'food';
+      if (t.indexOf('craft') !== -1) return 'craft';
+      if (t.indexOf('art') !== -1) return 'art';
+      if (t.indexOf('merch') !== -1) return 'merch';
+      return 'other';
+    }
+
+    /* ── Render vendor cards ── */
+    function renderVendors(vendors) {
+      loadingState.style.display = 'none';
+      if (!vendors || !vendors.length) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+      grid.innerHTML = vendors.map(function(v) {
+        var badgeCls = typeBadgeClass(v.type);
+        var socialLinks = '';
+        if (v.social) {
+          var socials = v.social.split(/[,\|;]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+          socialLinks = socials.map(function(s) {
+            var label = s.replace(/https?:\/\/(www\.)?/,'').split('/')[0];
+            return '<a href="' + (s.indexOf('http') === 0 ? '' : 'https://') + escHtml(s) +
+                   '" target="_blank" rel="noopener" class="vendor-social-link">🔗 ' + escHtml(label) + '</a>';
+          }).join('');
+        }
+        return [
+          '<div class="vendor-card">',
+          '  <div class="vendor-card-header">',
+          '    <h3>' + escHtml(v.name) + '</h3>',
+          v.type ? '    <span class="vendor-type-badge ' + badgeCls + '">' + escHtml(v.type) + '</span>' : '',
+          '  </div>',
+          '<div class="vendor-meta">',
+          v.phone   ? '<div class="vendor-meta-row"><span class="icon">📞</span>' + escHtml(v.phone) + '</div>' : '',
+          v.website ? '<div class="vendor-meta-row"><span class="icon">🌐</span><a href="' +
+                      (v.website.indexOf('http') === 0 ? '' : 'https://') + escHtml(v.website) +
+                      '" target="_blank" rel="noopener">' + escHtml(v.website) + '</a></div>' : '',
+          '</div>',
+          socialLinks ? '<div class="vendor-social-links">' + socialLinks + '</div>' : '',
+          v.electrical ? '<p class="vendor-electrical">⚡ Electrical: ' + escHtml(v.electrical) + '</p>' : '',
+          '</div>',
+        ].join('');
+      }).join('');
+    }
+
+    /* ── Load vendors (JSON fallback, then live sheet) ── */
+    function loadVendors() {
+      loadingState.style.display = 'none'; // start silent
+      var cfg = getConfig();
+
+      if (cfg && cfg.sheetUrl) {
+        // Try live sheet
+        fetchFromSheet(cfg)
+          .then(renderVendors)
+          .catch(function() {
+            // Fallback to JSON
+            fetch(VENDORS_JSON)
+              .then(function(r){ return r.json(); })
+              .then(renderVendors)
+              .catch(function(){ renderVendors([]); });
+          });
+      } else {
+        // No config — load from static JSON
+        fetch(VENDORS_JSON)
+          .then(function(r){ return r.json(); })
+          .then(renderVendors)
+          .catch(function(){ renderVendors([]); });
+      }
+    }
+
+    /* ── Admin Auth ── */
+    function isAuthed() {
+      return sessionStorage.getItem(AUTH_KEY) === '1';
+    }
+
+    function checkAdminPassword(pw) {
+      // Uses same password mechanism as other pages: check localStorage 'mpf_admin_pw'
+      var stored = localStorage.getItem('mpf_admin_pw');
+      if (!stored) return false;
+      return pw === stored;
+    }
+
+    function showAuthOverlay() {
+      authOverlay.style.display = 'flex';
+      authInput.value = '';
+      authErr.style.display = 'none';
+      setTimeout(function(){ authInput.focus(); }, 100);
+    }
+
+    function hideAuthOverlay() {
+      authOverlay.style.display = 'none';
+    }
+
+    authSubmit.addEventListener('click', function() {
+      var pw = authInput.value;
+      if (checkAdminPassword(pw)) {
+        sessionStorage.setItem(AUTH_KEY, '1');
+        hideAuthOverlay();
+        openAdminPanel();
+      } else {
+        authErr.style.display = 'block';
+        authInput.classList.add('admin-auth-shake');
+        setTimeout(function(){ authInput.classList.remove('admin-auth-shake'); }, 500);
+      }
+    });
+
+    authInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') authSubmit.click();
+    });
+
+    /* ── Admin Panel Open/Close ── */
+    function openAdminPanel() {
+      loadConfig();
+      adminPanel.classList.add('open');
+      gearBtn.classList.add('active');
+    }
+
+    function closeAdminPanel() {
+      adminPanel.classList.remove('open');
+      gearBtn.classList.remove('active');
+    }
+
+    gearBtn.addEventListener('click', function() {
+      if (adminPanel.classList.contains('open')) {
+        closeAdminPanel();
+      } else if (isAuthed()) {
+        openAdminPanel();
+      } else {
+        showAuthOverlay();
+      }
+    });
+
+    closeBtn.addEventListener('click', closeAdminPanel);
+
+    /* ── Admin Buttons ── */
+    document.getElementById('btnSaveTest').addEventListener('click', function() {
+      var cfg = saveConfig();
+      setStatus('Saved. Testing connection…', 'info');
+      fetchFromSheet(cfg)
+        .then(function(vendors) {
+          setStatus('Connected! Found ' + vendors.length + ' vendor(s).', 'ok');
+          renderVendors(vendors);
+        })
+        .catch(function(err) {
+          setStatus('Error: ' + err.message, 'err');
+        });
+    });
+
+    document.getElementById('btnSync').addEventListener('click', function() {
+      var cfg = saveConfig();
+      setStatus('Syncing from sheet…', 'info');
+      fetchFromSheet(cfg)
+        .then(function(vendors) {
+          setStatus('Synced ' + vendors.length + ' vendors from sheet.', 'ok');
+          renderVendors(vendors);
+        })
+        .catch(function(err) {
+          setStatus('Sync failed: ' + err.message, 'err');
+        });
+    });
+
+    document.getElementById('btnExportJSON').addEventListener('click', function() {
+      var cfg = saveConfig();
+      fetchFromSheet(cfg)
+        .then(function(vendors) {
+          var blob = new Blob([JSON.stringify(vendors, null, 2)], {type: 'application/json'});
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'vendors.json';
+          a.click();
+          setStatus('Downloaded vendors.json (' + vendors.length + ' vendors)', 'ok');
+        })
+        .catch(function(err) {
+          setStatus('Export failed: ' + err.message, 'err');
+        });
+    });
+
+    document.getElementById('btnSyncGitHub').addEventListener('click', function() {
+      setStatus('GitHub sync: export the JSON and commit it to the repo manually, or use the GitHub sync tool in the admin panel.', 'info');
+    });
+
+    document.getElementById('btnClearConfig').addEventListener('click', function() {
+      if (!confirm('Clear vendor config and log out?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(AUTH_KEY);
+      closeAdminPanel();
+      setStatus('Config cleared.', 'info');
+    });
+
+    /* ── Init ── */
+    loadVendors();
+
+  }());
+  </script>
+</body>
+</html>

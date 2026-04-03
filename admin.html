@@ -289,10 +289,14 @@
   <header class="adm-topbar">
     <a href="index.html" class="adm-topbar-logo">Midwest <span>Psych</span> Fest</a>
     <div class="adm-deploy" id="topDeployStatus">Checking deploy…</div>
+    <span id="topPatBadge" title="GitHub PAT status" style="font-size:0.7rem;padding:2px 8px;border-radius:99px;border:1px solid var(--color-border);color:var(--color-text-muted);display:none;"></span>
+    <span id="topDraftBadge" title="Unsaved cloud draft" style="font-size:0.7rem;padding:2px 8px;border-radius:99px;background:rgba(249,200,14,0.12);border:1px solid rgba(249,200,14,0.4);color:var(--color-secondary);display:none;">● Draft</span>
     <div class="adm-topbar-actions">
       <a href="index.html" target="_blank">Home ↗</a>
       <a href="schedule.html" target="_blank">Schedule ↗</a>
       <a href="mpf_schedule_tool.html" target="_blank">Band Tool ↗</a>
+      <a href="volunteer-tool.html" target="_blank">Vol Tool ↗</a>
+      <button class="btn btn-ghost btn-sm" id="btnSaveDraft" title="Save current edits as a cloud draft" style="display:none;">Save Draft</button>
       <button class="btn btn-ghost btn-sm" id="btnTriggerDeploy">Deploy Now</button>
       <button class="btn btn-danger btn-sm" id="btnLock">Lock</button>
     </div>
@@ -324,6 +328,10 @@
       <span class="adm-nav-icon">📋</span>
       <span class="nav-label">Info Images</span>
     </button>
+    <button class="adm-nav-item" data-section="bar">
+      <span class="adm-nav-icon">🍺</span>
+      <span class="nav-label">Bar / Square</span>
+    </button>
     <button class="adm-nav-item" data-section="volunteers">
       <span class="adm-nav-icon">👥</span>
       <span class="nav-label">Volunteers</span>
@@ -336,6 +344,14 @@
     <button class="adm-nav-item" data-section="widgets">
       <span class="adm-nav-icon">📦</span>
       <span class="nav-label">Widgets</span>
+    </button>
+    <button class="adm-nav-item" data-section="pagecreator">
+      <span class="adm-nav-icon">📄</span>
+      <span class="nav-label">Add Page</span>
+    </button>
+    <button class="adm-nav-item" data-section="alerts">
+      <span class="adm-nav-icon">📢</span>
+      <span class="nav-label">Live Alerts</span>
     </button>
     <hr class="adm-nav-sep" />
     <button class="adm-nav-item" data-section="settings">
@@ -773,6 +789,91 @@
       </div>
     </section>
 
+    <!-- ── BAR / SQUARE ── -->
+    <section class="adm-section" id="section-bar">
+      <div class="adm-section-header">
+        <h2>Bar &amp; Square Config</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="barReloadBtn">Reload from Repo</button>
+          <button class="btn btn-accent btn-sm" id="barSyncBtn">Push to GitHub</button>
+        </div>
+      </div>
+      <div id="syncBarMsg" class="sync-msg"></div>
+      <div class="adm-grid">
+        <div class="adm-card">
+          <h3>Bar Toggle</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;line-height:1.7;">
+            When enabled, a bouncing 🍺 FAB appears on the home page and links to the bar ordering page.
+          </p>
+          <div class="form-group" style="display:flex;align-items:center;gap:12px;">
+            <label style="margin:0;">Bar Open</label>
+            <input type="checkbox" id="barOpenToggle" style="width:18px;height:18px;cursor:pointer;" />
+            <span class="text-muted text-xs" id="barOpenLabel">Currently closed</span>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Square Credentials</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;line-height:1.7;">
+            Get these from your
+            <a href="https://developer.squareup.com/apps" target="_blank" style="color:var(--color-primary);">Square Developer Dashboard ↗</a>.
+            These are stored in <code>data/bar-config.json</code> — never in client JS.
+          </p>
+          <div class="form-group">
+            <label>Application ID</label>
+            <input type="text" id="squareAppId" placeholder="sq0idp-…" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label>Location ID</label>
+            <input type="text" id="squareLocationId" placeholder="L…" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label>Environment</label>
+            <select id="squareEnv">
+              <option value="sandbox">Sandbox (testing)</option>
+              <option value="production">Production (live)</option>
+            </select>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>Payment Link</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;line-height:1.7;">
+            Create a payment link in your
+            <a href="https://squareup.com/dashboard/payment-links" target="_blank" style="color:var(--color-primary);">Square Dashboard ↗</a>
+            and paste it here. The bar page will append the itemized order as a note.
+          </p>
+          <div class="form-group">
+            <label>Square Payment Link URL</label>
+            <input type="url" id="squarePayLink" placeholder="https://square.link/u/…" />
+          </div>
+          <div class="form-group">
+            <label>Order Note Prefix</label>
+            <input type="text" id="squareNotePrefix" placeholder="MPF 2026 Bar Order" />
+          </div>
+          <div class="form-group">
+            <label>Currency</label>
+            <select id="squareCurrency">
+              <option value="USD">USD</option>
+              <option value="CAD">CAD</option>
+            </select>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h3>How It Works</h3>
+          <ol class="text-muted text-xs" style="line-height:2;padding-left:18px;">
+            <li>Customer visits <code>bar.html</code> (linked from the 🍺 FAB)</li>
+            <li>Age gate confirms 21+ via sessionStorage</li>
+            <li>Customer builds order from <code>data/menu.json</code></li>
+            <li>Checkout constructs itemized note + total and redirects to your Square link</li>
+            <li>Square collects payment; bartender fulfills order</li>
+          </ol>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="bar.html" target="_blank" class="btn btn-ghost btn-sm">Preview bar.html ↗</a>
+            <a href="data/menu.json" target="_blank" class="btn btn-ghost btn-sm">View menu.json ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── VOLUNTEERS ── -->
     <section class="adm-section" id="section-volunteers">
       <div class="adm-section-header">
@@ -1005,6 +1106,110 @@
       </div>
     </section>
 
+    <!-- ── LIVE ALERTS ── -->
+    <section class="adm-section" id="section-alerts">
+      <div class="adm-section-header">
+        <h2>Live Alerts</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-accent btn-sm" id="alertsSaveBtn">Push Alert to Site</button>
+        </div>
+      </div>
+      <div id="syncAlertsMsg" class="sync-msg"></div>
+      <div class="adm-card">
+        <h3>Global Banner</h3>
+        <p class="text-muted text-xs" style="margin-bottom:16px;line-height:1.7;">
+          When active, a banner appears on all public pages. Push it to GitHub to go live.
+          Clear the message and push again to dismiss it site-wide.
+        </p>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="alertActive" style="width:16px;height:16px;" />
+            <span>Alert Active (show banner on site)</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>Alert Type</label>
+          <select id="alertType" style="background:var(--color-input-bg);border:1px solid var(--color-border);color:var(--color-text);padding:6px 10px;border-radius:var(--radius);font-family:var(--font-body);">
+            <option value="info">Info (mint)</option>
+            <option value="warning">Warning (gold)</option>
+            <option value="success">Announcement (pink)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="alertMessage" rows="3" placeholder="e.g. Set change: LAKEHORSE now plays at 9:30 PM on Outdoor Stage A"
+            style="width:100%;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);font-family:var(--font-body);padding:9px 12px;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-top:4px;">
+          <button class="btn btn-accent btn-sm" id="alertsSaveBtn2">Push to GitHub</button>
+          <button class="btn btn-ghost btn-sm" id="alertsClearBtn" style="margin-left:8px;">Clear &amp; Dismiss</button>
+        </div>
+        <div id="alertsStatus" style="margin-top:10px;font-size:0.78rem;color:var(--color-text-muted);min-height:18px;"></div>
+      </div>
+      <div class="adm-card">
+        <h3>Preview</h3>
+        <div id="alertPreview" style="padding:12px 18px;border-radius:var(--radius);font-size:0.9rem;line-height:1.5;background:rgba(79,255,176,0.06);border:1px solid rgba(79,255,176,0.25);color:var(--color-accent);">
+          No alert active.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PAGE CREATOR ── -->
+    <section class="adm-section" id="section-pagecreator">
+      <div class="adm-section-header">
+        <h2>Add Page</h2>
+        <button class="btn btn-accent btn-sm" id="pageCreateBtn">Create &amp; Publish</button>
+      </div>
+      <div id="syncPageMsg" class="sync-msg"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div class="adm-card">
+            <h3>Page Settings</h3>
+            <div class="form-group">
+              <label>Page Title</label>
+              <input type="text" id="newPageTitle" placeholder="e.g. Contest Rules" />
+            </div>
+            <div class="form-group">
+              <label>Filename (slug)</label>
+              <input type="text" id="newPageSlug" placeholder="e.g. contest-rules" />
+              <p class="text-muted text-xs" style="margin-top:4px;">Will create <code>.html</code> at the root of the repo. Auto-filled from title.</p>
+            </div>
+            <div class="form-group">
+              <label>Nav Section</label>
+              <select id="newPageNav" style="background:var(--color-input-bg);border:1px solid var(--color-border);color:var(--color-text);padding:6px 10px;border-radius:var(--radius);font-family:var(--font-body);width:100%;">
+                <option value="festival">Festival (public dropdown)</option>
+                <option value="organizers">Organizers dropdown</option>
+                <option value="none">None (no nav link)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="adm-card">
+            <h3>Content Blocks</h3>
+            <p class="text-muted text-xs" style="margin-bottom:14px;">Add sections to your page. Drag to reorder isn't supported yet — they appear in order added.</p>
+            <div id="pageBlockList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('text')">+ Text</button>
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('image')">+ Image</button>
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('link')">+ Link Button</button>
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('heading')">+ Heading</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card" style="height:fit-content;">
+          <h3>Preview</h3>
+          <div id="pagePreview" style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;min-height:200px;font-size:0.88rem;line-height:1.7;">
+            <em style="color:var(--color-text-muted);">Add blocks on the left to preview your page.</em>
+          </div>
+          <p class="text-muted text-xs" style="margin-top:10px;">
+            The created page will use the full site design (nav, footer, psychedelic theme).
+          </p>
+        </div>
+      </div>
+    </section>
+
   </main><!-- /adm-main -->
 </div><!-- /adminShell -->
 
@@ -1199,7 +1404,14 @@ function bootDashboard() {
   loadVolunteerConfig();
   loadVolCompletions();
   fetchDeployStatus();
+  loadBarConfig();
   updateDashboardSummary();
+
+  // PAT & draft checks after shell is visible
+  setTimeout(() => {
+    initPatBadge();
+    checkForDraft();
+  }, 500);
 }
 
 /* ── Navigation ────────────────────────────────────────── */
@@ -1222,6 +1434,7 @@ document.getElementById('settingsLockBtn')?.addEventListener('click', () => {
   location.reload();
 });
 document.getElementById('btnTriggerDeploy').addEventListener('click', triggerDeploy);
+document.getElementById('btnSaveDraft')?.addEventListener('click', saveAsDraft);
 document.getElementById('dashDeployBtn').addEventListener('click', triggerDeploy);
 
 async function triggerDeploy() {
@@ -2243,6 +2456,427 @@ document.getElementById('volCompSyncBtn')?.addEventListener('click', async () =>
   } catch(e) {
     showSyncMsg('volCompSyncMsg', 'err', '✗ Push failed — check PAT in Settings');
   } finally { btn.textContent = 'Push to GitHub'; btn.disabled = false; }
+});
+
+/* ══════════════════════════════════════════════════════
+   PAT VALIDATION & CLOUD DRAFT
+   ══════════════════════════════════════════════════════ */
+
+async function initPatBadge() {
+  const badge = document.getElementById('topPatBadge');
+  if (!badge) return;
+  badge.style.display = 'inline-block';
+  badge.textContent = '⟳ PAT…';
+  badge.style.borderColor = 'var(--color-border)';
+  badge.style.color = 'var(--color-text-muted)';
+  try {
+    const status = await ghCheckPatStatus();
+    if (status.valid) {
+      badge.textContent = `✓ @${status.login}`;
+      badge.style.borderColor = 'rgba(79,255,176,0.5)';
+      badge.style.color = 'var(--color-accent)';
+      document.getElementById('btnSaveDraft').style.display = 'inline-block';
+    } else {
+      badge.textContent = '⚠ No PAT';
+      badge.style.borderColor = 'rgba(249,200,14,0.5)';
+      badge.style.color = 'var(--color-secondary)';
+    }
+  } catch(e) {
+    badge.textContent = '✗ PAT Error';
+    badge.style.borderColor = 'rgba(255,68,68,0.4)';
+    badge.style.color = '#ff6666';
+  }
+}
+
+async function checkForDraft() {
+  try {
+    const draft = await ghLoadDraft();
+    if (!draft) return;
+    const badge = document.getElementById('topDraftBadge');
+    if (badge) badge.style.display = 'inline-block';
+    const ago = Math.round((Date.now() - new Date(draft.savedAt)) / 60000);
+    const agoStr = ago < 2 ? 'just now' : `${ago}m ago`;
+    if (confirm(`📋 Cloud draft found (saved ${agoStr}).\n\nResume cloud draft? Click Cancel to start fresh from live data.`)) {
+      if (draft.state && draft.state.schedule) { adminSchedule = draft.state.schedule; renderScheduleTable(); }
+      if (draft.state && draft.state.markers)  { adminMarkers  = draft.state.markers;  renderMarkersTable(); }
+      if (draft.state && draft.state.info)     { adminInfo     = draft.state.info; }
+    }
+  } catch(e) { /* no draft or not found */ }
+}
+
+document.getElementById('btnSaveDraft')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveDraft');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await ghSaveDraft('admin', { schedule: adminSchedule, markers: adminMarkers, info: adminInfo, savedAt: new Date().toISOString() });
+    const badge = document.getElementById('topDraftBadge');
+    if (badge) badge.style.display = 'inline-block';
+    btn.textContent = '✓ Draft Saved';
+    setTimeout(() => { btn.textContent = 'Save Draft'; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.textContent = 'Draft Failed';
+    setTimeout(() => { btn.textContent = 'Save Draft'; btn.disabled = false; }, 2000);
+  }
+});
+
+/* ══════════════════════════════════════════════════════
+   LIVE ALERTS
+   ══════════════════════════════════════════════════════ */
+async function initAlertsSection() {
+  try {
+    const res = await fetch('data/alerts.json?_=' + Date.now());
+    if (!res.ok) return;
+    const a = await res.json();
+    document.getElementById('alertActive').checked = !!a.active;
+    document.getElementById('alertType').value = a.type || 'info';
+    document.getElementById('alertMessage').value = a.message || '';
+    updateAlertPreview();
+  } catch(e) {}
+}
+
+function updateAlertPreview() {
+  const active  = document.getElementById('alertActive')?.checked;
+  const type    = document.getElementById('alertType')?.value || 'info';
+  const message = document.getElementById('alertMessage')?.value?.trim() || '';
+  const preview = document.getElementById('alertPreview');
+  if (!preview) return;
+  const colors = { info: ['rgba(79,255,176,0.06)','rgba(79,255,176,0.25)','var(--color-accent)'], warning: ['rgba(249,200,14,0.06)','rgba(249,200,14,0.3)','var(--color-secondary)'], success: ['rgba(255,60,172,0.06)','rgba(255,60,172,0.3)','var(--color-primary)'] };
+  const [bg, border, color] = colors[type] || colors.info;
+  if (!active || !message) { preview.textContent = 'No alert active.'; preview.style.cssText = `background:rgba(255,255,255,0.02);border:1px solid var(--color-border);border-radius:var(--radius);padding:12px 18px;color:var(--color-text-muted);font-size:0.9rem;`; return; }
+  preview.textContent = message;
+  preview.style.cssText = `background:${bg};border:1px solid ${border};border-radius:var(--radius);padding:12px 18px;color:${color};font-size:0.9rem;line-height:1.5;`;
+}
+
+['alertActive','alertType','alertMessage'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', updateAlertPreview);
+  document.getElementById(id)?.addEventListener('change', updateAlertPreview);
+});
+
+async function pushAlert(clear) {
+  const statusEl = document.getElementById('alertsStatus');
+  statusEl.textContent = 'Pushing…'; statusEl.style.color = 'var(--color-text-muted)';
+  const payload = clear
+    ? { active: false, type: 'info', message: '', updated: new Date().toISOString() }
+    : {
+        active:  document.getElementById('alertActive').checked,
+        type:    document.getElementById('alertType').value,
+        message: document.getElementById('alertMessage').value.trim(),
+        updated: new Date().toISOString(),
+      };
+  try {
+    await ghPutJSON('data/alerts.json', payload, `admin: ${clear ? 'clear' : 'update'} live alert`);
+    statusEl.textContent = '✓ Pushed to GitHub. Live in ~60s.'; statusEl.style.color = 'var(--color-accent)';
+    if (clear) { document.getElementById('alertActive').checked = false; document.getElementById('alertMessage').value = ''; updateAlertPreview(); }
+  } catch(e) {
+    statusEl.textContent = `✗ Push failed: ${e.message}`; statusEl.style.color = '#ff6666';
+  }
+}
+
+document.getElementById('alertsSaveBtn')?.addEventListener('click',  () => pushAlert(false));
+document.getElementById('alertsSaveBtn2')?.addEventListener('click', () => pushAlert(false));
+document.getElementById('alertsClearBtn')?.addEventListener('click', () => pushAlert(true));
+
+/* ══════════════════════════════════════════════════════
+   PAGE CREATOR
+   ══════════════════════════════════════════════════════ */
+let pageBlocks = [];
+
+function addPageBlock(type) {
+  const id = 'blk-' + Date.now();
+  pageBlocks.push({ id, type, content: '', href: '' });
+  renderPageBlocks();
+  updatePagePreview();
+}
+
+function removePageBlock(id) {
+  pageBlocks = pageBlocks.filter(b => b.id !== id);
+  renderPageBlocks();
+  updatePagePreview();
+}
+
+function renderPageBlocks() {
+  const container = document.getElementById('pageBlockList');
+  if (!container) return;
+  if (!pageBlocks.length) { container.innerHTML = '<p class="text-muted text-xs">No blocks yet.</p>'; return; }
+  container.innerHTML = pageBlocks.map(b => {
+    const inputLabel = b.type === 'image' ? 'Image URL' : b.type === 'link' ? 'Button Label' : b.type === 'heading' ? 'Heading Text' : 'Text Content';
+    const hrefField  = (b.type === 'link') ? `<input type="text" placeholder="Link URL (https://…)" value="${escHtml(b.href||'')}" oninput="updateBlock('${b.id}','href',this.value);updatePagePreview()" style="margin-top:6px;width:100%;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />` : '';
+    const inputEl    = b.type === 'text' || b.type === 'heading'
+      ? `<input type="text" placeholder="${inputLabel}" value="${escHtml(b.content||'')}" oninput="updateBlock('${b.id}','content',this.value);updatePagePreview()" style="flex:1;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />`
+      : `<input type="text" placeholder="${inputLabel}" value="${escHtml(b.content||'')}" oninput="updateBlock('${b.id}','content',this.value);updatePagePreview()" style="flex:1;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />`;
+    return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--color-border);border-radius:var(--radius);padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);min-width:52px;">${b.type}</span>
+        ${inputEl}
+        <button onclick="removePageBlock('${b.id}')" style="background:transparent;border:none;color:rgba(255,68,68,0.5);cursor:pointer;font-size:1rem;flex-shrink:0;" title="Remove">✕</button>
+      </div>
+      ${hrefField}
+    </div>`;
+  }).join('');
+}
+
+function updateBlock(id, field, value) {
+  const b = pageBlocks.find(b => b.id === id);
+  if (b) b[field] = value;
+}
+
+function updatePagePreview() {
+  const preview = document.getElementById('pagePreview');
+  if (!preview) return;
+  const title = document.getElementById('newPageTitle')?.value || 'Untitled Page';
+  let html = `<h2 style="font-family:'Abril Fatface',serif;color:#ff3cac;margin-bottom:16px;">${escHtml(title)}</h2>`;
+  pageBlocks.forEach(b => {
+    if (b.type === 'heading')  html += `<h3 style="font-family:'Abril Fatface',serif;color:#f9c80e;margin:14px 0 6px;">${escHtml(b.content)}</h3>`;
+    else if (b.type === 'text') html += `<p style="color:#e8e2d4;margin-bottom:12px;line-height:1.7;">${escHtml(b.content)}</p>`;
+    else if (b.type === 'image') html += b.content ? `<img src="${escHtml(b.content)}" style="max-width:100%;border-radius:8px;margin-bottom:12px;" />` : `<div style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.15);border-radius:8px;padding:20px;text-align:center;color:rgba(255,255,255,0.3);margin-bottom:12px;font-size:0.82rem;">Image URL not set</div>`;
+    else if (b.type === 'link') html += `<a href="${escHtml(b.href||'#')}" style="display:inline-block;background:#ff3cac;color:#fff;padding:9px 20px;border-radius:6px;font-weight:700;font-size:0.85rem;text-decoration:none;margin-bottom:12px;">${escHtml(b.content||'Button')}</a>`;
+  });
+  if (!pageBlocks.length) html += '<em style="color:rgba(255,255,255,0.3);">Add blocks on the left to preview.</em>';
+  preview.innerHTML = html;
+}
+
+document.getElementById('newPageTitle')?.addEventListener('input', () => {
+  const title = document.getElementById('newPageTitle').value;
+  const slugEl = document.getElementById('newPageSlug');
+  if (slugEl && !slugEl.dataset.edited) {
+    slugEl.value = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  }
+  updatePagePreview();
+});
+document.getElementById('newPageSlug')?.addEventListener('input', function() { this.dataset.edited = '1'; });
+
+document.getElementById('pageCreateBtn')?.addEventListener('click', async () => {
+  const btn    = document.getElementById('pageCreateBtn');
+  const msgEl  = document.getElementById('syncPageMsg');
+  const title  = document.getElementById('newPageTitle').value.trim();
+  const slug   = document.getElementById('newPageSlug').value.trim().replace(/\.html$/,'');
+  const navSec = document.getElementById('newPageNav').value;
+  if (!title || !slug) { showSyncMsg('syncPageMsg','err','Enter a page title and filename.'); return; }
+  btn.textContent = 'Creating…'; btn.disabled = true;
+
+  // Build block HTML
+  const blocksHtml = pageBlocks.map(b => {
+    if (b.type === 'heading')  return `\n    <h2 class="gen-page-heading">${escHtml(b.content)}</h2>`;
+    if (b.type === 'text')     return `\n    <p class="gen-page-text">${escHtml(b.content)}</p>`;
+    if (b.type === 'image')    return b.content ? `\n    <img src="${escHtml(b.content)}" class="gen-page-img" alt="" />` : '';
+    if (b.type === 'link')     return `\n    <a href="${escHtml(b.href||'#')}" class="btn btn-primary" style="display:inline-block;margin:8px 0;">${escHtml(b.content||'Link')}</a>`;
+    return '';
+  }).join('');
+
+  const pageHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escHtml(title)} — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    .gen-page-hero { background: linear-gradient(160deg,#150020 0%,#0d0010 60%); border-bottom:1px solid var(--color-border); padding:60px 24px 44px; text-align:center; }
+    .gen-page-hero h1 { font-family:var(--font-display); font-size:clamp(2rem,5vw,3.2rem); color:var(--color-primary); text-shadow:0 0 40px rgba(255,60,172,0.4); margin-bottom:8px; }
+    .gen-page-body { max-width:860px; margin:0 auto; padding:48px 24px 80px; }
+    .gen-page-heading { font-family:var(--font-display); font-size:1.8rem; color:var(--color-secondary); margin:32px 0 12px; }
+    .gen-page-text { color:var(--color-text); line-height:1.8; margin-bottom:16px; }
+    .gen-page-img { max-width:100%; border-radius:var(--radius-lg); margin:16px 0; }
+  </style>
+</head>
+<body data-repo="bunjumun/MidwestPsychFest">
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+        <li><a href="map.html">Map</a></li>
+        <li><a href="applications.html">Applications</a></li>
+        <li><a href="more-info.html">More Info</a></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="gen-page-hero">
+    <h1>${escHtml(title)}</h1>
+  </div>
+  <div class="gen-page-body">${blocksHtml || '\n    <p class="gen-page-text">Content coming soon.</p>'}
+  </div>
+  <footer class="site-footer">
+    <div><span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span></div>
+    <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
+  </footer>
+  <script src="assets/js/site-info.js"><\/script>
+  <script>
+    document.getElementById('navToggle')?.addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
+  <\/script>
+</body>
+</html>`;
+
+  try {
+    await ghPutFile(`${slug}.html`, pageHtml, `feat: create ${slug}.html via admin page creator`);
+    showSyncMsg('syncPageMsg','ok',`✓ Created ${slug}.html — live in ~60s. <a href="${slug}.html" target="_blank" style="color:var(--color-accent);">Open ↗</a>`);
+    pageBlocks = []; renderPageBlocks(); updatePagePreview();
+    document.getElementById('newPageTitle').value = '';
+    document.getElementById('newPageSlug').value  = '';
+    document.getElementById('newPageSlug').dataset.edited = '';
+  } catch(e) {
+    showSyncMsg('syncPageMsg','err',`✗ Failed: ${e.message}`);
+  } finally { btn.textContent = 'Create & Publish'; btn.disabled = false; }
+});
+
+/* ── Hook alerts section init on nav ─────────── */
+document.querySelectorAll('.adm-nav-item[data-section="alerts"]').forEach(btn => {
+  btn.addEventListener('click', initAlertsSection);
+});
+
+/* ════════════════════════════════════════════════════════
+   CLOUD DRAFT ENGINE
+   Saves in-progress edits to data/draft-state.json on GitHub
+   so work survives across devices/browser clears without
+   permanently committing to live data files.
+   ════════════════════════════════════════════════════════ */
+
+// Collect entire current editor state into one object
+function collectDraftState() {
+  return {
+    schedule:    adminSchedule,
+    markers:     adminMarkers,
+    info:        adminInfo,
+    imageBlocks: (() => { try { return JSON.parse(localStorage.getItem('mpf_image_blocks') || 'null'); } catch(e) { return null; } })(),
+    stages:      (() => { try { return JSON.parse(localStorage.getItem('mpf_stages') || 'null'); } catch(e) { return null; } })(),
+    widgets:     (() => { try { return JSON.parse(localStorage.getItem('mpf_widgets') || 'null'); } catch(e) { return null; } })(),
+  };
+}
+
+// Restore editor state from a draft snapshot
+function applyDraftState(state) {
+  if (state.schedule)    { adminSchedule = state.schedule;   renderSchedTable(); }
+  if (state.markers)     { adminMarkers  = state.markers;    renderMarkersTable(); }
+  if (state.info)        { adminInfo     = state.info;       populateInfoForm(adminInfo); }
+  if (state.imageBlocks) localStorage.setItem('mpf_image_blocks', JSON.stringify(state.imageBlocks));
+  if (state.stages)      localStorage.setItem('mpf_stages',       JSON.stringify(state.stages));
+  if (state.widgets)     localStorage.setItem('mpf_widgets',      JSON.stringify(state.widgets));
+}
+
+// Save current state as draft to GitHub
+async function saveAsDraft() {
+  const btn = document.getElementById('btnSaveDraft');
+  const orig = btn?.textContent;
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  try {
+    await ghSaveDraft('admin', collectDraftState());
+    if (btn) { btn.textContent = '✓ Draft saved'; setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000); }
+  } catch(e) {
+    if (btn) { btn.textContent = orig; btn.disabled = false; }
+    alert('Draft save failed: ' + e.message);
+  }
+}
+
+// Called on bootDashboard — checks for an existing draft and prompts user
+async function checkForDraft() {
+  if (!ghPat()) return; // no PAT = can't reach GitHub
+  let draft = null;
+  try { draft = await ghLoadDraft(); } catch(e) { return; }
+  if (!draft || draft.toolId !== 'admin') return;
+
+  const when = new Date(draft.savedAt).toLocaleString();
+  const resume = confirm(`A draft was saved on ${when}.\n\nResume that draft? (Cancel = start fresh from live files)`);
+  if (resume) {
+    applyDraftState(draft.state);
+    showSyncMsg('draftBanner', `Draft from ${when} restored.`, 'ok');
+  } else {
+    try { await ghDeleteDraft(); } catch(e) {}
+  }
+}
+
+// Wrap every "Push to GitHub" action to also delete the draft on success
+async function commitAndClearDraft(pushFn) {
+  await pushFn();
+  try { await ghDeleteDraft(); } catch(e) {}
+}
+
+// Show a persistent draft-restored banner at top of main
+function showDraftBanner(msg) {
+  let el = document.getElementById('draftBanner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'draftBanner';
+    el.style.cssText = 'position:fixed;top:52px;left:200px;right:0;z-index:90;background:rgba(255,180,0,0.12);border-bottom:1px solid rgba(255,180,0,0.3);padding:8px 24px;font-size:0.8rem;color:#ffd966;display:flex;align-items:center;gap:12px;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span>⚠ ${msg}</span><button onclick="document.getElementById('draftBanner').remove()" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;">✕</button>`;
+}
+
+/* ════════════════════════════════════════════════════════
+   BAR / SQUARE CONFIG
+   ════════════════════════════════════════════════════════ */
+let adminBarConfig = {};
+let adminBarConfigSha = '';
+
+async function loadBarConfig() {
+  try {
+    const { data, sha } = await ghGetJSON('data/bar-config.json');
+    adminBarConfig = data || {};
+    adminBarConfigSha = sha || '';
+  } catch(e) {
+    if (e.status !== 404) console.warn('bar-config load:', e.message);
+    adminBarConfig = { square_location_id:'', square_app_id:'', payment_link:'', currency:'USD', note:'MPF 2026 Bar Order', environment:'sandbox' };
+  }
+  // Also read bar_open from info
+  const barOpen = !!(adminInfo.bar_open);
+  const tog = document.getElementById('barOpenToggle');
+  if (tog) {
+    tog.checked = barOpen;
+    document.getElementById('barOpenLabel').textContent = barOpen ? 'Currently OPEN' : 'Currently closed';
+  }
+  const f = adminBarConfig;
+  setVal('squareAppId',      f.square_app_id   || '');
+  setVal('squareLocationId', f.square_location_id || '');
+  setVal('squarePayLink',    f.payment_link    || '');
+  setVal('squareNotePrefix', f.note            || 'MPF 2026 Bar Order');
+  const envSel = document.getElementById('squareEnv');
+  if (envSel) envSel.value = f.environment || 'sandbox';
+  const curSel = document.getElementById('squareCurrency');
+  if (curSel) curSel.value = f.currency || 'USD';
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+async function saveBarConfig() {
+  const barOpen = document.getElementById('barOpenToggle')?.checked || false;
+  adminBarConfig = {
+    square_app_id:      document.getElementById('squareAppId')?.value.trim()      || '',
+    square_location_id: document.getElementById('squareLocationId')?.value.trim() || '',
+    payment_link:       document.getElementById('squarePayLink')?.value.trim()    || '',
+    note:               document.getElementById('squareNotePrefix')?.value.trim() || 'MPF 2026 Bar Order',
+    environment:        document.getElementById('squareEnv')?.value               || 'sandbox',
+    currency:           document.getElementById('squareCurrency')?.value          || 'USD',
+  };
+  // Also persist bar_open into info
+  adminInfo.bar_open = barOpen;
+  document.getElementById('barOpenLabel').textContent = barOpen ? 'Currently OPEN' : 'Currently closed';
+
+  const msg = document.getElementById('syncBarMsg');
+  try {
+    const { sha: newBarSha } = await ghPutJSON('data/bar-config.json', adminBarConfig,
+      'admin: update bar/square config', adminBarConfigSha);
+    adminBarConfigSha = newBarSha;
+    const { sha: newInfoSha } = await ghPutJSON('data/info.json', adminInfo,
+      'admin: update bar_open toggle', adminInfoSha);
+    adminInfoSha = newInfoSha;
+    showSyncMsg('syncBarMsg', '✓ Bar config pushed to GitHub', 'ok');
+  } catch(e) {
+    showSyncMsg('syncBarMsg', 'Push failed: ' + e.message, 'err');
+  }
+}
+
+document.getElementById('barSyncBtn')?.addEventListener('click', saveBarConfig);
+document.getElementById('barReloadBtn')?.addEventListener('click', async () => {
+  await loadBarConfig();
+  showSyncMsg('syncBarMsg', 'Reloaded from repo', 'ok');
+});
+document.getElementById('barOpenToggle')?.addEventListener('change', function() {
+  document.getElementById('barOpenLabel').textContent = this.checked ? 'Currently OPEN' : 'Currently closed';
 });
 
 /* ── Boot ─────────────────────────────────────────────── */

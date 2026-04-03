@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Applications — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    /* ── Applications Hero ── */
+    .apps-hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(160deg, #150020 0%, #0d0010 60%);
+      border-bottom: 1px solid var(--color-border);
+      padding: 80px 24px 64px;
+      text-align: center;
+    }
+    .apps-orbs { position: absolute; inset: 0; pointer-events: none; }
+    .apps-orb {
+      position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.14;
+    }
+    .apps-orb-1 {
+      width: 380px; height: 380px;
+      background: var(--color-primary);
+      top: -120px; left: -60px;
+      animation: apps-drift 10s ease-in-out infinite alternate;
+    }
+    .apps-orb-2 {
+      width: 260px; height: 260px;
+      background: var(--color-secondary);
+      bottom: -80px; right: -40px;
+      animation: apps-drift 13s ease-in-out infinite alternate-reverse;
+    }
+    .apps-orb-3 {
+      width: 200px; height: 200px;
+      background: var(--color-accent);
+      top: 40%; left: 55%;
+      animation: apps-drift 9s ease-in-out infinite alternate;
+    }
+    @keyframes apps-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(18px, 12px) scale(1.06); }
+    }
+
+    .apps-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255, 60, 172, 0.1);
+      border: 1px solid rgba(255, 60, 172, 0.3);
+      border-radius: 99px; padding: 5px 16px;
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--color-primary); margin-bottom: 20px;
+    }
+    .apps-hero h1 {
+      position: relative;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      color: var(--color-primary);
+      text-shadow: 0 0 50px rgba(255, 60, 172, 0.35);
+      margin-bottom: 14px;
+    }
+    .apps-hero p {
+      position: relative;
+      color: var(--color-text-muted);
+      font-size: 1.1rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ── Cards Grid ── */
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      max-width: 1100px;
+      margin: 60px auto 0;
+      padding: 0 24px 80px;
+    }
+
+    .app-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+    }
+    .app-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .app-card.card-volunteer {
+      border-color: rgba(79, 255, 176, 0.25);
+    }
+    .app-card.card-volunteer:hover {
+      border-color: rgba(79, 255, 176, 0.55);
+      box-shadow: 0 0 40px rgba(79, 255, 176, 0.08);
+    }
+    .app-card.card-band {
+      border-color: rgba(255, 60, 172, 0.25);
+    }
+    .app-card.card-band:hover {
+      border-color: rgba(255, 60, 172, 0.55);
+      box-shadow: 0 0 40px rgba(255, 60, 172, 0.08);
+    }
+    .app-card.card-vendor {
+      border-color: rgba(249, 200, 14, 0.25);
+    }
+    .app-card.card-vendor:hover {
+      border-color: rgba(249, 200, 14, 0.55);
+      box-shadow: 0 0 40px rgba(249, 200, 14, 0.08);
+    }
+
+    .app-card-icon {
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+    .app-card h2 {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      line-height: 1.15;
+    }
+    .app-card.card-volunteer h2 { color: var(--color-accent); }
+    .app-card.card-band h2      { color: var(--color-primary); }
+    .app-card.card-vendor h2    { color: var(--color-secondary); }
+
+    .app-card p {
+      color: var(--color-text-muted);
+      font-size: 0.97rem;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    .app-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    /* ── Subtext note ── */
+    .app-card-note {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Festival <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="schedule.html">Schedule</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="more-info.html">More Info</a></li>
+            <li><a href="applications.html" class="active">Applications</a></li>
+          </ul>
+        </li>
+        <li class="nav-dropdown-group">
+          <button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+            Organizers <span class="arrow">▾</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            <li><a href="volunteer.html">Volunteer Check-In</a></li>
+            <li><a href="band-checkin.html">Band Check-In</a></li>
+            <li><a href="volunteer_schedule_tool.html">Volunteer Tool</a></li>
+            <li><a href="mpf_schedule_tool.html">Band Email Tool</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="apps-hero">
+    <div class="apps-orbs">
+      <div class="apps-orb apps-orb-1"></div>
+      <div class="apps-orb apps-orb-2"></div>
+      <div class="apps-orb apps-orb-3"></div>
+    </div>
+    <div class="apps-eyebrow">✦ Midwest Psych Fest 2026</div>
+    <h1>Apply to the Fest</h1>
+    <p>Volunteers, Artists, and Vendors — join the magic</p>
+  </section>
+
+  <!-- APPLICATION CARDS -->
+  <div class="apps-grid">
+
+    <!-- Volunteer Card -->
+    <div class="app-card card-volunteer">
+      <div class="app-card-icon">🙋</div>
+      <h2>Volunteer</h2>
+      <p>
+        Help make the magic happen. Volunteers get in free and work alongside an incredible
+        team of humans to build one of Ohio's best psych fests.
+        <br><br>
+        After signing up, you can check your shifts on the
+        <a href="volunteer.html">Volunteer Check-In</a> page.
+      </p>
+      <div class="app-card-actions">
+        <a href="#volunteer-form" class="btn btn-accent">Sign Up →</a>
+        <a href="volunteer.html" class="btn btn-ghost btn-sm">Check-In Page</a>
+      </div>
+      <p class="app-card-note">Google Form opens when available.</p>
+    </div>
+
+    <!-- Band / Artist Card -->
+    <div class="app-card card-band">
+      <div class="app-card-icon">🎸</div>
+      <h2>Band / Artist</h2>
+      <p>
+        Submit your act for consideration. We're looking for psychedelic, krautrock,
+        shoegaze, garage, experimental, and all things weird &amp; wonderful.
+        All genres considered — just bring the energy.
+      </p>
+      <div class="app-card-actions">
+        <a href="#band-form" class="btn btn-primary">Apply Now →</a>
+      </div>
+      <p class="app-card-note">Band application opens soon.</p>
+    </div>
+
+    <!-- Vendor Card -->
+    <div class="app-card card-vendor">
+      <div class="app-card-icon">🛒</div>
+      <h2>Vendor</h2>
+      <p>
+        Bring your business to the fest. Food trucks, craft vendors, artists, makers —
+        if you've got something cool to sell, we want you there.
+        Spaces are limited, so apply early.
+      </p>
+      <div class="app-card-actions">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdBclCjq9jJ813s57A2ql_9hZvA6yqg2hpbgn_QvYWAFPIaNQ/viewform"
+           target="_blank" rel="noopener" class="btn btn-secondary">Apply Now →</a>
+      </div>
+      <p class="app-card-note">Vendor application is live — apply now!</p>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      <span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span>
+    </div>
+    <div style="margin-top:12px;">
+      <a href="#" data-info="instagram">Instagram</a> &nbsp;·&nbsp;
+      <a href="#" data-info="facebook">Facebook</a>
+    </div>
+    <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
+  </footer>
+
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/site-info.js"></script>
+</body>
+</html>
