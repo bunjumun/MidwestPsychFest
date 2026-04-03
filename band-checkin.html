@@ -651,44 +651,66 @@
           <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec" />
         </div>
         <div class="script-guide">
-          <h4>Setup — deploy once, reuse for both pages</h4>
+          <h4>Setup — one script, one spreadsheet, both pages</h4>
           <ol>
-            <li>Open your band roster Google Sheet → <strong>Extensions → Apps Script</strong></li>
-            <li>Paste the script below, save, and deploy as a Web App (Execute as: Me, Anyone can access)</li>
-            <li>Copy the deployment URL and paste above</li>
+            <li>Create a spreadsheet named <strong>"MPF Spring 2026 Master Schedule"</strong> with two tabs: <strong>Bands</strong> and <strong>Volunteers</strong></li>
+            <li>Open the spreadsheet → <strong>Extensions → Apps Script</strong></li>
+            <li>Delete any existing code, paste the script below, replace <code>YOUR_SPREADSHEET_ID_HERE</code> with your Spreadsheet ID (from the sheet URL), and click <strong>Save</strong></li>
+            <li>Click <strong>Deploy → New deployment → Web App</strong></li>
+            <li>Set <em>Execute as:</em> <strong>Me</strong> · <em>Who has access:</em> <strong>Anyone</strong></li>
+            <li>Click <strong>Deploy</strong>, copy the <code>/exec</code> URL, and paste it above — use the same URL on both the Bands and Volunteers pages</li>
           </ol>
-          <div class="script-code-block">// ── IMPORTANT DEPLOYMENT SETTINGS ──────────────────────────
+          <div class="script-code-block">// ── DEPLOYMENT SETTINGS ────────────────────────────────────
 // Execute as: Me
 // Who has access: Anyone  (NOT "Anyone with a Google account")
-// This lets the browser POST without authentication.
+// ───────────────────────────────────────────────────────────
+// Use ONE spreadsheet ("MPF Spring 2026 Master Schedule") with
+// two tabs: "Bands" and "Volunteers".  This script handles both.
 // ───────────────────────────────────────────────────────────
 
+var SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+
 function doPost(e) {
-  var output;
   try {
     var d = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.openById(d.sheetId);
-    var sheet = ss.getSheets()[d.sheetIndex || 0];
-    var col = d.col.toUpperCase().charCodeAt(0) - 64;
-    var row = parseInt(d.row);
-    if (!col || !row) throw new Error('Bad col/row: ' + d.col + '/' + d.row);
-    if (d.value === '' || d.value === null) {
-      sheet.getRange(row, col).clearContent();
+    var ss = SpreadsheetApp.openById(d.sheetId || SPREADSHEET_ID);
+
+    // Route by tab name ("Bands" or "Volunteers")
+    var sheet;
+    if (d.sheetName) {
+      sheet = ss.getSheetByName(d.sheetName);
+      if (!sheet) throw new Error('Tab not found: ' + d.sheetName);
     } else {
-      sheet.getRange(row, col).setValue(d.value);
+      sheet = ss.getSheets()[d.sheetIndex || 0];
     }
-    output = JSON.stringify({ok: true});
+
+    // col: letter ("A") or 0-indexed integer; row: 1-indexed from CSV
+    var colNum = (typeof d.col === 'number')
+      ? d.col + 1
+      : d.col.trim().toUpperCase().charCodeAt(0) - 64;
+    var rowNum = parseInt(d.row);
+    if (!colNum || isNaN(rowNum) || rowNum < 1)
+      throw new Error('Bad col/row: ' + d.col + '/' + d.row);
+
+    if (d.value === '' || d.value === null || d.value === undefined) {
+      sheet.getRange(rowNum, colNum).clearContent();
+    } else {
+      sheet.getRange(rowNum, colNum).setValue(d.value);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'success', ok: true }))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch(err) {
-    output = JSON.stringify({ok: false, error: String(err)});
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
-  return ContentService
-    .createTextOutput(output)
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet(e) {
   return ContentService
-    .createTextOutput(JSON.stringify({ok: true, status: 'MPF Band Check-In active'}))
+    .createTextOutput(JSON.stringify({ ok: true, status: 'MPF Sync active' }))
     .setMimeType(ContentService.MimeType.JSON);
 }</div>
         </div>
@@ -754,7 +776,7 @@ function doGet(e) {
   const CACHE_TTL    = 5 * 60 * 1000;
 
   const DEFAULT_CONFIG = {
-    sheetUrl:'', sheetId:'', sheetIndex:0, scriptUrl:'',
+    sheetUrl:'', sheetId:'', sheetIndex:0, scriptUrl:'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
     nameCol:'A', checkinCol:'', checkinLabel:'Band Arrived',
     completeCol:'', completeLabel:'Load-Out Complete',
     fields:[
@@ -839,7 +861,7 @@ function doGet(e) {
       const res = await fetch(config.scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ sheetId: config.sheetId, sheetIndex: config.sheetIndex || 0, row, col, value })
+        body: JSON.stringify({ sheetId: config.sheetId, sheetName: 'Bands', row, col, value })
       });
       if (!res.ok) { console.error('Sheet write HTTP error:', res.status); return false; }
       const data = await res.json().catch(() => ({}));
