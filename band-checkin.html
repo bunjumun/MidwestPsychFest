@@ -6,124 +6,568 @@
   <title>Band Check-In — Midwest Psych Fest 2026</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <style>
-    /* ── Hero ── */
+    /* ══════════════════════════════════════════════
+       CARNIVAL HERO — teal sunburst + warm palette
+    ══════════════════════════════════════════════ */
     .band-hero {
-      position:relative;overflow:hidden;
-      background:linear-gradient(160deg,#1a0010 0%,#0d0010 60%);
-      border-bottom:1px solid var(--color-border);
-      padding:64px 24px 48px;text-align:center;
+      position: relative;
+      overflow: hidden;
+      background: #0a2e2b;
+      border-bottom: 4px solid #f7931d;
+      padding: 0;
+      text-align: center;
     }
-    .band-orbs{position:absolute;inset:0;pointer-events:none;}
-    .band-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:0.18;}
-    .band-orb-1{width:300px;height:300px;background:var(--color-primary);top:-80px;left:-60px;animation:bd-drift 9s ease-in-out infinite alternate;}
-    .band-orb-2{width:200px;height:200px;background:var(--color-secondary);bottom:-60px;right:-40px;animation:bd-drift 11s ease-in-out infinite alternate-reverse;}
-    @keyframes bd-drift{from{transform:translate(0,0) scale(1)}to{transform:translate(18px,12px) scale(1.07)}}
-    .band-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(255,60,172,0.1);border:1px solid rgba(255,60,172,0.3);border-radius:99px;padding:4px 14px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--color-primary);margin-bottom:16px;}
-    .band-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--color-primary);animation:bd-pulse 2s ease-in-out infinite;}
-    @keyframes bd-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
-    .band-hero h1{position:relative;font-size:clamp(2rem,5vw,3.2rem);color:var(--color-primary);text-shadow:0 0 40px rgba(255,60,172,0.4);margin-bottom:10px;}
-    .band-hero p{position:relative;color:var(--color-text-muted);max-width:500px;margin:0 auto;}
 
-    /* ── Lookup ── */
-    .lookup-section{max-width:600px;margin:40px auto;padding:0 24px;}
-    .lookup-card{background:var(--color-bg-card);border:1px solid rgba(255,60,172,0.2);border-radius:var(--radius-lg);padding:32px;box-shadow:0 0 40px rgba(255,60,172,0.06),0 4px 24px rgba(0,0,0,0.4);transition:box-shadow 0.3s;}
-    .lookup-card:focus-within{border-color:rgba(255,60,172,0.45);box-shadow:0 0 60px rgba(255,60,172,0.1),0 4px 24px rgba(0,0,0,0.4);}
-    .lookup-card h2{font-family:var(--font-display);color:var(--color-primary);font-size:1.4rem;margin-bottom:20px;text-align:center;}
-    .lookup-form{display:flex;gap:10px;margin-bottom:8px;}
-    .lookup-form input{flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);font-family:var(--font-body);font-size:1.05rem;padding:12px 18px;outline:none;transition:border-color 0.2s;}
-    .lookup-form input:focus{border-color:var(--color-primary);}
-    .lookup-form input::placeholder{color:var(--color-text-muted);}
-    .lookup-hint{font-size:0.78rem;color:var(--color-text-muted);text-align:center;margin-top:8px;}
-    .lookup-hint code{background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px;color:var(--color-primary);font-size:0.76rem;}
+    /* Teal sunburst rays via conic-gradient */
+    .hero-sunburst {
+      position: absolute;
+      inset: 0;
+      background: conic-gradient(
+        from 0deg at 50% 110%,
+        #1a8a82 0deg, #0d5e58 10deg,
+        #1a8a82 20deg, #0d5e58 30deg,
+        #1a8a82 40deg, #0d5e58 50deg,
+        #1a8a82 60deg, #0d5e58 70deg,
+        #1a8a82 80deg, #0d5e58 90deg,
+        #1a8a82 100deg, #0d5e58 110deg,
+        #1a8a82 120deg, #0d5e58 130deg,
+        #1a8a82 140deg, #0d5e58 150deg,
+        #1a8a82 160deg, #0d5e58 170deg,
+        #1a8a82 180deg
+      );
+      opacity: 0.85;
+    }
 
-    /* ── Status msgs ── */
-    #resultArea{margin-top:24px;}
-    .status-msg{text-align:center;padding:20px;border-radius:var(--radius-lg);border:1px solid var(--color-border);color:var(--color-text-muted);font-size:0.95rem;}
-    .status-msg.error{border-color:rgba(255,68,68,0.4);color:#ff6666;background:rgba(255,68,68,0.05);}
-    .status-msg.loading{display:flex;align-items:center;justify-content:center;gap:10px;border-color:rgba(255,60,172,0.2);color:var(--color-primary);}
-    .status-msg.loading::before{content:'';width:16px;height:16px;border:2px solid rgba(255,60,172,0.3);border-top-color:var(--color-primary);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Teal radial overlay to punch the center */
+    .hero-sunburst::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 90% 60% at 50% 100%, #2dd4c4 0%, transparent 65%);
+      opacity: 0.45;
+    }
 
-    /* ── Band Cards ── */
-    .shift-card{background:rgba(255,60,172,0.05);border:1px solid rgba(255,60,172,0.3);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;position:relative;animation:card-in 0.3s ease-out both;}
-    @keyframes card-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .shift-card.checked-in{border-color:rgba(255,60,172,0.55);background:rgba(255,60,172,0.08);}
-    .shift-card.completed{border-color:rgba(249,200,14,0.4);background:rgba(249,200,14,0.05);}
-    .shift-name{font-family:var(--font-display);font-size:1.3rem;color:var(--color-primary);margin-bottom:14px;}
-    .shift-meta{display:grid;gap:7px;margin-bottom:16px;}
-    .shift-meta-row{display:flex;align-items:flex-start;gap:10px;font-size:0.9rem;}
-    .shift-meta-label{color:var(--color-text-muted);min-width:120px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;padding-top:2px;flex-shrink:0;}
-    .shift-meta-value{color:var(--color-text);}
-    .shift-status{margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;}
-    .shift-actions{display:flex;gap:10px;flex-wrap:wrap;}
-    .status-chip{display:inline-flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;padding:3px 10px;border-radius:99px;}
-    .status-chip--in{background:rgba(255,60,172,0.15);border:1px solid rgba(255,60,172,0.4);color:var(--color-primary);}
-    .status-chip--done{background:rgba(249,200,14,0.12);border:1px solid rgba(249,200,14,0.4);color:var(--color-secondary);}
-    .status-chip--none{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--color-text-muted);}
-    .complete-btn{background:var(--color-primary);color:#fff;border:none;border-radius:var(--radius);padding:9px 20px;font-family:var(--font-body);font-weight:700;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;}
-    .complete-btn:hover:not(:disabled){background:#ff69d3;transform:translateY(-1px);}
-    .complete-btn:disabled{background:rgba(255,60,172,0.2);color:var(--color-text-muted);cursor:default;transform:none;}
-    .complete-btn--secondary{background:var(--color-secondary);color:#0d0010;}
-    .complete-btn--secondary:hover:not(:disabled){background:#ffe066;}
-    .undo-btn{background:transparent;border:1px solid var(--color-border);color:var(--color-text-muted);border-radius:var(--radius);padding:9px 14px;font-family:var(--font-body);font-size:0.8rem;cursor:pointer;transition:all 0.2s;}
-    .undo-btn:hover{border-color:var(--color-text);color:var(--color-text);}
-    .sync-notice{font-size:0.75rem;color:var(--color-text-muted);margin-top:10px;min-height:16px;}
-    .sync-notice.synced{color:var(--color-primary);}
-    .sync-notice.failed{color:#ff6666;}
+    /* Swirl/wave overlay */
+    .hero-swirl {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 120% 80% at 50% -10%, rgba(13,94,88,0.8) 0%, transparent 60%);
+    }
 
-    /* ── Full Schedule Table ── */
-    .full-schedule-wrap{margin-top:16px;}
-    .full-schedule-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:0.82rem;color:var(--color-text-muted);}
-    .table-scroll{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--color-border);}
-    .full-schedule-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
-    .full-schedule-table th{background:rgba(255,60,172,0.07);color:var(--color-primary);font-family:var(--font-display);font-size:0.78rem;padding:10px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--color-border);}
-    .full-schedule-table td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--color-text);vertical-align:top;}
-    .full-schedule-table tr:last-child td{border-bottom:none;}
-    .full-schedule-table tr.row-checkedin td{background:rgba(255,60,172,0.04);}
-    .full-schedule-table tr.row-complete td{background:rgba(249,200,14,0.04);}
-    .full-schedule-table tr:hover td{background:rgba(255,255,255,0.03);}
-    .td-name{font-weight:700;white-space:nowrap;}
-    .td-status{white-space:nowrap;}
+    /* Marquee dot border top */
+    .hero-dots-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #f7931d 0px, #f7931d 10px,
+        transparent 10px, transparent 18px
+      );
+    }
+    .hero-dots-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #ff3cac 0px, #ff3cac 10px,
+        transparent 10px, transparent 18px
+      );
+    }
 
-    /* ── Admin ── */
-    .admin-config-section{max-width:600px;margin:0 auto 60px;padding:0 24px;}
-    .admin-config-toggle{width:100%;background:transparent;border:1px dashed rgba(178,75,255,0.3);color:rgba(178,75,255,0.7);border-radius:var(--radius);padding:10px;font-family:var(--font-body);font-size:0.8rem;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.05em;}
-    .admin-config-toggle:hover{border-color:var(--color-purple);color:var(--color-purple);}
-    .admin-config-panel{display:none;background:rgba(178,75,255,0.05);border:1px solid rgba(178,75,255,0.25);border-radius:var(--radius-lg);padding:24px;margin-top:12px;}
-    .admin-config-panel.open{display:block;}
-    .admin-config-panel h3{font-family:var(--font-display);color:var(--color-purple);font-size:1.1rem;margin-bottom:16px;}
-    .admin-section-divider{border:none;border-top:1px solid rgba(255,255,255,0.08);margin:20px 0;}
-    .admin-section-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--color-text-muted);margin-bottom:12px;display:block;}
-    .config-field{margin-bottom:14px;}
-    .config-field label{display:block;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-text-muted);margin-bottom:6px;}
-    .config-field input{width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);font-family:var(--font-body);font-size:0.9rem;padding:9px 12px;outline:none;transition:border-color 0.2s;}
-    .config-field input:focus{border-color:var(--color-purple);}
-    .config-field input::placeholder{color:var(--color-text-muted);font-size:0.8rem;}
-    .field-hint{font-size:0.73rem;color:var(--color-text-muted);margin-top:5px;line-height:1.4;}
-    .field-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-    .field-row .fr-label{flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);font-family:var(--font-body);font-size:0.85rem;padding:7px 10px;outline:none;}
-    .field-row .fr-label:focus{border-color:var(--color-purple);}
-    .field-row .fr-col{width:52px;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-primary);font-family:monospace;font-size:0.9rem;padding:7px 8px;text-align:center;outline:none;text-transform:uppercase;}
-    .field-row .fr-col:focus{border-color:var(--color-purple);}
-    .field-row .fr-remove{background:transparent;border:1px solid rgba(255,68,68,0.25);color:rgba(255,68,68,0.6);border-radius:var(--radius);width:28px;height:28px;cursor:pointer;font-size:0.8rem;flex-shrink:0;transition:all 0.2s;}
-    .field-row .fr-remove:hover{border-color:#ff4444;color:#ff4444;}
-    .field-rows-header{display:flex;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);gap:8px;margin-bottom:6px;padding:0 2px;}
-    .field-rows-header .fh-label{flex:1;}
-    .field-rows-header .fh-col{width:52px;text-align:center;}
-    .field-rows-header .fh-del{width:28px;}
-    .script-guide{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px;margin-top:16px;}
-    .script-guide h4{font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-text-muted);margin-bottom:10px;}
-    .script-guide ol{padding-left:18px;font-size:0.8rem;color:var(--color-text-muted);line-height:1.7;}
-    .script-guide code{background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px;font-size:0.76rem;color:var(--color-primary);}
-    .script-code-block{background:#0d0010;border:1px solid rgba(255,60,172,0.2);border-radius:var(--radius);padding:12px;margin-top:10px;font-family:monospace;font-size:0.72rem;color:var(--color-primary);white-space:pre;overflow-x:auto;line-height:1.5;}
-    .config-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;}
-    .config-status{margin-top:10px;font-size:0.8rem;color:var(--color-text-muted);min-height:20px;}
-    .config-status.ok{color:var(--color-primary);}
-    .config-status.err{color:#ff6666;}
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      padding: 52px 24px 44px;
+    }
+
+    /* Carnival tent icon */
+    .hero-tent {
+      font-size: 2.8rem;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 12px rgba(247,147,29,0.6));
+    }
+
+    /* Artist Portal badge — marquee pill */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7931d;
+      border: 3px solid #d63030;
+      border-radius: 4px;
+      padding: 4px 20px;
+      font-size: 0.68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: #fff;
+      margin-bottom: 18px;
+      box-shadow: 0 0 0 2px #f7931d, 0 0 0 4px rgba(247,147,29,0.25);
+      position: relative;
+    }
+    .hero-badge::before,
+    .hero-badge::after {
+      content: '●';
+      font-size: 0.45rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* Main title */
+    .band-hero h1 {
+      position: relative;
+      font-family: var(--font-display);
+      font-size: clamp(2.6rem, 8vw, 5rem);
+      line-height: 0.95;
+      margin-bottom: 8px;
+      /* white fill, hot-pink + orange stroke stack */
+      -webkit-text-stroke: 3px #ff3cac;
+      paint-order: stroke fill;
+      color: #fff;
+      text-shadow:
+        4px 4px 0 #d63030,
+        6px 6px 0 rgba(0,0,0,0.3);
+      letter-spacing: 0.02em;
+    }
+
+    /* Date marquee band */
+    .hero-date-band {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: #d63030;
+      border: 2px solid #f7931d;
+      border-radius: 3px;
+      padding: 5px 24px;
+      margin: 10px 0 14px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: #fff;
+      letter-spacing: 0.12em;
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.35);
+    }
+    .hero-date-band .dot { width: 7px; height: 7px; border-radius: 50%; background: #f9c80e; flex-shrink: 0; }
+
+    .hero-sub {
+      position: relative;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.8);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    .hero-sub strong { color: #f9c80e; }
+
+    /* ══════════════════════════════════════════════
+       LOOKUP CARD — warm carnival style
+    ══════════════════════════════════════════════ */
+    .lookup-section { max-width: 620px; margin: 36px auto; padding: 0 24px; }
+
+    .lookup-card {
+      background: linear-gradient(145deg, #1a0e00, #120800);
+      border: 2px solid #f7931d;
+      border-radius: 6px;
+      padding: 32px;
+      box-shadow:
+        0 0 0 1px rgba(247,147,29,0.2),
+        0 0 40px rgba(247,147,29,0.08),
+        0 8px 32px rgba(0,0,0,0.5);
+      position: relative;
+    }
+
+    /* Corner marquee dots */
+    .lookup-card::before {
+      content: '● ● ●';
+      position: absolute;
+      top: -1px; left: 50%; transform: translateX(-50%);
+      background: #f7931d;
+      color: #fff;
+      font-size: 0.5rem;
+      letter-spacing: 4px;
+      padding: 2px 12px;
+      border-radius: 0 0 6px 6px;
+    }
+
+    .lookup-card h2 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: #f7931d;
+      text-align: center;
+      margin-bottom: 22px;
+      text-shadow: 0 0 20px rgba(247,147,29,0.3);
+      letter-spacing: 0.04em;
+    }
+
+    .lookup-form { display: flex; gap: 10px; margin-bottom: 8px; }
+    .lookup-form input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(247,147,29,0.35);
+      border-radius: var(--radius);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      padding: 12px 18px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .lookup-form input:focus {
+      border-color: #f7931d;
+      box-shadow: 0 0 0 3px rgba(247,147,29,0.12);
+    }
+    .lookup-form input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .lookup-btn {
+      background: #f7931d;
+      color: #120800;
+      border: 2px solid #d63030;
+      border-radius: var(--radius);
+      padding: 12px 24px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+    .lookup-btn:hover { background: #ffa83d; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(247,147,29,0.3); }
+
+    .lookup-hint { font-size: 0.78rem; color: rgba(255,255,255,0.4); text-align: center; margin-top: 8px; }
+    .lookup-hint code {
+      background: rgba(247,147,29,0.1);
+      border: 1px solid rgba(247,147,29,0.25);
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: #f7931d;
+      font-size: 0.76rem;
+    }
+
+    /* ══════════════════════════════════════════════
+       STATUS MESSAGES
+    ══════════════════════════════════════════════ */
+    #resultArea { margin-top: 24px; }
+
+    .status-msg {
+      text-align: center; padding: 20px; border-radius: var(--radius-lg);
+      border: 1px solid rgba(247,147,29,0.2);
+      color: rgba(255,255,255,0.5); font-size: 0.95rem;
+    }
+    .status-msg.error {
+      border-color: rgba(214,48,48,0.4);
+      color: #ff7070;
+      background: rgba(214,48,48,0.06);
+    }
+    .status-msg.loading {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      border-color: rgba(247,147,29,0.25); color: #f7931d;
+    }
+    .status-msg.loading::before {
+      content: '';
+      width: 16px; height: 16px;
+      border: 2px solid rgba(247,147,29,0.3);
+      border-top-color: #f7931d;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════════
+       BAND CARDS — warm carnival
+    ══════════════════════════════════════════════ */
+    .shift-card {
+      background: linear-gradient(145deg, #1c0f00, #140a00);
+      border: 2px solid rgba(247,147,29,0.45);
+      border-radius: 6px;
+      padding: 24px;
+      margin-bottom: 16px;
+      position: relative;
+      animation: card-in 0.3s ease-out both;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(247,147,29,0.08);
+    }
+    @keyframes card-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Marquee dot stripe at top of card */
+    .shift-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        #f7931d 0px, #f7931d 8px,
+        transparent 8px, transparent 14px
+      );
+      border-radius: 4px 4px 0 0;
+    }
+
+    .shift-card.checked-in {
+      border-color: rgba(247,147,29,0.7);
+      background: linear-gradient(145deg, #221200, #180d00);
+      box-shadow: 0 0 24px rgba(247,147,29,0.12), 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .shift-card.completed {
+      border-color: rgba(249,200,14,0.5);
+      background: linear-gradient(145deg, #1c1800, #130f00);
+      box-shadow: 0 0 24px rgba(249,200,14,0.1), 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .shift-card.completed::before {
+      background: repeating-linear-gradient(
+        90deg,
+        #f9c80e 0px, #f9c80e 8px,
+        transparent 8px, transparent 14px
+      );
+    }
+
+    .shift-name {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: #f7931d;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+      text-shadow: 0 0 20px rgba(247,147,29,0.25);
+    }
+
+    .shift-meta { display: grid; gap: 8px; margin-bottom: 18px; }
+    .shift-meta-row { display: flex; align-items: flex-start; gap: 12px; font-size: 0.9rem; }
+    .shift-meta-label {
+      color: rgba(255,255,255,0.4);
+      min-width: 130px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+    .shift-meta-value { color: #f0e0c8; }
+
+    .shift-status { margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .shift-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Status chips */
+    .status-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 3px 12px; border-radius: 3px;
+    }
+    .status-chip--in {
+      background: rgba(247,147,29,0.18);
+      border: 1px solid rgba(247,147,29,0.5);
+      color: #f7931d;
+    }
+    .status-chip--done {
+      background: rgba(249,200,14,0.14);
+      border: 1px solid rgba(249,200,14,0.45);
+      color: #f9c80e;
+    }
+    .status-chip--none {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* Action buttons */
+    .complete-btn {
+      background: #f7931d;
+      color: #120800;
+      border: 2px solid #d63030;
+      border-radius: 4px;
+      padding: 10px 22px;
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+    }
+    .complete-btn:hover:not(:disabled) {
+      background: #ffa83d;
+      transform: translateY(-2px);
+      box-shadow: 3px 5px 0 rgba(0,0,0,0.4);
+    }
+    .complete-btn:active:not(:disabled) { transform: translateY(0); box-shadow: 1px 1px 0 rgba(0,0,0,0.4); }
+    .complete-btn:disabled {
+      background: rgba(247,147,29,0.2);
+      color: rgba(255,255,255,0.35);
+      border-color: rgba(247,147,29,0.2);
+      cursor: default; transform: none; box-shadow: none;
+    }
+    .complete-btn--gold {
+      background: #f9c80e;
+      color: #120800;
+      border-color: #d4a800;
+    }
+    .complete-btn--gold:hover:not(:disabled) { background: #ffe033; }
+
+    .undo-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.4);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .undo-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.7); }
+
+    .sync-notice { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 10px; min-height: 16px; }
+    .sync-notice.synced { color: #4fffb0; }
+    .sync-notice.failed { color: #ff6666; }
+
+    /* ══════════════════════════════════════════════
+       FULL ROSTER TABLE
+    ══════════════════════════════════════════════ */
+    .full-schedule-wrap { margin-top: 16px; }
+    .full-schedule-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; font-size: 0.82rem; color: rgba(255,255,255,0.4);
+    }
+    .table-scroll {
+      overflow-x: auto;
+      border-radius: 4px;
+      border: 1px solid rgba(247,147,29,0.25);
+    }
+    .full-schedule-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .full-schedule-table th {
+      background: rgba(247,147,29,0.12);
+      color: #f7931d;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      padding: 10px 14px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid rgba(247,147,29,0.2);
+    }
+    .full-schedule-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: #f0e0c8;
+      vertical-align: top;
+    }
+    .full-schedule-table tr:last-child td { border-bottom: none; }
+    .full-schedule-table tr.row-checkedin td { background: rgba(247,147,29,0.05); }
+    .full-schedule-table tr.row-complete td { background: rgba(249,200,14,0.04); }
+    .full-schedule-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .td-name { font-weight: 700; white-space: nowrap; color: #f7931d; }
+    .td-status { white-space: nowrap; }
+
+    /* ══════════════════════════════════════════════
+       ADMIN PANEL — same function, teal accent
+    ══════════════════════════════════════════════ */
+    .admin-config-section { max-width: 620px; margin: 0 auto 60px; padding: 0 24px; }
+    .admin-config-toggle {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed rgba(45,212,196,0.3);
+      color: rgba(45,212,196,0.6);
+      border-radius: var(--radius);
+      padding: 10px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .admin-config-toggle:hover { border-color: #2dd4c4; color: #2dd4c4; }
+    .admin-config-panel {
+      display: none;
+      background: rgba(45,212,196,0.04);
+      border: 1px solid rgba(45,212,196,0.2);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-top: 12px;
+    }
+    .admin-config-panel.open { display: block; }
+    .admin-config-panel h3 {
+      font-family: var(--font-display);
+      color: #2dd4c4;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+    .admin-section-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 20px 0; }
+    .admin-section-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4); margin-bottom: 12px; display: block;
+    }
+    .config-field { margin-bottom: 14px; }
+    .config-field label {
+      display: block; font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.05em; color: rgba(255,255,255,0.4); margin-bottom: 6px;
+    }
+    .config-field input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      color: var(--color-text);
+      font-family: var(--font-body); font-size: 0.9rem;
+      padding: 9px 12px; outline: none; transition: border-color 0.2s;
+    }
+    .config-field input:focus { border-color: #2dd4c4; }
+    .config-field input::placeholder { color: rgba(255,255,255,0.25); font-size: 0.8rem; }
+    .field-hint { font-size: 0.73rem; color: rgba(255,255,255,0.35); margin-top: 5px; line-height: 1.4; }
+    .field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .field-row .fr-label {
+      flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--color-border);
+      border-radius: var(--radius); color: var(--color-text); font-family: var(--font-body);
+      font-size: 0.85rem; padding: 7px 10px; outline: none;
+    }
+    .field-row .fr-label:focus { border-color: #2dd4c4; }
+    .field-row .fr-col {
+      width: 52px; background: rgba(255,255,255,0.06); border: 1px solid var(--color-border);
+      border-radius: var(--radius); color: #f7931d; font-family: monospace;
+      font-size: 0.9rem; padding: 7px 8px; text-align: center; outline: none; text-transform: uppercase;
+    }
+    .field-row .fr-col:focus { border-color: #2dd4c4; }
+    .field-row .fr-remove {
+      background: transparent; border: 1px solid rgba(255,68,68,0.25);
+      color: rgba(255,68,68,0.6); border-radius: var(--radius);
+      width: 28px; height: 28px; cursor: pointer; font-size: 0.8rem; flex-shrink: 0; transition: all 0.2s;
+    }
+    .field-row .fr-remove:hover { border-color: #ff4444; color: #ff4444; }
+    .field-rows-header {
+      display: flex; font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.08em; color: rgba(255,255,255,0.35);
+      gap: 8px; margin-bottom: 6px; padding: 0 2px;
+    }
+    .field-rows-header .fh-label { flex: 1; }
+    .field-rows-header .fh-col { width: 52px; text-align: center; }
+    .field-rows-header .fh-del { width: 28px; }
+    .script-guide {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius); padding: 14px; margin-top: 16px;
+    }
+    .script-guide h4 {
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.4); margin-bottom: 10px;
+    }
+    .script-guide ol { padding-left: 18px; font-size: 0.8rem; color: rgba(255,255,255,0.4); line-height: 1.7; }
+    .script-guide code {
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 3px;
+      font-size: 0.76rem; color: #2dd4c4;
+    }
+    .script-code-block {
+      background: #050d0c; border: 1px solid rgba(45,212,196,0.2); border-radius: var(--radius);
+      padding: 12px; margin-top: 10px; font-family: monospace; font-size: 0.72rem;
+      color: #2dd4c4; white-space: pre; overflow-x: auto; line-height: 1.5;
+    }
+    .config-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+    .config-status { margin-top: 10px; font-size: 0.8rem; color: rgba(255,255,255,0.4); min-height: 20px; }
+    .config-status.ok { color: #4fffb0; }
+    .config-status.err { color: #ff6666; }
   </style>
 </head>
 <body data-repo="bunjumun/MidwestPsychFest">
 
+  <!-- NAV -->
   <nav class="site-nav">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
@@ -139,25 +583,39 @@
     </div>
   </nav>
 
+  <!-- HERO -->
   <div class="band-hero">
-    <div class="band-orbs"><div class="band-orb band-orb-1"></div><div class="band-orb band-orb-2"></div></div>
-    <div class="band-eyebrow">Artist Portal · May 8–9, 2026</div>
-    <h1>Band Check-In</h1>
-    <p>Look up your band to view load-in details and check in. Type <strong style="color:var(--color-primary)">full schedule</strong> for the full lineup roster.</p>
+    <div class="hero-sunburst"></div>
+    <div class="hero-swirl"></div>
+    <div class="hero-dots-top"></div>
+    <div class="hero-dots-bottom"></div>
+    <div class="hero-content">
+      <div class="hero-tent">🎪</div>
+      <div class="hero-badge">Artist Portal · May 8–9, 2026</div>
+      <h1>Band Check-In</h1>
+      <div class="hero-date-band">
+        <span class="dot"></span>
+        Troubadour Farm · Galena OH
+        <span class="dot"></span>
+      </div>
+      <p class="hero-sub">Search your band name to view load-in details and check in.<br>Type <strong>full schedule</strong> to see the full artist roster.</p>
+    </div>
   </div>
 
+  <!-- LOOKUP -->
   <div class="lookup-section">
     <div class="lookup-card">
       <h2>Find Your Band</h2>
       <div class="lookup-form">
-        <input type="text" id="nameInput" placeholder="Band name or 'full schedule'…" autocomplete="off" autocorrect="off" />
-        <button class="btn btn-primary" id="lookupBtn" onclick="lookupBand()">Go</button>
+        <input type="text" id="nameInput" placeholder="Band name or 'full schedule'…" autocomplete="off" autocorrect="off" spellcheck="false" />
+        <button class="lookup-btn" id="lookupBtn" onclick="lookupBand()">Go</button>
       </div>
-      <p class="lookup-hint">Enter your band name as submitted, or type <code>full schedule</code> for the full roster.</p>
+      <p class="lookup-hint">Enter your band name as submitted — or type <code>full schedule</code> for the full roster.</p>
       <div id="resultArea"></div>
     </div>
   </div>
 
+  <!-- ADMIN CONFIG -->
   <div class="admin-config-section">
     <button class="admin-config-toggle" onclick="toggleAdminPanel()">⚙ Admin: Configure Band Check-In</button>
     <div class="admin-config-panel" id="adminPanel">
@@ -178,7 +636,7 @@
         <div class="config-field">
           <label>Google Sheet CSV URL</label>
           <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/…/export?format=csv" />
-          <p class="field-hint">File → Share → Publish to web → CSV.</p>
+          <p class="field-hint">File → Share → Publish to web → select the band roster tab → CSV.</p>
         </div>
         <div class="config-field">
           <label>Sheet Tab Index (0 = first tab)</label>
@@ -193,7 +651,7 @@
           <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec" />
         </div>
         <div class="script-guide">
-          <h4>Setup — same script as volunteer page</h4>
+          <h4>Setup — deploy once, reuse for both pages</h4>
           <ol>
             <li>Open your band roster Google Sheet → <strong>Extensions → Apps Script</strong></li>
             <li>Paste the script below, save, and deploy as a Web App (Execute as: Me, Anyone can access)</li>
@@ -234,15 +692,15 @@ function doGet() {
             <input type="text" id="nameCol" placeholder="A" maxlength="2" />
           </div>
           <div class="config-field">
-            <label>Check-In timestamp column</label>
+            <label>Arrival timestamp column</label>
             <input type="text" id="checkinCol" placeholder="e.g. G" maxlength="2" />
           </div>
           <div class="config-field">
-            <label>Check-In label</label>
+            <label>Arrival label</label>
             <input type="text" id="checkinLabel" placeholder="Band Arrived" />
           </div>
           <div class="config-field">
-            <label>Load-Out Complete column</label>
+            <label>Load-Out column</label>
             <input type="text" id="completeCol" placeholder="e.g. H" maxlength="2" />
           </div>
           <div class="config-field" style="grid-column:1/-1">
@@ -271,13 +729,13 @@ function doGet() {
     </div>
   </div>
 
+  <!-- FOOTER -->
   <footer class="site-footer">
     <div><span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span></div>
     <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
   </footer>
 
   <script src="assets/js/site-info.js"></script>
-  <script src="assets/js/github-sync.js"></script>
   <script>
   /* Config key separate from volunteer page */
   const CONFIG_KEY   = 'mpf_band_config';
@@ -286,177 +744,275 @@ function doGet() {
   const CACHE_TTL    = 5 * 60 * 1000;
 
   const DEFAULT_CONFIG = {
-    sheetUrl:'',sheetId:'',sheetIndex:0,scriptUrl:'',
-    nameCol:'A',checkinCol:'',checkinLabel:'Band Arrived',
-    completeCol:'',completeLabel:'Load-Out Complete',
+    sheetUrl:'', sheetId:'', sheetIndex:0, scriptUrl:'',
+    nameCol:'A', checkinCol:'', checkinLabel:'Band Arrived',
+    completeCol:'', completeLabel:'Load-Out Complete',
     fields:[
-      {label:'Set Time',          col:'B'},
-      {label:'Stage',             col:'C'},
-      {label:'Load-In Time',      col:'D'},
-      {label:'Sound Check',       col:'E'},
-      {label:'Hospitality Notes', col:'F'},
+      { label:'Set Time',          col:'B' },
+      { label:'Stage',             col:'C' },
+      { label:'Load-In Time',      col:'D' },
+      { label:'Sound Check',       col:'E' },
+      { label:'Hospitality Notes', col:'F' },
     ]
   };
 
-  function getConfig(){try{return Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}'));}catch{return Object.assign({},DEFAULT_CONFIG);}}
-  function setConfig(cfg){localStorage.setItem(CONFIG_KEY,JSON.stringify(cfg));}
-  function extractSheetId(url){const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);return m?m[1]:'';}
+  function getConfig() { try { return Object.assign({}, DEFAULT_CONFIG, JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')); } catch { return Object.assign({}, DEFAULT_CONFIG); } }
+  function setConfig(cfg) { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
+  function extractSheetId(url) { const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/); return m ? m[1] : ''; }
+  function colIdx(l) { if (!l) return -1; return l.trim().toUpperCase().charCodeAt(0) - 65; }
+  function getCol(cols, l) { const i = colIdx(l); return (i >= 0 && i < cols.length) ? cols[i] : ''; }
 
-  function colIdx(l){if(!l)return -1;return l.trim().toUpperCase().charCodeAt(0)-65;}
-  function getCol(cols,l){const i=colIdx(l);return(i>=0&&i<cols.length)?cols[i]:'';}
-  function parseCSVLine(line){const cols=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}cols.push(cur.trim());return cols;}
+  function parseCSVLine(line) {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  }
 
-  function parseCSV(text,config){
-    const lines=text.trim().split(/\r?\n/);
-    const firstCell=lines[0].split(',')[0].trim().toLowerCase();
-    const isHeader=['name','band','artist','act'].some(h=>firstCell.includes(h));
-    const dataLines=isHeader?lines.slice(1):lines;
-    const startRow=isHeader?2:1;
-    return dataLines.map((line,i)=>{
-      const cols=parseCSVLine(line);
-      if(!cols.some(c=>c))return null;
-      const rec={_row:startRow+i,name:getCol(cols,config.nameCol),checkinValue:config.checkinCol?getCol(cols,config.checkinCol):'',completeValue:config.completeCol?getCol(cols,config.completeCol):'',fields:{}};
-      config.fields.forEach(f=>{rec.fields[f.col]=getCol(cols,f.col);});
+  function parseCSV(text, config) {
+    const lines = text.trim().split(/\r?\n/);
+    const firstCell = lines[0].split(',')[0].trim().toLowerCase();
+    const isHeader = ['name','band','artist','act'].some(h => firstCell.includes(h));
+    const dataLines = isHeader ? lines.slice(1) : lines;
+    const startRow  = isHeader ? 2 : 1;
+    return dataLines.map((line, i) => {
+      const cols = parseCSVLine(line);
+      if (!cols.some(c => c)) return null;
+      const rec = {
+        _row: startRow + i,
+        name: getCol(cols, config.nameCol),
+        checkinValue:  config.checkinCol  ? getCol(cols, config.checkinCol)  : '',
+        completeValue: config.completeCol ? getCol(cols, config.completeCol) : '',
+        fields: {}
+      };
+      config.fields.forEach(f => { rec.fields[f.col] = getCol(cols, f.col); });
       return rec;
-    }).filter(r=>r&&r.name);
+    }).filter(r => r && r.name);
   }
 
-  async function fetchRecords(force){
-    const config=getConfig();
-    if(!config.sheetUrl)return null;
-    if(!force){const ts=parseInt(localStorage.getItem(CACHE_TS_KEY)||'0');if(Date.now()-ts<CACHE_TTL){const c=localStorage.getItem(CACHE_KEY);if(c)return JSON.parse(c);}}
-    try{
-      const url=config.sheetUrl+(config.sheetUrl.includes('?')?'&':'?')+'_='+Date.now();
-      const res=await fetch(url);if(!res.ok)throw new Error(`HTTP ${res.status}`);
-      const records=parseCSV(await res.text(),config);
-      localStorage.setItem(CACHE_KEY,JSON.stringify(records));localStorage.setItem(CACHE_TS_KEY,Date.now().toString());
+  async function fetchRecords(force) {
+    const config = getConfig();
+    if (!config.sheetUrl) return null;
+    if (!force) {
+      const ts = parseInt(localStorage.getItem(CACHE_TS_KEY) || '0');
+      if (Date.now() - ts < CACHE_TTL) { const c = localStorage.getItem(CACHE_KEY); if (c) return JSON.parse(c); }
+    }
+    try {
+      const url = config.sheetUrl + (config.sheetUrl.includes('?') ? '&' : '?') + '_=' + Date.now();
+      const res = await fetch(url); if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const records = parseCSV(await res.text(), config);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(records));
+      localStorage.setItem(CACHE_TS_KEY, Date.now().toString());
       return records;
-    }catch(e){console.error(e);return null;}
+    } catch(e) { console.error(e); return null; }
   }
 
-  function updateLocalRecord(row,field,value){
-    try{const records=JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');const rec=records.find(r=>r._row===row);if(rec){if(field==='checkin')rec.checkinValue=value;if(field==='complete')rec.completeValue=value;localStorage.setItem(CACHE_KEY,JSON.stringify(records));}return rec;}catch{return null;}
+  function updateLocalRecord(row, field, value) {
+    try {
+      const records = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+      const rec = records.find(r => r._row === row);
+      if (rec) { if (field === 'checkin') rec.checkinValue = value; if (field === 'complete') rec.completeValue = value; localStorage.setItem(CACHE_KEY, JSON.stringify(records)); }
+      return rec;
+    } catch { return null; }
   }
-  function getLocalRecord(row){try{const records=JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');return records.find(r=>r._row===row)||null;}catch{return null;}}
+  function getLocalRecord(row) { try { const records = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); return records.find(r => r._row === row) || null; } catch { return null; } }
 
-  async function writeToSheet(row,col,value){
-    const config=getConfig();
-    if(!config.scriptUrl||!config.sheetId)return false;
-    try{await fetch(config.scriptUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({sheetId:config.sheetId,sheetIndex:config.sheetIndex||0,row,col,value})});return true;}
-    catch(e){console.error(e);return false;}
-  }
-
-  async function lookupBand(){
-    const nameRaw=document.getElementById('nameInput').value.trim();
-    if(!nameRaw)return;
-    const area=document.getElementById('resultArea');
-    area.innerHTML='<div class="status-msg loading">Searching…</div>';
-    if(nameRaw.toLowerCase()==='full schedule'){await showFullSchedule(area);return;}
-    const records=await fetchRecords();
-    if(!records){const cfg=getConfig();area.innerHTML=cfg.sheetUrl?'<div class="status-msg error">Could not load band data.</div>':'<div class="status-msg error">No band data configured yet. Ask an admin to set up the sheet connection below.</div>';return;}
-    const q=nameRaw.toLowerCase();
-    const matches=records.filter(r=>r.name.toLowerCase().includes(q));
-    if(!matches.length){area.innerHTML=`<div class="status-msg error">No band found matching "<strong>${escHtml(nameRaw)}</strong>".</div>`;return;}
-    area.innerHTML=matches.map(r=>renderCard(r)).join('');
+  async function writeToSheet(row, col, value) {
+    const config = getConfig();
+    if (!config.scriptUrl || !config.sheetId) return false;
+    try {
+      await fetch(config.scriptUrl, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ sheetId: config.sheetId, sheetIndex: config.sheetIndex || 0, row, col, value }) });
+      return true;
+    } catch(e) { console.error(e); return false; }
   }
 
-  async function showFullSchedule(area){
-    const records=await fetchRecords();
-    if(!records){area.innerHTML='<div class="status-msg error">Could not load sheet data.</div>';return;}
-    const config=getConfig();
-    const sorted=[...records].sort((a,b)=>a.name.localeCompare(b.name));
-    const checkinH=config.checkinCol?`<th>${escHtml(config.checkinLabel||'Checked In')}</th>`:'';
-    const completeH=config.completeCol?`<th>${escHtml(config.completeLabel||'Complete')}</th>`:'';
-    const rows=sorted.map(r=>{
-      const inCell=config.checkinCol?`<td class="td-status">${r.checkinValue?`<span class="status-chip status-chip--in">✓ ${escHtml(r.checkinValue)}</span>`:'<span class="status-chip status-chip--none">—</span>'}</td>`:'';
-      const doneCell=config.completeCol?`<td class="td-status">${r.completeValue?`<span class="status-chip status-chip--done">✓ ${escHtml(r.completeValue)}</span>`:'<span class="status-chip status-chip--none">—</span>'}</td>`:'';
-      return `<tr class="${r.completeValue?'row-complete':r.checkinValue?'row-checkedin':''}"><td class="td-name">${escHtml(r.name)}</td>${config.fields.map(f=>`<td>${escHtml(r.fields[f.col]||'')}</td>`).join('')}${inCell}${doneCell}</tr>`;
+  async function lookupBand() {
+    const nameRaw = document.getElementById('nameInput').value.trim();
+    if (!nameRaw) return;
+    const area = document.getElementById('resultArea');
+    area.innerHTML = '<div class="status-msg loading">Searching…</div>';
+    if (nameRaw.toLowerCase() === 'full schedule') { await showFullSchedule(area); return; }
+    const records = await fetchRecords();
+    if (!records) {
+      const cfg = getConfig();
+      area.innerHTML = cfg.sheetUrl
+        ? '<div class="status-msg error">Could not load band data. The sheet may be private or the URL invalid.</div>'
+        : '<div class="status-msg error">No band data configured. Ask a festival admin to connect the Google Sheet below.</div>';
+      return;
+    }
+    const q = nameRaw.toLowerCase();
+    const matches = records.filter(r => r.name.toLowerCase().includes(q));
+    if (!matches.length) {
+      area.innerHTML = `<div class="status-msg error">No band found matching "<strong>${escHtml(nameRaw)}</strong>".<br/><span style="font-size:0.82rem;opacity:0.7;display:block;margin-top:4px;">Check spelling or contact a festival organizer.</span></div>`;
+      return;
+    }
+    area.innerHTML = matches.map(r => renderCard(r)).join('');
+  }
+
+  async function showFullSchedule(area) {
+    const records = await fetchRecords();
+    if (!records) { area.innerHTML = '<div class="status-msg error">Could not load sheet data.</div>'; return; }
+    const config = getConfig();
+    const sorted = [...records].sort((a, b) => a.name.localeCompare(b.name));
+    const checkinH  = config.checkinCol  ? `<th>${escHtml(config.checkinLabel  || 'Arrived')}</th>`  : '';
+    const completeH = config.completeCol ? `<th>${escHtml(config.completeLabel || 'Load-Out')}</th>` : '';
+    const rows = sorted.map(r => {
+      const inCell   = config.checkinCol  ? `<td class="td-status">${r.checkinValue  ? `<span class="status-chip status-chip--in">✓ ${escHtml(r.checkinValue)}</span>`  : '<span class="status-chip status-chip--none">—</span>'}</td>` : '';
+      const doneCell = config.completeCol ? `<td class="td-status">${r.completeValue ? `<span class="status-chip status-chip--done">✓ ${escHtml(r.completeValue)}</span>` : '<span class="status-chip status-chip--none">—</span>'}</td>` : '';
+      return `<tr class="${r.completeValue ? 'row-complete' : r.checkinValue ? 'row-checkedin' : ''}">
+        <td class="td-name">${escHtml(r.name)}</td>
+        ${config.fields.map(f => `<td>${escHtml(r.fields[f.col] || '')}</td>`).join('')}
+        ${inCell}${doneCell}
+      </tr>`;
     }).join('');
-    const inCount=sorted.filter(r=>r.checkinValue).length;
-    area.innerHTML=`<div class="full-schedule-wrap"><div class="full-schedule-bar"><span>${sorted.length} bands · ${inCount} arrived</span><button class="btn btn-sm btn-ghost" onclick="fetchRecords(true).then(()=>lookupBand())">↺ Refresh</button></div><div class="table-scroll"><table class="full-schedule-table"><thead><tr><th>Band</th>${config.fields.map(f=>`<th>${escHtml(f.label)}</th>`).join('')}${checkinH}${completeH}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    const inCount = sorted.filter(r => r.checkinValue).length;
+    area.innerHTML = `<div class="full-schedule-wrap">
+      <div class="full-schedule-bar">
+        <span>${sorted.length} bands · ${inCount} arrived</span>
+        <button class="btn btn-sm btn-ghost" onclick="fetchRecords(true).then(()=>lookupBand())">↺ Refresh</button>
+      </div>
+      <div class="table-scroll">
+        <table class="full-schedule-table">
+          <thead><tr><th>Band</th>${config.fields.map(f => `<th>${escHtml(f.label)}</th>`).join('')}${checkinH}${completeH}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
   }
 
-  function renderCard(record){
-    const config=getConfig();
-    const isIn=!!record.checkinValue;const isDone=!!record.completeValue;
-    const meta=config.fields.map(f=>{const val=record.fields[f.col];if(!val)return'';return`<div class="shift-meta-row"><span class="shift-meta-label">${escHtml(f.label)}</span><span class="shift-meta-value">${escHtml(val)}</span></div>`;}).join('');
-    let statusHtml='';
-    if(config.checkinCol&&isIn)statusHtml+=`<span class="status-chip status-chip--in">✓ ${escHtml(config.checkinLabel||'Arrived')}: ${escHtml(record.checkinValue)}</span>`;
-    if(config.completeCol&&isDone)statusHtml+=`<span class="status-chip status-chip--done">✓ ${escHtml(config.completeLabel||'Complete')}: ${escHtml(record.completeValue)}</span>`;
-    let actions='';
-    if(config.checkinCol){
-      if(!isIn)actions+=`<button class="complete-btn" onclick="doCheckin(${record._row})">Band Has Arrived</button>`;
-      else{actions+=`<button class="complete-btn" disabled>✓ Arrived</button>`;actions+=`<button class="undo-btn" onclick="undoCheckin(${record._row})">Undo</button>`;}
+  function renderCard(record) {
+    const config = getConfig();
+    const isIn   = !!record.checkinValue;
+    const isDone = !!record.completeValue;
+    const meta = config.fields.map(f => {
+      const val = record.fields[f.col];
+      if (!val) return '';
+      return `<div class="shift-meta-row"><span class="shift-meta-label">${escHtml(f.label)}</span><span class="shift-meta-value">${escHtml(val)}</span></div>`;
+    }).join('');
+
+    let statusHtml = '';
+    if (config.checkinCol && isIn)   statusHtml += `<span class="status-chip status-chip--in">✓ ${escHtml(config.checkinLabel || 'Arrived')}: ${escHtml(record.checkinValue)}</span>`;
+    if (config.completeCol && isDone) statusHtml += `<span class="status-chip status-chip--done">✓ ${escHtml(config.completeLabel || 'Load-Out')}: ${escHtml(record.completeValue)}</span>`;
+
+    let actions = '';
+    if (config.checkinCol) {
+      if (!isIn) actions += `<button class="complete-btn" onclick="doCheckin(${record._row})">🎸 Band Has Arrived</button>`;
+      else { actions += `<button class="complete-btn" disabled>✓ Arrived</button>`; actions += `<button class="undo-btn" onclick="undoCheckin(${record._row})">Undo</button>`; }
     }
-    if(config.completeCol&&isIn){
-      if(!isDone)actions+=`<button class="complete-btn complete-btn--secondary" onclick="doComplete(${record._row})">${escHtml(config.completeLabel||'Load-Out Complete')}</button>`;
-      else{actions+=`<button class="complete-btn" style="background:var(--color-secondary);color:#0d0010;" disabled>✓ ${escHtml(config.completeLabel||'Complete')}</button>`;actions+=`<button class="undo-btn" onclick="undoComplete(${record._row})">Undo</button>`;}
+    if (config.completeCol && isIn) {
+      if (!isDone) actions += `<button class="complete-btn complete-btn--gold" onclick="doComplete(${record._row})">${escHtml(config.completeLabel || 'Load-Out Complete')}</button>`;
+      else { actions += `<button class="complete-btn complete-btn--gold" disabled>✓ ${escHtml(config.completeLabel || 'Load-Out')}</button>`; actions += `<button class="undo-btn" onclick="undoComplete(${record._row})">Undo</button>`; }
     }
-    return`<div class="shift-card ${isDone?'completed':isIn?'checked-in':''}" id="bcard-${record._row}"><div class="shift-name">${escHtml(record.name)}</div><div class="shift-meta">${meta}</div>${statusHtml?`<div class="shift-status">${statusHtml}</div>`:''}<div class="shift-actions">${actions}</div><div class="sync-notice" id="bsync-${record._row}"></div></div>`;
+
+    return `<div class="shift-card ${isDone ? 'completed' : isIn ? 'checked-in' : ''}" id="bcard-${record._row}">
+      <div class="shift-name">${escHtml(record.name)}</div>
+      <div class="shift-meta">${meta}</div>
+      ${statusHtml ? `<div class="shift-status">${statusHtml}</div>` : ''}
+      <div class="shift-actions">${actions}</div>
+      <div class="sync-notice" id="bsync-${record._row}"></div>
+    </div>`;
   }
 
-  function refreshCard(row){const rec=getLocalRecord(row);if(!rec)return;const el=document.getElementById(`bcard-${row}`);if(el)el.outerHTML=renderCard(rec);}
-  function nowTimestamp(){return new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true});}
+  function refreshCard(row) { const rec = getLocalRecord(row); if (!rec) return; const el = document.getElementById(`bcard-${row}`); if (el) el.outerHTML = renderCard(rec); }
+  function nowTimestamp() { return new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true }); }
 
-  async function doCheckin(row){
-    const config=getConfig();const ts=nowTimestamp();
-    updateLocalRecord(row,'checkin',ts);refreshCard(row);
-    const notice=document.getElementById(`bsync-${row}`);
-    if(notice){notice.textContent='Syncing…';notice.className='sync-notice';}
-    const ok=await writeToSheet(row,config.checkinCol,ts);
-    if(notice){notice.textContent=ok?'✓ Synced to Google Sheet':'Saved locally. (Configure Apps Script to sync.)';notice.className='sync-notice '+(ok?'synced':'failed');}
+  async function doCheckin(row) {
+    const config = getConfig(); const ts = nowTimestamp();
+    updateLocalRecord(row, 'checkin', ts); refreshCard(row);
+    const notice = document.getElementById(`bsync-${row}`);
+    if (notice) { notice.textContent = 'Syncing to sheet…'; notice.className = 'sync-notice'; }
+    const ok = await writeToSheet(row, config.checkinCol, ts);
+    if (notice) { notice.textContent = ok ? '✓ Synced to Google Sheet' : 'Saved locally. (Configure Apps Script to sync to sheet.)'; notice.className = 'sync-notice ' + (ok ? 'synced' : 'failed'); }
   }
-  async function undoCheckin(row){const config=getConfig();updateLocalRecord(row,'checkin','');refreshCard(row);writeToSheet(row,config.checkinCol,'');}
-  async function doComplete(row){
-    const config=getConfig();const ts=nowTimestamp();
-    updateLocalRecord(row,'complete',ts);refreshCard(row);
-    const notice=document.getElementById(`bsync-${row}`);
-    if(notice){notice.textContent='Syncing…';notice.className='sync-notice';}
-    const ok=await writeToSheet(row,config.completeCol,ts);
-    if(notice){notice.textContent=ok?'✓ Synced to Google Sheet':'Saved locally.';notice.className='sync-notice '+(ok?'synced':'failed');}
+  async function undoCheckin(row)  { const config = getConfig(); updateLocalRecord(row, 'checkin', '');  refreshCard(row); writeToSheet(row, config.checkinCol, ''); }
+  async function doComplete(row) {
+    const config = getConfig(); const ts = nowTimestamp();
+    updateLocalRecord(row, 'complete', ts); refreshCard(row);
+    const notice = document.getElementById(`bsync-${row}`);
+    if (notice) { notice.textContent = 'Syncing…'; notice.className = 'sync-notice'; }
+    const ok = await writeToSheet(row, config.completeCol, ts);
+    if (notice) { notice.textContent = ok ? '✓ Synced to Google Sheet' : 'Saved locally.'; notice.className = 'sync-notice ' + (ok ? 'synced' : 'failed'); }
   }
-  async function undoComplete(row){const config=getConfig();updateLocalRecord(row,'complete','');refreshCard(row);writeToSheet(row,config.completeCol,'');}
+  async function undoComplete(row) { const config = getConfig(); updateLocalRecord(row, 'complete', ''); refreshCard(row); writeToSheet(row, config.completeCol, ''); }
 
-  function toggleAdminPanel(){const panel=document.getElementById('adminPanel');const open=panel.classList.toggle('open');if(open)loadConfigForm();}
-  function loadConfigForm(){
-    const cfg=getConfig();
-    document.getElementById('sheetUrl').value=cfg.sheetUrl||'';
-    document.getElementById('sheetIndex').value=cfg.sheetIndex??0;
-    document.getElementById('scriptUrl').value=cfg.scriptUrl||'';
-    document.getElementById('nameCol').value=cfg.nameCol||'A';
-    document.getElementById('checkinCol').value=cfg.checkinCol||'';
-    document.getElementById('checkinLabel').value=cfg.checkinLabel||'Band Arrived';
-    document.getElementById('completeCol').value=cfg.completeCol||'';
-    document.getElementById('completeLabel').value=cfg.completeLabel||'Load-Out Complete';
-    renderFieldRows(cfg.fields||[]);
+  function toggleAdminPanel() { const panel = document.getElementById('adminPanel'); const open = panel.classList.toggle('open'); if (open) loadConfigForm(); }
+  function loadConfigForm() {
+    const cfg = getConfig();
+    document.getElementById('sheetUrl').value      = cfg.sheetUrl      || '';
+    document.getElementById('sheetIndex').value    = cfg.sheetIndex    ?? 0;
+    document.getElementById('scriptUrl').value     = cfg.scriptUrl     || '';
+    document.getElementById('nameCol').value       = cfg.nameCol       || 'A';
+    document.getElementById('checkinCol').value    = cfg.checkinCol    || '';
+    document.getElementById('checkinLabel').value  = cfg.checkinLabel  || 'Band Arrived';
+    document.getElementById('completeCol').value   = cfg.completeCol   || '';
+    document.getElementById('completeLabel').value = cfg.completeLabel || 'Load-Out Complete';
+    renderFieldRows(cfg.fields || []);
   }
-  function renderFieldRows(fields){document.getElementById('fieldRows').innerHTML=fields.map(f=>`<div class="field-row"><input class="fr-label" type="text" placeholder="Label" value="${escHtml(f.label)}" /><input class="fr-col" type="text" placeholder="Col" maxlength="2" value="${escHtml(f.col)}" /><button class="fr-remove" onclick="this.closest('.field-row').remove()">✕</button></div>`).join('');}
-  function addFieldRow(){const row=document.createElement('div');row.className='field-row';row.innerHTML='<input class="fr-label" type="text" placeholder="Label" /><input class="fr-col" type="text" placeholder="Col" maxlength="2" /><button class="fr-remove" onclick="this.closest(\'.field-row\').remove()">✕</button>';document.getElementById('fieldRows').appendChild(row);}
-  function getFieldsFromForm(){return Array.from(document.querySelectorAll('#fieldRows .field-row')).map(r=>({label:r.querySelector('.fr-label').value.trim(),col:r.querySelector('.fr-col').value.trim().toUpperCase()})).filter(f=>f.label&&f.col);}
-
-  async function saveConfig(){
-    const statusEl=document.getElementById('configStatus');statusEl.textContent='Saving…';statusEl.className='config-status';
-    const sheetUrl=document.getElementById('sheetUrl').value.trim();
-    const cfg={sheetUrl,sheetId:extractSheetId(sheetUrl),sheetIndex:parseInt(document.getElementById('sheetIndex').value)||0,scriptUrl:document.getElementById('scriptUrl').value.trim(),nameCol:document.getElementById('nameCol').value.trim().toUpperCase()||'A',checkinCol:document.getElementById('checkinCol').value.trim().toUpperCase(),checkinLabel:document.getElementById('checkinLabel').value.trim()||'Band Arrived',completeCol:document.getElementById('completeCol').value.trim().toUpperCase(),completeLabel:document.getElementById('completeLabel').value.trim()||'Load-Out Complete',fields:getFieldsFromForm()};
-    setConfig(cfg);localStorage.removeItem(CACHE_KEY);localStorage.removeItem(CACHE_TS_KEY);
-    if(sheetUrl){const records=await fetchRecords(true);if(records&&records.length){statusEl.textContent=`✓ Connected! ${records.length} bands loaded.`;statusEl.className='config-status ok';}else{statusEl.textContent='Could not reach sheet. Verify the URL is published as CSV.';statusEl.className='config-status err';}}else{statusEl.textContent='Config saved.';statusEl.className='config-status ok';}
+  function renderFieldRows(fields) {
+    document.getElementById('fieldRows').innerHTML = fields.map(f =>
+      `<div class="field-row"><input class="fr-label" type="text" placeholder="Label" value="${escHtml(f.label)}" /><input class="fr-col" type="text" placeholder="Col" maxlength="2" value="${escHtml(f.col)}" /><button class="fr-remove" onclick="this.closest('.field-row').remove()">✕</button></div>`
+    ).join('');
   }
-  function clearCache(){localStorage.removeItem(CACHE_KEY);localStorage.removeItem(CACHE_TS_KEY);const s=document.getElementById('configStatus');s.textContent='Cache cleared.';s.className='config-status ok';}
-
-  async function adminUnlock(){
-    const pw=document.getElementById('adminPwInput').value;if(!pw)return;
-    const statusEl=document.getElementById('authStatus');
-    let storedHash=null;
-    try{const res=await fetch('data/admin-config.json?_='+Date.now());if(res.ok){const cfg=await res.json();storedHash=cfg.pw_hash||null;}}catch{}
-    const hashPw=async p=>{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');};
-    if(!storedHash){document.getElementById('adminAuth').style.display='none';document.getElementById('adminForm').style.display='block';loadConfigForm();return;}
-    if(await hashPw(pw)===storedHash){document.getElementById('adminAuth').style.display='none';document.getElementById('adminForm').style.display='block';loadConfigForm();}
-    else{statusEl.textContent='Incorrect password.';statusEl.className='config-status err';}
+  function addFieldRow() {
+    const row = document.createElement('div'); row.className = 'field-row';
+    row.innerHTML = `<input class="fr-label" type="text" placeholder="Label" /><input class="fr-col" type="text" placeholder="Col" maxlength="2" /><button class="fr-remove" onclick="this.closest('.field-row').remove()">✕</button>`;
+    document.getElementById('fieldRows').appendChild(row);
+  }
+  function getFieldsFromForm() {
+    return Array.from(document.querySelectorAll('#fieldRows .field-row')).map(r => ({
+      label: r.querySelector('.fr-label').value.trim(),
+      col:   r.querySelector('.fr-col').value.trim().toUpperCase()
+    })).filter(f => f.label && f.col);
   }
 
-  function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  document.getElementById('navToggle').addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
-  document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')lookupBand();});
+  async function saveConfig() {
+    const statusEl = document.getElementById('configStatus');
+    statusEl.textContent = 'Saving…'; statusEl.className = 'config-status';
+    const sheetUrl = document.getElementById('sheetUrl').value.trim();
+    const cfg = {
+      sheetUrl, sheetId: extractSheetId(sheetUrl),
+      sheetIndex:    parseInt(document.getElementById('sheetIndex').value) || 0,
+      scriptUrl:     document.getElementById('scriptUrl').value.trim(),
+      nameCol:       document.getElementById('nameCol').value.trim().toUpperCase() || 'A',
+      checkinCol:    document.getElementById('checkinCol').value.trim().toUpperCase(),
+      checkinLabel:  document.getElementById('checkinLabel').value.trim() || 'Band Arrived',
+      completeCol:   document.getElementById('completeCol').value.trim().toUpperCase(),
+      completeLabel: document.getElementById('completeLabel').value.trim() || 'Load-Out Complete',
+      fields:        getFieldsFromForm()
+    };
+    setConfig(cfg); localStorage.removeItem(CACHE_KEY); localStorage.removeItem(CACHE_TS_KEY);
+    if (sheetUrl) {
+      const records = await fetchRecords(true);
+      if (records && records.length) { statusEl.textContent = `✓ Connected! ${records.length} bands loaded.`; statusEl.className = 'config-status ok'; }
+      else { statusEl.textContent = 'Could not reach sheet. Verify the URL is published as CSV.'; statusEl.className = 'config-status err'; }
+    } else { statusEl.textContent = 'Config saved.'; statusEl.className = 'config-status ok'; }
+  }
+
+  function clearCache() {
+    localStorage.removeItem(CACHE_KEY); localStorage.removeItem(CACHE_TS_KEY);
+    const s = document.getElementById('configStatus'); s.textContent = 'Cache cleared.'; s.className = 'config-status ok';
+  }
+
+  async function adminUnlock() {
+    const pw = document.getElementById('adminPwInput').value; if (!pw) return;
+    const statusEl = document.getElementById('authStatus');
+    let storedHash = null;
+    try { const res = await fetch('data/admin-config.json?_=' + Date.now()); if (res.ok) { const cfg = await res.json(); storedHash = cfg.pw_hash || null; } } catch {}
+    const hashPw = async p => { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p)); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''); };
+    if (!storedHash) { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminForm').style.display = 'block'; loadConfigForm(); return; }
+    if (await hashPw(pw) === storedHash) { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminForm').style.display = 'block'; loadConfigForm(); }
+    else { statusEl.textContent = 'Incorrect password.'; statusEl.className = 'config-status err'; }
+  }
+
+  function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  document.getElementById('navToggle').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+  document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') lookupBand(); });
   </script>
 </body>
 </html>
