@@ -1,11 +1,65 @@
 [
   {
-    "name": "",
-    "role": "",
-    "date": "",
+    "name": "Fred blasing",
+    "date": "fredblasing455@gamil.com",
+    "time": "5",
+    "location": "STAGE",
+    "role": "SECURITY",
+    "notes": "Mind expanding",
+    "status": "pending"
+  },
+  {
+    "name": "Joe Shamis",
+    "date": "joseph.shamis@gmail.com",
     "time": "",
     "location": "",
-    "status": "pending",
-    "notes": ""
+    "role": "",
+    "notes": "Jimi Hendrix",
+    "status": "pending"
+  },
+  {
+    "name": "Frederick",
+    "date": "frederickfoxtrott@gmail.com",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Experiencing multiple senses both simultaneously and intensely, provoking thought and introspection.",
+    "status": "pending"
+  },
+  {
+    "name": "Pixie",
+    "date": "angeldye29@gmail.com",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Weirdness with a purpose",
+    "status": "pending"
+  },
+  {
+    "name": "Jen Asson",
+    "date": "jenasson@gmail.com",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Delving deeper into depths of divinity",
+    "status": "pending"
+  },
+  {
+    "name": "Sarah guinther",
+    "date": "sarahxking@gmail.com",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Creating new pathways in your brain and beauty",
+    "status": "pending"
+  },
+  {
+    "name": "Jayhmeee",
+    "date": "jamie_snyder@ymail.com",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Lots of acid",
+    "status": "pending"
   }
 ]
