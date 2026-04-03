@@ -1,7 +1,8 @@
 {
-  "square_location_id": "",
   "square_app_id": "",
+  "square_location_id": "",
   "payment_link": "",
-  "currency": "USD",
-  "note": "MPF 2026 Bar Order"
+  "note": "MPF 2026 Bar Order",
+  "environment": "sandbox",
+  "currency": "USD"
 }
