@@ -145,115 +145,6 @@
     }
     .gallery-empty strong { color: var(--color-text); display: block; margin-bottom: 6px; font-size: 1rem; }
 
-    /* ── Admin upload panel ── */
-    .admin-upload-section {
-      max-width: 900px;
-      margin: 0 auto 60px;
-      padding: 0 24px;
-    }
-    .admin-upload-toggle {
-      width: 100%;
-      background: transparent;
-      border: 1px dashed rgba(178,75,255,0.3);
-      color: rgba(178,75,255,0.7);
-      border-radius: var(--radius);
-      padding: 10px;
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .admin-upload-toggle:hover { border-color: var(--color-purple); color: var(--color-purple); }
-
-    .admin-upload-panel {
-      display: none;
-      background: rgba(178,75,255,0.05);
-      border: 1px solid rgba(178,75,255,0.25);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      margin-top: 12px;
-    }
-    .admin-upload-panel.open { display: block; }
-    .admin-upload-panel h3 {
-      font-family: var(--font-display);
-      color: var(--color-purple);
-      font-size: 1.1rem;
-      margin-bottom: 16px;
-    }
-
-    .upload-instructions {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      font-size: 0.85rem;
-      color: var(--color-text-muted);
-      line-height: 1.7;
-    }
-    .upload-instructions strong { color: var(--color-text); }
-    .upload-instructions code {
-      background: rgba(255,255,255,0.08);
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-size: 0.8rem;
-      color: var(--color-accent);
-    }
-
-    .config-field { margin-bottom: 14px; }
-    .config-field label {
-      display: block;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--color-text-muted);
-      margin-bottom: 6px;
-    }
-    .config-field input, .config-field textarea {
-      width: 100%;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      color: var(--color-text);
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      padding: 9px 12px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .config-field input:focus, .config-field textarea:focus { border-color: var(--color-purple); }
-    .config-field input::placeholder, .config-field textarea::placeholder { color: var(--color-text-muted); font-size: 0.8rem; }
-    .config-field textarea { min-height: 80px; resize: vertical; }
-
-    .upload-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
-    .upload-status { margin-top: 10px; font-size: 0.8rem; color: var(--color-text-muted); min-height: 20px; }
-    .upload-status.ok { color: var(--color-accent); }
-    .upload-status.err { color: #ff6666; }
-
-    .managed-image-list { margin-top: 20px; }
-    .managed-image-list h4 {
-      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--color-text-muted); margin-bottom: 12px;
-    }
-    .managed-image-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: var(--radius);
-      margin-bottom: 8px;
-    }
-    .managed-image-item img { width: 48px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
-    .managed-image-name { flex: 1; font-size: 0.82rem; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .managed-image-caption-text { font-size: 0.75rem; color: var(--color-text-muted); }
-    .managed-image-delete {
-      background: transparent; border: 1px solid rgba(255,68,68,0.3);
-      color: rgba(255,68,68,0.7); border-radius: var(--radius);
-      padding: 4px 10px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
-    }
-    .managed-image-delete:hover { border-color: #ff4444; color: #ff4444; }
   </style>
 </head>
 <body>
@@ -299,44 +190,7 @@
 
   </div>
 
-  <!-- ADMIN PANEL -->
-  <div class="admin-upload-section">
-    <button class="admin-upload-toggle" onclick="toggleUploadPanel()">⚙ Admin: Manage Info Images</button>
-    <div class="admin-upload-panel" id="uploadPanel">
-      <h3>Manage FAQ / Info Images</h3>
-
-      <div class="upload-instructions">
-        <strong>How to add images to this page:</strong>
-        <ol style="margin:8px 0 0 18px;padding:0;">
-          <li>Upload your image file to the <code>assets/img/info/</code> folder in the GitHub repo.</li>
-          <li>Enter the filename below (e.g. <code>faq-parking.png</code>) and an optional caption.</li>
-          <li>Click <strong>Add Image</strong> — it will appear in the gallery immediately.</li>
-          <li>The image list is saved in your browser and also in <code>data/info-images.json</code> when you sync.</li>
-        </ol>
-        <p style="margin-top:10px;">
-          <strong>Tip:</strong> For infographics, use tall PNG or JPG images. They display with click-to-enlarge lightbox.
-        </p>
-      </div>
-
-      <div class="config-field">
-        <label>Image filename (relative to assets/img/info/)</label>
-        <input type="text" id="imgFilename" placeholder="e.g. faq-parking.png" />
-      </div>
-      <div class="config-field">
-        <label>Caption (optional)</label>
-        <input type="text" id="imgCaption" placeholder="e.g. Parking &amp; Shuttle Info" />
-      </div>
-
-      <div class="upload-actions">
-        <button class="btn btn-sm btn-accent" onclick="addInfoImage()">Add Image</button>
-        <button class="btn btn-sm btn-ghost" onclick="syncImagesToGitHub()">Sync to GitHub</button>
-        <button class="btn btn-sm btn-ghost" onclick="downloadImagesJSON()">Export JSON</button>
-      </div>
-      <div class="upload-status" id="uploadStatus"></div>
-
-      <div class="managed-image-list" id="managedImageList"></div>
-    </div>
-  </div>
+  <!-- Admin link (images are managed via admin.html) -->
 
   <!-- LIGHTBOX -->
   <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
@@ -353,7 +207,6 @@
   </footer>
 
   <script src="assets/js/site-info.js"></script>
-  <script src="assets/js/github-sync.js"></script>
   <script>
     const INFO_IMAGES_KEY = 'mpf_info_images';
 
@@ -365,18 +218,17 @@
       localStorage.setItem(INFO_IMAGES_KEY, JSON.stringify(imgs));
     }
 
-    /* ── Render gallery ── */
     function renderGallery() {
       const gallery = document.getElementById('infoGallery');
       const imgs = getImages();
       if (!imgs.length) {
         gallery.innerHTML = `<div class="gallery-empty">
           <strong>No images yet</strong>
-          Upload infographic images via the admin panel below, then add them here.
+          Info images are managed via the <a href="admin.html" style="color:var(--color-primary)">Admin panel</a>.
         </div>`;
         return;
       }
-      gallery.innerHTML = imgs.map((img, i) => `
+      gallery.innerHTML = imgs.map(img => `
         <div class="info-image-item" onclick="openLightbox('assets/img/info/${escHtml(img.filename)}', '${escAttr(img.caption || img.filename)}')">
           <img src="assets/img/info/${escHtml(img.filename)}" alt="${escAttr(img.caption || img.filename)}" loading="lazy"
                onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
@@ -386,7 +238,6 @@
       `).join('');
     }
 
-    /* ── Lightbox ── */
     function openLightbox(src, alt) {
       document.getElementById('lightboxImg').src = src;
       document.getElementById('lightboxImg').alt = alt;
@@ -397,76 +248,8 @@
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-    /* ── Admin panel ── */
-    function toggleUploadPanel() {
-      const panel = document.getElementById('uploadPanel');
-      panel.classList.toggle('open');
-      if (panel.classList.contains('open')) renderManagedList();
-    }
-
-    function addInfoImage() {
-      const filename = document.getElementById('imgFilename').value.trim();
-      const caption  = document.getElementById('imgCaption').value.trim();
-      const status   = document.getElementById('uploadStatus');
-      if (!filename) { status.textContent = 'Enter a filename.'; status.className = 'upload-status err'; return; }
-
-      const imgs = getImages();
-      if (imgs.find(i => i.filename === filename)) {
-        status.textContent = 'That filename is already in the list.'; status.className = 'upload-status err'; return;
-      }
-      imgs.push({ filename, caption });
-      saveImages(imgs);
-      document.getElementById('imgFilename').value = '';
-      document.getElementById('imgCaption').value  = '';
-      status.textContent = `Added "${filename}".`; status.className = 'upload-status ok';
-      renderGallery();
-      renderManagedList();
-    }
-
-    function removeInfoImage(filename) {
-      saveImages(getImages().filter(i => i.filename !== filename));
-      renderGallery();
-      renderManagedList();
-    }
-
-    function renderManagedList() {
-      const container = document.getElementById('managedImageList');
-      const imgs = getImages();
-      if (!imgs.length) { container.innerHTML = ''; return; }
-      container.innerHTML = `<h4>Current images (${imgs.length})</h4>` +
-        imgs.map(img => `
-          <div class="managed-image-item">
-            <img src="assets/img/info/${escHtml(img.filename)}" alt="" onerror="this.style.opacity='0.3'" />
-            <div>
-              <div class="managed-image-name">${escHtml(img.filename)}</div>
-              ${img.caption ? `<div class="managed-image-caption-text">${escHtml(img.caption)}</div>` : ''}
-            </div>
-            <button class="managed-image-delete" onclick="removeInfoImage('${escAttr(img.filename)}')">Remove</button>
-          </div>
-        `).join('');
-    }
-
-    async function syncImagesToGitHub() {
-      const status = document.getElementById('uploadStatus');
-      status.textContent = 'Syncing…'; status.className = 'upload-status';
-      try {
-        await ghPutJSON('data/info-images.json', getImages(), 'info: update info images list');
-        status.textContent = 'Synced to GitHub.'; status.className = 'upload-status ok';
-      } catch(e) {
-        status.textContent = 'Sync failed — check PAT in admin settings.'; status.className = 'upload-status err';
-      }
-    }
-
-    function downloadImagesJSON() {
-      const blob = new Blob([JSON.stringify(getImages(), null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'info-images.json'; a.click();
-    }
-
-    /* ── Load from data/info-images.json on first visit ── */
     async function loadImagesFromRepo() {
-      if (localStorage.getItem(INFO_IMAGES_KEY)) return; // already hydrated
+      if (localStorage.getItem(INFO_IMAGES_KEY)) return;
       try {
         const r = await fetch('data/info-images.json?_=' + Date.now());
         if (r.ok) {

@@ -320,6 +320,14 @@
       <span class="adm-nav-icon">🗺</span>
       <span class="nav-label">Map</span>
     </button>
+    <button class="adm-nav-item" data-section="infoimg">
+      <span class="adm-nav-icon">📋</span>
+      <span class="nav-label">Info Images</span>
+    </button>
+    <button class="adm-nav-item" data-section="volunteers">
+      <span class="adm-nav-icon">👥</span>
+      <span class="nav-label">Volunteers</span>
+    </button>
     <hr class="adm-nav-sep" />
     <button class="adm-nav-item" data-section="stages">
       <span class="adm-nav-icon">🎭</span>
@@ -364,6 +372,7 @@
             <a href="schedule.html" target="_blank" class="btn btn-ghost btn-sm">📅 Schedule ↗</a>
             <a href="map.html" target="_blank" class="btn btn-ghost btn-sm">🗺 Map ↗</a>
             <a href="mpf_schedule_tool.html" target="_blank" class="btn btn-accent btn-sm">🎸 Band Email Tool ↗</a>
+            <a href="volunteer_schedule_tool.html" target="_blank" class="btn btn-accent btn-sm">👥 Volunteer Tool ↗</a>
             <a href="setup.html" target="_blank" class="btn btn-ghost btn-sm">⚡ Setup Wizard ↗</a>
           </div>
         </div>
@@ -725,6 +734,144 @@
       </div>
     </section>
 
+    <!-- ── INFO IMAGES ── -->
+    <section class="adm-section" id="section-infoimg">
+      <div class="adm-section-header">
+        <h2>Info Page Images</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="infoImgExportBtn">Export JSON</button>
+          <button class="btn btn-accent btn-sm" id="infoImgSyncBtn">Push to GitHub</button>
+        </div>
+      </div>
+      <div id="syncInfoImgMsg" class="sync-msg"></div>
+      <p class="text-muted text-xs" style="margin-bottom:16px;">
+        Images listed here appear on the public <a href="more-info.html" target="_blank" style="color:var(--color-primary)">More Info ↗</a> page
+        as a click-to-enlarge gallery. Upload image files to <code>assets/img/info/</code> in the repo first, then add them here.
+      </p>
+
+      <div class="adm-card">
+        <h3>Add Image</h3>
+        <div class="form-row">
+          <div class="form-group" style="flex:2;">
+            <label>Filename (relative to assets/img/info/)</label>
+            <input type="text" id="infoImgFilename" placeholder="e.g. faq-parking.png" />
+          </div>
+          <div class="form-group" style="flex:2;">
+            <label>Caption (optional)</label>
+            <input type="text" id="infoImgCaption" placeholder="e.g. Parking &amp; Shuttle Info" />
+          </div>
+          <div class="form-group" style="flex:0 0 auto;align-self:flex-end;">
+            <button class="btn btn-accent btn-sm" id="infoImgAddBtn">Add</button>
+          </div>
+        </div>
+        <div id="infoImgAddStatus" class="sync-msg"></div>
+      </div>
+
+      <div class="adm-card">
+        <h3>Current Images</h3>
+        <div id="infoImgList"><span class="text-muted text-xs">No images yet.</span></div>
+      </div>
+    </section>
+
+    <!-- ── VOLUNTEERS ── -->
+    <section class="adm-section" id="section-volunteers">
+      <div class="adm-section-header">
+        <h2>Volunteer Config</h2>
+        <div style="display:flex;gap:8px;">
+          <a href="volunteer_schedule_tool.html" target="_blank" class="btn btn-accent btn-sm">Open Volunteer Tool ↗</a>
+        </div>
+      </div>
+
+      <div class="adm-grid">
+        <div class="adm-card">
+          <h3>Google Sheet Connection</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;line-height:1.7;">
+            Paste a public Google Sheet CSV export URL. Volunteers enter their name on
+            <a href="volunteer.html" target="_blank" style="color:var(--color-primary)">volunteer.html ↗</a>
+            and their shift info is pulled from this sheet at runtime.
+          </p>
+          <div class="form-group">
+            <label>Google Sheet CSV URL</label>
+            <input type="url" id="volSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/…/export?format=csv" />
+            <p class="text-muted text-xs" style="margin-top:4px;">
+              File → Share → Publish to web → CSV. Must be publicly accessible.
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn btn-accent btn-sm" id="volSheetSaveBtn">Save URL</button>
+            <button class="btn btn-ghost btn-sm" id="volSheetTestBtn">Test Connection</button>
+          </div>
+          <div id="volSheetStatus" class="sync-msg" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="adm-card">
+          <h3>Column Mapping</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;">
+            Map your sheet's column letters to the volunteer data fields.
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Name column</label>
+              <input type="text" id="volColName" maxlength="2" placeholder="A" style="width:60px;" />
+            </div>
+            <div class="form-group">
+              <label>Date column</label>
+              <input type="text" id="volColDate" maxlength="2" placeholder="B" style="width:60px;" />
+            </div>
+            <div class="form-group">
+              <label>Time column</label>
+              <input type="text" id="volColTime" maxlength="2" placeholder="C" style="width:60px;" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location column</label>
+              <input type="text" id="volColLoc" maxlength="2" placeholder="D" style="width:60px;" />
+            </div>
+            <div class="form-group">
+              <label>Role column</label>
+              <input type="text" id="volColRole" maxlength="2" placeholder="E" style="width:60px;" />
+            </div>
+            <div class="form-group">
+              <label>Notes column</label>
+              <input type="text" id="volColNotes" maxlength="2" placeholder="F" style="width:60px;" />
+            </div>
+          </div>
+          <button class="btn btn-accent btn-sm" id="volColSaveBtn" style="margin-top:8px;">Save Mapping</button>
+          <div id="volColStatus" class="sync-msg" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="adm-card">
+          <h3>Check-In Completions</h3>
+          <p class="text-muted text-xs" style="margin-bottom:14px;">
+            Volunteers who have marked their shift complete. Stored in
+            <code>data/volunteer-completions.json</code>.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn btn-ghost btn-sm" id="volCompRefreshBtn">Refresh</button>
+            <button class="btn btn-ghost btn-sm" id="volCompExportBtn">Export CSV</button>
+            <button class="btn btn-accent btn-sm" id="volCompSyncBtn">Push to GitHub</button>
+          </div>
+          <div id="volCompSyncMsg" class="sync-msg"></div>
+          <div id="volCompList" style="font-size:0.82rem;max-height:300px;overflow-y:auto;">
+            <span class="text-muted">Loading…</span>
+          </div>
+        </div>
+
+        <div class="adm-card">
+          <h3>Quick Links</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="volunteer.html" target="_blank" class="btn btn-ghost btn-sm">👤 Volunteer Check-In Page ↗</a>
+            <a href="volunteer_schedule_tool.html" target="_blank" class="btn btn-accent btn-sm">📋 Volunteer Schedule Tool ↗</a>
+          </div>
+          <p class="text-muted text-xs" style="margin-top:12px;line-height:1.7;">
+            The Volunteer Schedule Tool is a shareable link you can send to co-organizers.
+            They can edit volunteer records and push directly to GitHub.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- ── STAGES ── -->
     <section class="adm-section" id="section-stages">
       <div class="adm-section-header">
@@ -1048,6 +1195,9 @@ function bootDashboard() {
   loadStagesEditor();
   loadImageSlots();
   loadWidgetEditor();
+  loadInfoImages();
+  loadVolunteerConfig();
+  loadVolCompletions();
   fetchDeployStatus();
   updateDashboardSummary();
 }
@@ -1911,6 +2061,189 @@ function toDisplayTime(t24) {
   const hour   = h % 12 || 12;
   return `${hour}:${String(m).padStart(2,'0')} ${suffix}`;
 }
+
+/* ════════════════════════════════════════════════════════
+   INFO IMAGES SECTION
+   ════════════════════════════════════════════════════════ */
+
+const INFO_IMAGES_LS = 'mpf_info_images';
+
+function getInfoImages() {
+  try { return JSON.parse(localStorage.getItem(INFO_IMAGES_LS)) || []; } catch { return []; }
+}
+function saveInfoImages(imgs) { localStorage.setItem(INFO_IMAGES_LS, JSON.stringify(imgs)); }
+
+function renderInfoImgList() {
+  const el = document.getElementById('infoImgList');
+  if (!el) return;
+  const imgs = getInfoImages();
+  if (!imgs.length) { el.innerHTML = '<span class="text-muted text-xs">No images added yet.</span>'; return; }
+  el.innerHTML = `<table class="sched-table">
+    <thead><tr><th>Filename</th><th>Caption</th><th style="width:70px;"></th></tr></thead>
+    <tbody>${imgs.map((img,i) => `
+      <tr>
+        <td><code style="font-size:0.78rem;">${escHtml(img.filename)}</code></td>
+        <td style="color:var(--color-text-muted);">${escHtml(img.caption || '—')}</td>
+        <td><button class="btn btn-ghost btn-sm" style="padding:2px 8px;"
+            onclick="removeInfoImg(${i})">Remove</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function removeInfoImg(idx) {
+  const imgs = getInfoImages();
+  imgs.splice(idx, 1);
+  saveInfoImages(imgs);
+  renderInfoImgList();
+}
+
+document.getElementById('infoImgAddBtn')?.addEventListener('click', () => {
+  const filename = document.getElementById('infoImgFilename').value.trim();
+  const caption  = document.getElementById('infoImgCaption').value.trim();
+  const msg      = document.getElementById('infoImgAddStatus');
+  if (!filename) { msg.className = 'sync-msg err'; msg.textContent = 'Enter a filename.'; return; }
+  const imgs = getInfoImages();
+  if (imgs.find(i => i.filename === filename)) {
+    msg.className = 'sync-msg err'; msg.textContent = 'Already in list.'; return;
+  }
+  imgs.push({ filename, caption });
+  saveInfoImages(imgs);
+  document.getElementById('infoImgFilename').value = '';
+  document.getElementById('infoImgCaption').value  = '';
+  msg.className = 'sync-msg ok'; msg.textContent = `Added "${filename}".`;
+  setTimeout(() => { msg.className = 'sync-msg'; }, 3000);
+  renderInfoImgList();
+});
+
+document.getElementById('infoImgExportBtn')?.addEventListener('click',
+  () => dlJson(getInfoImages(), 'info-images.json'));
+
+document.getElementById('infoImgSyncBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('infoImgSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  try {
+    await ghPutJSON('data/info-images.json', getInfoImages(), 'admin: update info images');
+    showSyncMsg('syncInfoImgMsg', 'ok', '✓ Pushed to GitHub');
+  } catch(e) {
+    showSyncMsg('syncInfoImgMsg', 'err', '✗ Push failed — check PAT in Settings');
+  } finally { btn.textContent = 'Push to GitHub'; btn.disabled = false; }
+});
+
+async function loadInfoImages() {
+  if (!localStorage.getItem(INFO_IMAGES_LS)) {
+    try {
+      const r = await fetch('data/info-images.json?_=' + Date.now());
+      if (r.ok) { const d = await r.json(); if (Array.isArray(d) && d.length) saveInfoImages(d); }
+    } catch {}
+  }
+  renderInfoImgList();
+}
+
+/* ════════════════════════════════════════════════════════
+   VOLUNTEERS SECTION
+   ════════════════════════════════════════════════════════ */
+
+const VOL_SHEET_KEY  = 'mpf_vol_sheet_url';
+const VOL_COLS_KEY   = 'mpf_vol_col_map';
+const VOL_COMP_KEY   = 'mpf_vol_completions';
+
+function loadVolunteerConfig() {
+  const url  = localStorage.getItem(VOL_SHEET_KEY) || '';
+  const cols = JSON.parse(localStorage.getItem(VOL_COLS_KEY) || '{}');
+  document.getElementById('volSheetUrl').value  = url;
+  document.getElementById('volColName').value   = cols.name   || 'A';
+  document.getElementById('volColDate').value   = cols.date   || 'B';
+  document.getElementById('volColTime').value   = cols.time   || 'C';
+  document.getElementById('volColLoc').value    = cols.location || 'D';
+  document.getElementById('volColRole').value   = cols.role   || 'E';
+  document.getElementById('volColNotes').value  = cols.notes  || 'F';
+}
+
+document.getElementById('volSheetSaveBtn')?.addEventListener('click', () => {
+  const url = document.getElementById('volSheetUrl').value.trim();
+  localStorage.setItem(VOL_SHEET_KEY, url);
+  showSyncMsg('volSheetStatus', 'ok', '✓ URL saved');
+});
+
+document.getElementById('volSheetTestBtn')?.addEventListener('click', async () => {
+  const url = document.getElementById('volSheetUrl').value.trim();
+  const msg = document.getElementById('volSheetStatus');
+  if (!url) { msg.className = 'sync-msg err'; msg.textContent = 'Enter a URL first.'; return; }
+  msg.className = 'sync-msg'; msg.textContent = 'Testing…'; msg.style.display = 'block';
+  try {
+    const r = await fetch(url + '&_=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    const rows = text.trim().split('\n').length;
+    msg.className = 'sync-msg ok'; msg.textContent = `✓ Connected — ${rows} rows found`;
+  } catch(e) {
+    msg.className = 'sync-msg err'; msg.textContent = '✗ Failed: ' + e.message + ' (check sheet is published publicly)';
+  }
+});
+
+document.getElementById('volColSaveBtn')?.addEventListener('click', () => {
+  const cols = {
+    name:     document.getElementById('volColName').value.trim().toUpperCase()  || 'A',
+    date:     document.getElementById('volColDate').value.trim().toUpperCase()  || 'B',
+    time:     document.getElementById('volColTime').value.trim().toUpperCase()  || 'C',
+    location: document.getElementById('volColLoc').value.trim().toUpperCase()   || 'D',
+    role:     document.getElementById('volColRole').value.trim().toUpperCase()  || 'E',
+    notes:    document.getElementById('volColNotes').value.trim().toUpperCase() || 'F',
+  };
+  localStorage.setItem(VOL_COLS_KEY, JSON.stringify(cols));
+  showSyncMsg('volColStatus', 'ok', '✓ Column mapping saved');
+});
+
+function loadVolCompletions() {
+  const el = document.getElementById('volCompList');
+  if (!el) return;
+  let comps = [];
+  try { comps = JSON.parse(localStorage.getItem(VOL_COMP_KEY)) || []; } catch {}
+  if (!comps.length) {
+    el.innerHTML = '<span class="text-muted text-xs">No completions recorded yet.</span>'; return;
+  }
+  el.innerHTML = `<table class="sched-table">
+    <thead><tr><th>Name</th><th>Role</th><th>Location</th><th>Completed</th></tr></thead>
+    <tbody>${comps.map(c => `
+      <tr>
+        <td>${escHtml(c.name||'')}</td>
+        <td style="color:var(--color-text-muted);">${escHtml(c.role||'')}</td>
+        <td style="color:var(--color-text-muted);">${escHtml(c.location||'')}</td>
+        <td style="color:var(--color-text-muted);font-size:0.75rem;">${escHtml(c.completedAt ? new Date(c.completedAt).toLocaleString() : '')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+document.getElementById('volCompRefreshBtn')?.addEventListener('click', loadVolCompletions);
+
+document.getElementById('volCompExportBtn')?.addEventListener('click', () => {
+  let comps = [];
+  try { comps = JSON.parse(localStorage.getItem(VOL_COMP_KEY)) || []; } catch {}
+  const header = 'Name,Role,Location,Completed\n';
+  const rows = comps.map(c =>
+    [c.name,c.role,c.location,c.completedAt ? new Date(c.completedAt).toLocaleString() : '']
+    .map(v => `"${String(v||'').replace(/"/g,'""')}"`)
+    .join(',')
+  ).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'volunteer-completions.csv'; a.click();
+});
+
+document.getElementById('volCompSyncBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('volCompSyncBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  let comps = [];
+  try { comps = JSON.parse(localStorage.getItem(VOL_COMP_KEY)) || []; } catch {}
+  try {
+    await ghPutJSON('data/volunteer-completions.json', comps, 'admin: sync volunteer completions');
+    showSyncMsg('volCompSyncMsg', 'ok', '✓ Pushed to GitHub');
+  } catch(e) {
+    showSyncMsg('volCompSyncMsg', 'err', '✗ Push failed — check PAT in Settings');
+  } finally { btn.textContent = 'Push to GitHub'; btn.disabled = false; }
+});
 
 /* ── Boot ─────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', initAuth);
