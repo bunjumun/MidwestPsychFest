@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gallery — Midwest Psych Fest 2026</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <style>
+    /* ── Gallery Hero ── */
+    .gallery-hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(160deg, #150020 0%, #0d0010 60%);
+      border-bottom: 1px solid var(--color-border);
+      padding: 80px 24px 64px;
+      text-align: center;
+    }
+    .gallery-orbs { position: absolute; inset: 0; pointer-events: none; }
+    .gallery-orb {
+      position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.14;
+    }
+    .gallery-orb-1 {
+      width: 360px; height: 360px;
+      background: var(--color-purple);
+      top: -100px; left: -60px;
+      animation: gorb-drift 11s ease-in-out infinite alternate;
+    }
+    .gallery-orb-2 {
+      width: 240px; height: 240px;
+      background: var(--color-primary);
+      bottom: -70px; right: -40px;
+      animation: gorb-drift 14s ease-in-out infinite alternate-reverse;
+    }
+    .gallery-orb-3 {
+      width: 180px; height: 180px;
+      background: var(--color-accent);
+      top: 35%; left: 60%;
+      animation: gorb-drift 9s ease-in-out infinite alternate;
+    }
+    @keyframes gorb-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(20px, 14px) scale(1.07); }
+    }
+    .gallery-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      border-radius: 99px; padding: 5px 16px;
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--color-purple); margin-bottom: 20px;
+    }
+    .gallery-hero h1 {
+      position: relative;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      color: var(--color-purple);
+      text-shadow: 0 0 50px rgba(139, 92, 246, 0.4);
+      margin-bottom: 14px;
+    }
+    .gallery-hero p {
+      position: relative;
+      color: var(--color-text-muted);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Gallery Grid ── */
+    .gallery-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .gallery-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+      position: relative;
+    }
+    .gallery-card:hover {
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.12);
+    }
+
+    .gallery-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      background: rgba(0,0,0,0.3);
+    }
+
+    .gallery-card-video {
+      position: relative;
+      aspect-ratio: 16/9;
+    }
+    .gallery-card-video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .gallery-card-caption {
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    /* Admin delete button */
+    .gallery-delete-btn {
+      display: none;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(13,0,16,0.85);
+      border: 1px solid rgba(255,60,172,0.4);
+      color: var(--color-primary);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 0.9rem;
+      line-height: 1;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    body.admin-mode .gallery-delete-btn { display: flex; }
+
+    /* Add Media button (admin only) */
+    .gallery-add-btn {
+      display: none;
+      position: fixed;
+      bottom: 28px;
+      right: 90px;
+      z-index: 800;
+      background: var(--color-purple);
+      color: #fff;
+      border: none;
+      border-radius: 99px;
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.45);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    body.admin-mode .gallery-add-btn { display: block; }
+    .gallery-add-btn:hover {
+      background: #7c3aed;
+      box-shadow: 0 6px 28px rgba(139, 92, 246, 0.65);
+    }
+
+    /* Empty state */
+    .gallery-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 24px;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      color: var(--color-text-muted);
+      line-height: 1.9;
+    }
+    .gallery-empty strong {
+      display: block;
+      color: var(--color-text);
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    /* Add media modal */
+    .gallery-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 600;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .gallery-modal-overlay.open { display: flex; }
+    .gallery-modal-box {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 460px;
+    }
+    .gallery-modal-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      color: var(--color-purple);
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="hList" id="navLinks">
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Festival</h2>
+            <ul class="menu-dropdown">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="schedule.html">Schedule</a></li>
+              <li><a href="gallery.html" class="active">Gallery</a></li>
+              <li><a href="map.html">Map</a></li>
+              <li><a href="more-info.html">More Info</a></li>
+              <li><a href="applications.html">Applications</a></li>
+              <li><a href="vendors.html">Vendors</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Check-In</h2>
+            <ul class="menu-dropdown">
+              <li><a href="volunteer.html">Volunteer Check-In</a></li>
+              <li><a href="band-checkin.html">Band Check-In</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Bar &amp; Merch</h2>
+            <ul class="menu-dropdown">
+              <li><a href="bar.html">Bar</a></li>
+            </ul>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-banner" data-slot="gallery-banner"></div>
+
+  <!-- HERO -->
+  <section class="gallery-hero">
+    <div class="gallery-orbs">
+      <div class="gallery-orb gallery-orb-1"></div>
+      <div class="gallery-orb gallery-orb-2"></div>
+      <div class="gallery-orb gallery-orb-3"></div>
+    </div>
+    <div class="gallery-eyebrow">✦ Midwest Psych Fest 2026</div>
+    <h1>Gallery</h1>
+    <p>Photos &amp; videos from the fest</p>
+  </section>
+
+  <!-- GALLERY GRID -->
+  <div class="gallery-container">
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+
+  <!-- Admin: Add Media button -->
+  <button class="gallery-add-btn" id="galleryAddBtn">+ Add Media</button>
+
+  <!-- Add Media Modal -->
+  <div class="gallery-modal-overlay" id="galleryModal">
+    <div class="gallery-modal-box">
+      <div class="gallery-modal-title">Add Media</div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:6px;">URL <span style="font-weight:400;color:var(--color-text-muted)">(photo URL or YouTube/Vimeo link)</span></label>
+        <input type="url" id="galleryUrlInput" placeholder="https://..." style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:6px;color:var(--color-text);box-sizing:border-box;" />
+      </div>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:6px;">Caption <span style="font-weight:400;color:var(--color-text-muted)">(optional)</span></label>
+        <input type="text" id="galleryCaptionInput" placeholder="Band name, event description…" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:6px;color:var(--color-text);box-sizing:border-box;" />
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-accent btn-sm" id="galleryModalSave">Add</button>
+        <button class="btn btn-ghost btn-sm" id="galleryModalCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      <span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span>
+    </div>
+    <div style="margin-top:12px;">
+      <a href="#" data-info="instagram">Instagram</a> &nbsp;·&nbsp;
+      <a href="#" data-info="facebook">Facebook</a>
+    </div>
+    <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
+  </footer>
+
+  <script src="assets/js/nav.js"></script>
+  <script src="assets/js/image-blocks.js"></script>
+  <script src="assets/js/site-info.js"></script>
+  <script>
+  (function () {
+    const GALLERY_KEY = 'mpf_gallery';
+
+    function loadGallery() {
+      try { return JSON.parse(localStorage.getItem(GALLERY_KEY)) || []; }
+      catch { return []; }
+    }
+    function saveGallery(items) {
+      localStorage.setItem(GALLERY_KEY, JSON.stringify(items));
+    }
+
+    function detectType(url) {
+      if (/youtube\.com|youtu\.be/.test(url)) return 'video';
+      if (/vimeo\.com/.test(url)) return 'video';
+      return 'photo';
+    }
+
+    function toEmbedUrl(url) {
+      // YouTube
+      let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]+)/);
+      if (m) return `https://www.youtube.com/embed/${m[1]}`;
+      // Vimeo
+      m = url.match(/vimeo\.com\/(\d+)/);
+      if (m) return `https://player.vimeo.com/video/${m[1]}`;
+      return url;
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderGallery() {
+      const items  = loadGallery();
+      const grid   = document.getElementById('galleryGrid');
+      const isAdmin = document.body.classList.contains('admin-mode');
+
+      if (!items.length) {
+        grid.innerHTML = `<div class="gallery-empty">
+          <strong>No media yet</strong>
+          ${isAdmin ? 'Click <strong>+ Add Media</strong> to add photos or videos.' : 'Check back soon for photos and videos from the fest!'}
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(item => {
+        const del = `<button class="gallery-delete-btn" onclick="deleteGalleryItem('${item.id}')" title="Remove">✕</button>`;
+        const cap = item.caption ? `<div class="gallery-card-caption">${escHtml(item.caption)}</div>` : '';
+
+        if (item.type === 'video') {
+          const embed = toEmbedUrl(item.url);
+          return `<div class="gallery-card">
+            ${del}
+            <div class="gallery-card-video">
+              <iframe src="${escHtml(embed)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+            </div>
+            ${cap}
+          </div>`;
+        } else {
+          return `<div class="gallery-card">
+            ${del}
+            <img src="${escHtml(item.url)}" alt="${escHtml(item.caption || '')}" loading="lazy"
+                 onerror="this.style.display='none'" />
+            ${cap}
+          </div>`;
+        }
+      }).join('');
+    }
+
+    window.deleteGalleryItem = function(id) {
+      if (!document.body.classList.contains('admin-mode')) return;
+      const items = loadGallery().filter(i => i.id !== id);
+      saveGallery(items);
+      renderGallery();
+    };
+
+    // Modal
+    const modal      = document.getElementById('galleryModal');
+    const urlInput   = document.getElementById('galleryUrlInput');
+    const capInput   = document.getElementById('galleryCaptionInput');
+
+    document.getElementById('galleryAddBtn').addEventListener('click', () => {
+      urlInput.value = '';
+      capInput.value = '';
+      modal.classList.add('open');
+      urlInput.focus();
+    });
+
+    document.getElementById('galleryModalCancel').addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+    document.getElementById('galleryModalSave').addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (!url) { urlInput.focus(); return; }
+      const item = {
+        id:      uid(),
+        type:    detectType(url),
+        url:     url,
+        caption: capInput.value.trim(),
+      };
+      const items = loadGallery();
+      items.push(item);
+      saveGallery(items);
+      modal.classList.remove('open');
+      renderGallery();
+    });
+
+    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('galleryModalSave').click(); });
+
+    // Load fallback from repo JSON, then render
+    async function init() {
+      if (!localStorage.getItem(GALLERY_KEY)) {
+        try {
+          const r = await fetch('data/gallery.json?_=' + Date.now());
+          if (r.ok) {
+            const data = await r.json();
+            if (Array.isArray(data) && data.length) saveGallery(data);
+          }
+        } catch(e) {}
+      }
+      renderGallery();
+    }
+
+    // Re-render when admin mode toggles
+    const observer = new MutationObserver(() => renderGallery());
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    init();
+  })();
+  </script>
+</body>
+</html>

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyBackground();
   renderAllBlocks();
   renderAllBanners();
+  injectEditPageBtn();
 
   // Expose admin controls to whatever page's admin panel loads them
   window.imageBlocksAdmin = {
@@ -39,11 +40,25 @@ function saveImageBlocks() {
 }
 
 // ── Background Image ──────────────────────────
-function applyBackground() {
-  const img     = localStorage.getItem(BG_IMAGE_KEY);
-  const opacity = parseFloat(localStorage.getItem(BG_OPACITY_KEY) || '0.85');
-  if (!img) return;
+async function applyBackground() {
+  let img     = localStorage.getItem(BG_IMAGE_KEY);
+  let opacity = parseFloat(localStorage.getItem(BG_OPACITY_KEY) || '0.85');
 
+  // Fall back to info.json if nothing in localStorage
+  if (!img) {
+    try {
+      const r = await fetch('data/info.json');
+      if (r.ok) {
+        const d = await r.json();
+        if (d.bg_image) {
+          img     = d.bg_image;
+          opacity = parseFloat(d.bg_opacity || opacity);
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (!img) return;
   document.body.classList.add('has-bg-image');
   document.body.style.backgroundImage = `url(${img})`;
   document.documentElement.style.setProperty('--bg-scrim', `rgba(13,0,16,${opacity})`);
@@ -294,6 +309,116 @@ function showImageEditor({ title, current, onSave, onClear }) {
 
 function removeOverlay(id) {
   document.getElementById(id)?.remove();
+}
+
+// ── Edit Page Button (floating, password-gated) ───────────────
+function getCurrentPageSlot() {
+  const map = {
+    'index.html':        'home-banner',
+    '':                  'home-banner',
+    'schedule.html':     'schedule-banner',
+    'map.html':          'map-banner',
+    'more-info.html':    'more-info-banner',
+    'vendors.html':      'vendors-banner',
+    'volunteer.html':    'volunteer-banner',
+    'band-checkin.html': 'band-checkin-banner',
+    'applications.html': 'applications-banner',
+    'bar.html':          'bar-banner',
+    'gallery.html':      'gallery-banner',
+  };
+  const page = location.pathname.split('/').pop() || '';
+  return map[page] || null;
+}
+
+function injectEditPageBtn() {
+  // Skip on admin page
+  if (location.pathname.includes('admin.html')) return;
+  const slot = getCurrentPageSlot();
+  if (!slot) return;
+
+  const btn = document.createElement('button');
+  btn.id        = 'editPageBtn';
+  btn.className = 'edit-page-btn';
+  btn.textContent = '✏ Edit Page';
+  document.body.appendChild(btn);
+
+  btn.addEventListener('click', () => {
+    requireAdminThen(() => {
+      const bannerEl = document.querySelector(`.page-banner[data-slot="${slot}"]`) || undefined;
+      openEditBanner(slot, bannerEl);
+    });
+  });
+}
+
+async function requireAdminThen(cb) {
+  if (sessionStorage.getItem('mpf_admin_ok') === '1') { cb(); return; }
+
+  const storedHash = localStorage.getItem('mpf_admin_pw');
+  const overlayId  = 'mpf-admin-gate';
+  document.getElementById(overlayId)?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id        = overlayId;
+  overlay.className = 'img-editor-overlay';
+  overlay.innerHTML = `
+    <div class="img-editor-box" style="max-width:340px">
+      <div class="img-editor-title">${storedHash ? 'Admin Login' : 'Set Admin Password'}</div>
+      ${!storedHash ? '<p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:12px;">Choose a password to protect admin editing. Stored locally in your browser.</p>' : ''}
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPwInput" placeholder="Enter password" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:6px;color:var(--color-text);" />
+      </div>
+      ${!storedHash ? `<div class="form-group">
+        <label>Confirm</label>
+        <input type="password" id="adminPwConfirm" placeholder="Re-enter password" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:6px;color:var(--color-text);" />
+      </div>` : ''}
+      <p id="adminPwErr" style="color:#ff6b6b;font-size:0.8rem;min-height:1.2em;margin-bottom:8px;"></p>
+      <div class="flex gap-1">
+        <button class="btn btn-accent btn-sm" id="adminPwOk">${storedHash ? 'Unlock' : 'Set Password'}</button>
+        <button class="btn btn-ghost btn-sm" id="adminPwCancel">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const pwInput   = overlay.querySelector('#adminPwInput');
+  const errEl     = overlay.querySelector('#adminPwErr');
+  pwInput.focus();
+
+  async function hashPw(pw) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  overlay.querySelector('#adminPwOk').addEventListener('click', async () => {
+    const pw = pwInput.value;
+    if (!pw) { errEl.textContent = 'Password required.'; return; }
+
+    if (!storedHash) {
+      const confirm = overlay.querySelector('#adminPwConfirm')?.value;
+      if (pw !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
+      const hash = await hashPw(pw);
+      localStorage.setItem('mpf_admin_pw', hash);
+      sessionStorage.setItem('mpf_admin_ok', '1');
+      overlay.remove();
+      cb();
+    } else {
+      const hash = await hashPw(pw);
+      if (hash === storedHash) {
+        sessionStorage.setItem('mpf_admin_ok', '1');
+        overlay.remove();
+        cb();
+      } else {
+        errEl.textContent = 'Incorrect password.';
+        pwInput.value = '';
+        pwInput.focus();
+      }
+    }
+  });
+
+  pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') overlay.querySelector('#adminPwOk').click(); });
+  overlay.querySelector('#adminPwCancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
 // ── Export ────────────────────────────────────

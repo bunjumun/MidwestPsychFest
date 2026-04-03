@@ -10,5 +10,7 @@
   "instagram": "https://www.instagram.com/midwestpsychfest/",
   "facebook": "https://www.facebook.com/share/1CcAK6oDCH/",
   "bar_open": true,
-  "bar_payment_link": ""
+  "bar_payment_link": "",
+  "bg_image": "",
+  "bg_opacity": "0.85"
 }
