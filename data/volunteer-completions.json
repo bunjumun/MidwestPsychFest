@@ -1,17 +1,1 @@
-[
-  {
-    "key": "fred blasing|friday|5|gate",
-    "name": "Fred blasing",
-    "shift": {
-      "name": "Fred blasing",
-      "date": "FRIDAY",
-      "start_time": "5",
-      "end_time": "7",
-      "location": "GATE",
-      "leader_contact": "ANDREW DAVIS 614-441-7333",
-      "role": "SECURITY",
-      "notes": "No"
-    },
-    "completedAt": "2026-04-02T23:11:47.217Z"
-  }
-]
+[]
