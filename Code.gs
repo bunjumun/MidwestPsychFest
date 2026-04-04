@@ -41,14 +41,9 @@ function doPost(e) {
       throw new Error('Tab "' + d.sheetName + '" not found. Available tabs: ' + allTabs);
     }
 
-    // col can be a letter ("A", "G") or a 0-indexed integer from the app.
+    // col is always a 1-indexed integer sent from the client (A=1, B=2, … O=15, …).
     // row is always 1-indexed (matches the spreadsheet row number).
-    var colNum;
-    if (typeof d.col === 'number') {
-      colNum = d.col + 1;                               // 0-indexed → 1-indexed
-    } else {
-      colNum = d.col.trim().toUpperCase().charCodeAt(0) - 64; // "A"→1, "B"→2 …
-    }
+    var colNum = parseInt(d.col);
     var rowNum = parseInt(d.row);                       // 1-indexed from CSV
 
     if (!colNum || isNaN(rowNum) || rowNum < 1) {
@@ -100,9 +95,38 @@ function onEditPush(e) {
 }
 
 
-// ── Health check ──────────────────────────────────────────────────────────
+// ── Sheet → Browser: fetch all rows for a given tab ─────────────────────
+// Called by check-in pages on load and after each check-in/undo.
+// Query params: ?sheet=TabName&sheetId=SPREADSHEET_ID
+// Returns: { ok: true, rows: [[...], ...] }  (first row = headers)
+// No params → health check response.
 function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, status: 'MPF Sync active' }))
-    .setMimeType(ContentService.MimeType.JSON);
+  var params = (e && e.parameter) ? e.parameter : {};
+  var sheetName     = params.sheet;
+  var spreadsheetId = params.sheetId || SPREADSHEET_ID;
+
+  if (!sheetName) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, status: 'MPF Sync active' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  try {
+    var ss    = SpreadsheetApp.openById(spreadsheetId);
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      var allTabs = ss.getSheets().map(function(s) { return s.getName(); }).join(', ');
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: 'Tab "' + sheetName + '" not found. Available: ' + allTabs }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    var data = sheet.getDataRange().getValues();
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, rows: data }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }

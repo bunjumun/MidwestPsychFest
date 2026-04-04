@@ -664,9 +664,9 @@
 
         <span class="admin-section-label">Google Sheet Connection</span>
         <div class="config-field">
-          <label>Google Sheet CSV URL</label>
-          <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/…/export?format=csv" />
-          <p class="field-hint">File → Share → Publish to web → select the band roster tab → CSV.</p>
+          <label>Google Spreadsheet URL</label>
+          <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/…" />
+          <p class="field-hint">Paste your spreadsheet URL — the ID is extracted automatically. No need to publish to web.</p>
         </div>
         <div class="config-field">
           <label>Sheet Tab Name <span class="field-hint" style="font-weight:400;">(exact name of the tab in Google Sheets)</span></label>
@@ -803,14 +803,12 @@ function doGet(e) {
   <script>
   /* Config key separate from volunteer page */
   const CONFIG_KEY   = 'mpf_band_config';
-  const CACHE_KEY    = 'mpf_band_cache';
-  const CACHE_TS_KEY = 'mpf_band_cache_ts';
-  const CACHE_TTL    = 5 * 60 * 1000;
+  let currentRecords = [];
 
   const DEFAULT_CONFIG = {
     sheetUrl:'https://docs.google.com/spreadsheets/d/1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI/export?format=csv&gid=1311731562',
     sheetId:'1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI', sheetName:'Bands',
-    scriptUrl:'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
+    scriptUrl:'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec',
     nameCol:'A', checkinCol:'Q', checkinLabel:'Band Arrived',
     completeCol:'', completeLabel:'',
     imageCol: 'K',
@@ -823,85 +821,84 @@ function doGet(e) {
     ]
   };
 
-  function getConfig() { try { return Object.assign({}, DEFAULT_CONFIG, JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')); } catch { return Object.assign({}, DEFAULT_CONFIG); } }
+  function getConfig() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+      if (saved.scriptUrl && saved.scriptUrl !== DEFAULT_CONFIG.scriptUrl) {
+        localStorage.removeItem(CONFIG_KEY);
+        currentRecords = [];
+        return Object.assign({}, DEFAULT_CONFIG);
+      }
+      return Object.assign({}, DEFAULT_CONFIG, saved);
+    } catch { return Object.assign({}, DEFAULT_CONFIG); }
+  }
   function setConfig(cfg) { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); }
-  function extractSheetId(url) { const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/); return m ? m[1] : ''; }
+  function extractSheetId(url) { const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/); return m ? m[1] : ''; }
   function colIdx(l) { if (!l) return -1; return l.trim().toUpperCase().charCodeAt(0) - 65; }
   function getCol(cols, l) { const i = colIdx(l); return (i >= 0 && i < cols.length) ? cols[i] : ''; }
 
-  function parseCSVLine(line) {
-    const cols = []; let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    cols.push(cur.trim());
-    return cols;
+  function getColFromArray(arr, letter) {
+    const i = colIdx(letter);
+    const val = (i >= 0 && i < arr.length) ? arr[i] : '';
+    return (val === null || val === undefined) ? '' : String(val);
   }
 
-  function parseCSV(text, config) {
-    const lines = text.trim().split(/\r?\n/);
-    const firstCell = lines[0].split(',')[0].trim().toLowerCase();
-    const isHeader = ['name','band','artist','act'].some(h => firstCell.includes(h));
-    const dataLines = isHeader ? lines.slice(1) : lines;
-    const startRow  = isHeader ? 2 : 1;
-    return dataLines.map((line, i) => {
-      const cols = parseCSVLine(line);
-      if (!cols.some(c => c)) return null;
-      const rec = {
-        _row: startRow + i,
-        name: getCol(cols, config.nameCol),
-        checkinValue:  config.checkinCol  ? getCol(cols, config.checkinCol)  : '',
-        completeValue: config.completeCol ? getCol(cols, config.completeCol) : '',
-        imageUrl: config.imageCol ? getCol(cols, config.imageCol) : '',
-        fields: {}
-      };
-      config.fields.forEach(f => { rec.fields[f.col] = getCol(cols, f.col); });
-      return rec;
-    }).filter(r => r && r.name);
-  }
-
-  async function fetchRecords(force) {
+  async function fetchRecords() {
     const config = getConfig();
-    if (!config.sheetUrl) return null;
-    if (!force) {
-      const ts = parseInt(localStorage.getItem(CACHE_TS_KEY) || '0');
-      if (Date.now() - ts < CACHE_TTL) { const c = localStorage.getItem(CACHE_KEY); if (c) return JSON.parse(c); }
-    }
+    if (!config.scriptUrl || !config.sheetId) return null;
     try {
-      const url = config.sheetUrl + (config.sheetUrl.includes('?') ? '&' : '?') + '_=' + Date.now();
-      const res = await fetch(url); if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const records = parseCSV(await res.text(), config);
-      localStorage.setItem(CACHE_KEY, JSON.stringify(records));
-      localStorage.setItem(CACHE_TS_KEY, Date.now().toString());
+      const url = `${config.scriptUrl}?sheet=${encodeURIComponent(config.sheetName)}&sheetId=${encodeURIComponent(config.sheetId)}&_=${Date.now()}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Script error');
+      const [, ...dataRows] = json.rows;
+      const records = dataRows.map((cols, i) => {
+        if (!cols.some(c => c !== '' && c !== null && c !== undefined)) return null;
+        const rec = {
+          _row: i + 2,
+          name: getColFromArray(cols, config.nameCol),
+          checkinValue:  config.checkinCol  ? getColFromArray(cols, config.checkinCol)  : '',
+          completeValue: config.completeCol ? getColFromArray(cols, config.completeCol) : '',
+          imageUrl: config.imageCol ? getColFromArray(cols, config.imageCol) : '',
+          fields: {}
+        };
+        config.fields.forEach(f => { rec.fields[f.col] = getColFromArray(cols, f.col); });
+        return rec;
+      }).filter(r => r && r.name);
+      currentRecords = records;
       return records;
-    } catch(e) { console.error(e); return null; }
+    } catch(e) { console.error('fetchRecords error:', e); return null; }
   }
 
   function updateLocalRecord(row, field, value) {
-    try {
-      const records = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
-      const rec = records.find(r => r._row === row);
-      if (rec) { if (field === 'checkin') rec.checkinValue = value; if (field === 'complete') rec.completeValue = value; localStorage.setItem(CACHE_KEY, JSON.stringify(records)); }
-      return rec;
-    } catch { return null; }
+    const rec = currentRecords.find(r => r._row === row);
+    if (rec) { if (field === 'checkin') rec.checkinValue = value; if (field === 'complete') rec.completeValue = value; }
+    return rec || null;
   }
-  function getLocalRecord(row) { try { const records = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); return records.find(r => r._row === row) || null; } catch { return null; } }
+  function getLocalRecord(row) { return currentRecords.find(r => r._row === row) || null; }
 
   async function writeToSheet(row, col, value) {
     const config = getConfig();
     if (!config.scriptUrl || !config.sheetId || !col) return false;
+    // Convert column letter to 1-indexed number (A=1, B=2, …) — Apps Script getRange needs an integer
+    const colNum = typeof col === 'number' ? col : col.trim().toUpperCase().charCodeAt(0) - 64;
     try {
       const res = await fetch(config.scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ sheetId: config.sheetId, sheetName: config.sheetName || 'Bands', row, col, value })
+        body: JSON.stringify({ sheetId: config.sheetId, sheetName: config.sheetName || 'Bands', row, col: colNum, value })
       });
       if (!res.ok) { console.error('Sheet write HTTP error:', res.status); return false; }
-      const data = await res.json().catch(() => ({}));
-      return data.ok === true;
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        if (data.ok === false) { console.error('Sheet write script error:', data.error); return false; }
+        return data.ok === true || data.status === 'success';
+      } catch(_) {
+        if (text.toLowerCase().includes('error')) { console.error('Sheet write error:', text); return false; }
+        return true;
+      }
     } catch(e) { console.error('Sheet write error:', e); return false; }
   }
 
@@ -914,9 +911,9 @@ function doGet(e) {
     const records = await fetchRecords();
     if (!records) {
       const cfg = getConfig();
-      area.innerHTML = cfg.sheetUrl
-        ? '<div class="status-msg error">Could not load band data. The sheet may be private or the URL invalid.</div>'
-        : '<div class="status-msg error">No band data configured. Ask a festival admin to connect the Google Sheet below.</div>';
+      area.innerHTML = (cfg.scriptUrl && cfg.sheetId)
+        ? '<div class="status-msg error">Could not load band data. Check the Apps Script deployment and Sheet Tab Name.</div>'
+        : '<div class="status-msg error">No band data configured. Ask a festival admin to set up the Apps Script connection below.</div>';
       return;
     }
     const q = nameRaw.toLowerCase();
@@ -1005,18 +1002,38 @@ function doGet(e) {
     const notice = document.getElementById(`bsync-${row}`);
     if (notice) { notice.textContent = 'Syncing to sheet…'; notice.className = 'sync-notice'; }
     const ok = await writeToSheet(row, config.checkinCol, ts);
-    if (notice) { notice.textContent = ok ? '✓ Synced to Google Sheet' : 'Saved locally. (Configure Apps Script to sync to sheet.)'; notice.className = 'sync-notice ' + (ok ? 'synced' : 'failed'); }
+    if (ok) {
+      await fetchRecords(); refreshCard(row);
+      const n2 = document.getElementById(`bsync-${row}`);
+      if (n2) { n2.textContent = '✓ Synced to Google Sheet'; n2.className = 'sync-notice synced'; }
+    } else {
+      if (notice) { notice.textContent = '✗ Sync failed — check Apps Script config.'; notice.className = 'sync-notice failed'; }
+    }
   }
-  async function undoCheckin(row)  { const config = getConfig(); updateLocalRecord(row, 'checkin', '');  refreshCard(row); writeToSheet(row, config.checkinCol, ''); }
+  async function undoCheckin(row) {
+    const config = getConfig(); updateLocalRecord(row, 'checkin', ''); refreshCard(row);
+    const ok = await writeToSheet(row, config.checkinCol, '');
+    if (ok) { await fetchRecords(); refreshCard(row); }
+  }
   async function doComplete(row) {
     const config = getConfig(); const ts = nowTimestamp();
     updateLocalRecord(row, 'complete', ts); refreshCard(row);
     const notice = document.getElementById(`bsync-${row}`);
     if (notice) { notice.textContent = 'Syncing…'; notice.className = 'sync-notice'; }
     const ok = await writeToSheet(row, config.completeCol, ts);
-    if (notice) { notice.textContent = ok ? '✓ Synced to Google Sheet' : 'Saved locally.'; notice.className = 'sync-notice ' + (ok ? 'synced' : 'failed'); }
+    if (ok) {
+      await fetchRecords(); refreshCard(row);
+      const n2 = document.getElementById(`bsync-${row}`);
+      if (n2) { n2.textContent = '✓ Synced to Google Sheet'; n2.className = 'sync-notice synced'; }
+    } else {
+      if (notice) { notice.textContent = '✗ Sync failed — check Apps Script config.'; notice.className = 'sync-notice failed'; }
+    }
   }
-  async function undoComplete(row) { const config = getConfig(); updateLocalRecord(row, 'complete', ''); refreshCard(row); writeToSheet(row, config.completeCol, ''); }
+  async function undoComplete(row) {
+    const config = getConfig(); updateLocalRecord(row, 'complete', ''); refreshCard(row);
+    const ok = await writeToSheet(row, config.completeCol, '');
+    if (ok) { await fetchRecords(); refreshCard(row); }
+  }
 
   function toggleAdminPanel() { const panel = document.getElementById('adminPanel'); const open = panel.classList.toggle('open'); if (open) loadConfigForm(); }
   function loadConfigForm() {
@@ -1063,17 +1080,18 @@ function doGet(e) {
       completeLabel: document.getElementById('completeLabel').value.trim() || 'Load-Out Complete',
       fields:        getFieldsFromForm()
     };
-    setConfig(cfg); localStorage.removeItem(CACHE_KEY); localStorage.removeItem(CACHE_TS_KEY);
-    if (sheetUrl) {
-      const records = await fetchRecords(true);
-      if (records && records.length) { statusEl.textContent = `✓ Connected! ${records.length} bands loaded.`; statusEl.className = 'config-status ok'; }
-      else { statusEl.textContent = 'Could not reach sheet. Verify the URL is published as CSV.'; statusEl.className = 'config-status err'; }
-    } else { statusEl.textContent = 'Config saved.'; statusEl.className = 'config-status ok'; }
+    setConfig(cfg);
+    if (cfg.scriptUrl && cfg.sheetId) {
+      const records = await fetchRecords();
+      if (records && records.length) { statusEl.textContent = `✓ Connected — ${records.length} bands loaded via Apps Script.`; statusEl.className = 'config-status ok'; }
+      else if (records) { statusEl.textContent = 'Apps Script reached but no bands found. Check Sheet Tab Name and Name Column.'; statusEl.className = 'config-status err'; }
+      else { statusEl.textContent = '✗ Could not reach Apps Script. Check URL and deployment settings (Execute as: Me, Access: Anyone).'; statusEl.className = 'config-status err'; }
+    } else { statusEl.textContent = 'Config saved. Enter Apps Script URL and Spreadsheet URL to connect.'; statusEl.className = 'config-status ok'; }
   }
 
   function clearCache() {
-    localStorage.removeItem(CACHE_KEY); localStorage.removeItem(CACHE_TS_KEY);
-    const s = document.getElementById('configStatus'); s.textContent = 'Cache cleared.'; s.className = 'config-status ok';
+    currentRecords = [];
+    const s = document.getElementById('configStatus'); s.textContent = 'Records cleared — next lookup will fetch fresh data.'; s.className = 'config-status ok';
   }
 
   async function adminUnlock() {
@@ -1100,3 +1118,4 @@ function doGet(e) {
   <script src="assets/js/live-pulse.js"></script>
 </body>
 </html>
+html>
