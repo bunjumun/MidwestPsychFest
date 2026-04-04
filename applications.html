@@ -212,9 +212,6 @@
     <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--color-text-muted);font-size:0.9rem;">Loading applications…</div>
   </div>
 
-  <!-- FORM EMBEDS — rendered by JS -->
-  <div id="formEmbeds"></div>
-
   <!-- FOOTER -->
   <footer class="site-footer">
     <div>
@@ -252,68 +249,51 @@
       }
 
       const grid = document.getElementById('appsGrid');
-      const embeds = document.getElementById('formEmbeds');
+
+      // Filter out hidden entries
+      const visible = apps.filter(app => !app.hidden);
 
       // ── Render cards ──
       if (grid) {
-        grid.innerHTML = apps.map(app => {
-          const color = app.color || '#aaaaff';
-          const isOpen = app.status === 'open' && app.form_url;
-          const btnStyle = isOpen
-            ? `background:${color};color:#000;border:none;`
-            : `background:transparent;border:1px solid ${color}40;color:${color};opacity:0.5;pointer-events:none;`;
-          const btnText = isOpen ? 'Apply Now →' : 'Coming Soon';
-          const btnHref = isOpen ? `#form-${app.key}` : '#';
-
-          return `<div class="app-card" style="border-color:${color}40;">
-            <div class="app-card-icon">${app.emoji || '📋'}</div>
-            <h2 style="color:${color};">${app.label || ''}</h2>
-            <p>${app.description || ''}</p>
-            <div class="app-card-actions">
-              <a href="${btnHref}" class="btn btn-sm" style="${btnStyle}">${btnText}</a>
-              ${app.note ? `<span class="app-card-note">${app.note}</span>` : ''}
-            </div>
-          </div>`;
-        }).join('');
-
-        // Hover effects via JS (since colors are dynamic)
-        grid.querySelectorAll('.app-card').forEach((card, i) => {
-          const color = apps[i]?.color || '#aaaaff';
-          card.addEventListener('mouseenter', () => {
-            card.style.borderColor = color + '99';
-            card.style.boxShadow = `0 0 40px ${color}14`;
-          });
-          card.addEventListener('mouseleave', () => {
-            card.style.borderColor = color + '40';
-            card.style.boxShadow = '';
-          });
-        });
-      }
-
-      // ── Render form embeds ──
-      if (embeds) {
-        embeds.innerHTML = apps
-          .filter(app => app.status === 'open' && app.form_url)
-          .map(app => {
+        if (!visible.length) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--color-text-muted);">No applications available right now. Check back soon.</div>';
+        } else {
+          grid.innerHTML = visible.map(app => {
             const color = app.color || '#aaaaff';
-            const embedUrl = app.form_url.includes('?')
-              ? app.form_url + '&embedded=true'
-              : app.form_url + '?embedded=true';
-            return `<section id="form-${app.key}" style="max-width:760px;margin:0 auto;padding:0 24px 64px;">
-              <h2 style="color:${color};font-family:var(--font-display);margin-bottom:16px;font-size:1.6rem;">
-                ${app.emoji || ''} ${app.label || ''} Application
-              </h2>
-              <iframe src="${embedUrl}" width="100%" height="700" frameborder="0" marginheight="0" marginwidth="0"
-                style="border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,0.08);display:block;">
-                Loading form…
-              </iframe>
-              <p style="text-align:center;margin-top:10px;font-size:0.82rem;">
-                <a href="${app.form_url}" target="_blank" rel="noopener" style="color:${color};">
-                  Open form in new tab ↗
-                </a>
-              </p>
-            </section>`;
+            const isOpen = app.status === 'open' && app.form_url;
+            const btnStyle = isOpen
+              ? `background:${color};color:#000;border:none;`
+              : `background:transparent;border:1px solid ${color}40;color:${color};opacity:0.5;pointer-events:none;`;
+            const btnText = isOpen ? 'Apply Now →' : 'Coming Soon';
+
+            return `<div class="app-card" style="border-color:${color}40;">
+              <div class="app-card-icon">${app.emoji || '📋'}</div>
+              <h2 style="color:${color};">${app.label || ''}</h2>
+              <p>${app.description || ''}</p>
+              <div class="app-card-actions">
+                ${isOpen
+                  ? `<a href="${app.form_url}" target="_blank" rel="noopener" class="btn btn-sm" style="${btnStyle}">${btnText}</a>`
+                  : `<span class="btn btn-sm" style="${btnStyle}">${btnText}</span>`
+                }
+                ${app.note ? `<span class="app-card-note">${app.note}</span>` : ''}
+              </div>
+            </div>`;
           }).join('');
+
+          // Hover effects (dynamic colors)
+          const cards = grid.querySelectorAll('.app-card');
+          cards.forEach((card, i) => {
+            const color = visible[i]?.color || '#aaaaff';
+            card.addEventListener('mouseenter', () => {
+              card.style.borderColor = color + '99';
+              card.style.boxShadow = `0 0 40px ${color}14`;
+            });
+            card.addEventListener('mouseleave', () => {
+              card.style.borderColor = color + '40';
+              card.style.boxShadow = '';
+            });
+          });
+        }
       }
 
     } catch(e) { console.warn('applications.json load failed', e); }

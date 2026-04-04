@@ -3294,12 +3294,22 @@ function renderAppFormsEditor() {
     return;
   }
   el.innerHTML = appFormsArr.map((entry, i) => {
-    const isOpen = entry.status === 'open';
+    const isOpen   = entry.status === 'open';
+    const isHidden = !!entry.hidden;
     const col = escHtml(entry.color || '#aaaaff');
-    return `<div style="border:1px solid var(--color-border);border-radius:var(--radius);padding:14px 16px;position:relative;">
-      <button onclick="removeAppForm(${i})" title="Remove"
-        style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:rgba(255,68,68,0.55);cursor:pointer;font-size:1rem;line-height:1;padding:0;">✕</button>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+    const rowOpacity = isHidden ? 'opacity:0.45;' : '';
+    return `<div style="border:1px solid var(--color-border);border-radius:var(--radius);padding:14px 16px;position:relative;${rowOpacity}">
+      <div style="position:absolute;top:10px;right:10px;display:flex;gap:8px;align-items:center;">
+        <label title="${isHidden ? 'Hidden from page — click to show' : 'Visible on page — click to hide'}"
+          style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.72rem;color:${isHidden ? 'rgba(255,180,0,0.8)' : 'rgba(79,255,176,0.7)'};">
+          <input type="checkbox" id="appForm-hidden-${i}" ${isHidden ? 'checked' : ''}
+            style="width:14px;height:14px;cursor:pointer;" />
+          ${isHidden ? 'Hidden' : 'Visible'}
+        </label>
+        <button onclick="removeAppForm(${i})" title="Remove"
+          style="background:transparent;border:none;color:rgba(255,68,68,0.55);cursor:pointer;font-size:1rem;line-height:1;padding:0;">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;padding-right:110px;">
         <div class="form-group" style="margin:0;flex:0 0 64px;">
           <label style="font-size:0.7rem;">Emoji</label>
           <input type="text" id="appForm-emoji-${i}" value="${escHtml(entry.emoji || '📋')}"
@@ -3322,14 +3332,14 @@ function renderAppFormsEditor() {
           style="font-size:0.82rem;resize:vertical;">${escHtml(entry.description || '')}</textarea>
       </div>
       <div class="form-group" style="margin-bottom:8px;">
-        <label>Form URL</label>
+        <label>Form URL <span class="text-muted" style="font-weight:400;">(opens in new tab when clicked)</span></label>
         <input type="url" id="appForm-url-${i}" placeholder="https://docs.google.com/forms/…"
           value="${escHtml(entry.form_url || '')}" style="font-size:0.82rem;" />
       </div>
       <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
           <input type="radio" name="appForm-status-${i}" value="open" ${isOpen ? 'checked' : ''} />
-          Open (show button &amp; embed)
+          Open (show Apply Now button)
         </label>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
           <input type="radio" name="appForm-status-${i}" value="coming_soon" ${!isOpen ? 'checked' : ''} />
@@ -3372,6 +3382,7 @@ document.getElementById('appFormsSaveBtn')?.addEventListener('click', async () =
     form_url:    document.getElementById(`appForm-url-${i}`)?.value.trim() || '',
     status:      document.querySelector(`input[name="appForm-status-${i}"]:checked`)?.value || 'coming_soon',
     note:        document.getElementById(`appForm-note-${i}`)?.value.trim() || '',
+    hidden:      document.getElementById(`appForm-hidden-${i}`)?.checked || false,
   }));
   try {
     await ghPutJSON('data/applications.json', updated, 'admin: update application form config');
