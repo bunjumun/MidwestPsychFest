@@ -84,6 +84,11 @@
     }
     .adm-section { display: none; }
     .adm-section.active { display: block; }
+    /* Bands section: full-bleed iframe, undo parent padding */
+    #section-bands.active {
+      margin: -28px -32px;
+      overflow: hidden;
+    }
 
     .adm-section-header {
       display: flex; align-items: center; gap: 12px;
@@ -306,6 +311,10 @@
       <span class="adm-nav-icon">ℹ️</span>
       <span class="nav-label">Site Info</span>
     </button>
+    <button class="adm-nav-item" data-section="bands">
+      <span class="adm-nav-icon">📅</span>
+      <span class="nav-label">Schedule / Bands</span>
+    </button>
     <button class="adm-nav-item" data-section="images">
       <span class="adm-nav-icon">🖼</span>
       <span class="nav-label">Images</span>
@@ -402,7 +411,16 @@
       </div>
     </section>
 
-    <!-- ── SCHEDULE ── -->
+    <!-- ── BANDS / SCHEDULE ── -->
+    <section class="adm-section" id="section-bands" style="padding:0;overflow:hidden;">
+      <iframe
+        id="bandToolFrame"
+        src="mpf_schedule_tool.html"
+        style="width:100%;border:none;display:block;height:calc(100vh - 52px);"
+        title="Band & Schedule Tool"
+      ></iframe>
+    </section>
+
     <!-- ── SITE INFO ── -->
     <section class="adm-section" id="section-siteinfo">
       <div class="adm-section-header">

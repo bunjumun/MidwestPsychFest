@@ -209,6 +209,7 @@
       <button class="hdr-btn sync-sheet" id="syncSheetBtn" onclick="syncEmailBodiesToSheet()" title="Push email bodies and photo URLs to the Bands sheet">Sync to Sheet ↑</button>
       <button class="hdr-btn" id="pullSheetBtn" onclick="pullFromSheet()" title="Pull status, email, and photo URL from the Bands sheet into this tool">Pull from Sheet ↓</button>
       <button class="hdr-btn" id="pushLiveBtn" onclick="pushToLiveSite()" title="Commit current schedule to data/schedule.json on GitHub (updates live site in ~60s)">Push to Live Site</button>
+      <button class="hdr-btn" id="schedVisBtn" onclick="toggleScheduleVisibility()" title="Show or hide the schedule on the public site">Schedule: Public</button>
       <button class="hdr-btn" onclick="toggleSheetConfig()" title="Configure Google Sheet connection">⚙ Sheet</button>
     </div>
   </div>
@@ -698,6 +699,11 @@ function stateForExport() {
 }
 
 // ─── STORAGE SYNC ─────────────────────────────────────────────────────────────
+let _syncDebounce = null;
+function debouncedSync() {
+  clearTimeout(_syncDebounce);
+  _syncDebounce = setTimeout(syncToStorage, 800);
+}
 function syncToStorage() {
   const schedule = bands.map((b, i) => {
     const ex       = getExtra(i);
@@ -1348,11 +1354,13 @@ function handleFieldEdit(idx, field, val) {
     const btn = document.getElementById(`btn-${idx}`);
     if (btn) btn.classList.add('active');
   }
+  debouncedSync();
 }
 
 function handleExtraEdit(idx, field, val) {
   if (!state.extra[idx]) state.extra[idx] = {};
   state.extra[idx][field] = val;
+  debouncedSync();
 }
 
 function handlePhotoUrl(idx, url) {
@@ -1360,6 +1368,7 @@ function handlePhotoUrl(idx, url) {
   state.photos[idx] = url;
   const prev = document.getElementById('photoPreview');
   if (prev) { prev.src = url; prev.classList.toggle('visible', !!url); }
+  syncToStorage();
 }
 
 function handlePhotoFile(idx, fileInput) {
@@ -1371,6 +1380,7 @@ function handlePhotoFile(idx, fileInput) {
     state.photos[idx] = e.target.result;
     const prev = document.getElementById('photoPreview');
     if (prev) { prev.src = e.target.result; prev.classList.add('visible'); }
+    syncToStorage();
   };
   reader.readAsDataURL(file);
 }
@@ -1453,6 +1463,7 @@ function toggleEditBody(idx) {
   if (editingBody) {
     const ta = document.getElementById('bodyEdit');
     if (ta) commitBodyEdit(idx, ta.value);
+    syncToStorage();
   }
   editingBody = !editingBody;
   renderBand(idx);
@@ -1464,6 +1475,7 @@ function toggleEditBody(idx) {
 
 function handleBodyEdit(idx, val) {
   state.bodies[idx] = { manual: true, text: val };
+  debouncedSync();
 }
 
 // ─── EMAIL / STATUS ───────────────────────────────────────────────────────────
@@ -1676,6 +1688,64 @@ async function pushToLiveSite() {
   }
 }
 
+// ─── SCHEDULE VISIBILITY TOGGLE ──────────────────────────────────────────────
+let _infoJsonCache = null;  // cached data/info.json so we don't clobber other fields
+let _scheduleHidden = false;
+
+async function loadScheduleVisibility() {
+  try {
+    const repo = (document.body && document.body.dataset.repo) || 'bunjumun/MidwestPsychFest';
+    const data = await fetch('https://raw.githubusercontent.com/' +
+      repo + '/main/data/info.json?t=' + Date.now())
+      .then(r => r.ok ? r.json() : null);
+    if (data) {
+      _infoJsonCache = data;
+      _scheduleHidden = !!data.schedule_hidden;
+      updateSchedVisBtn();
+    }
+  } catch(e) {}
+}
+
+function updateSchedVisBtn() {
+  const btn = document.getElementById('schedVisBtn');
+  if (!btn) return;
+  if (_scheduleHidden) {
+    btn.textContent = 'Schedule: Hidden';
+    btn.style.borderColor = 'var(--missing)';
+    btn.style.color = 'var(--missing)';
+  } else {
+    btn.textContent = 'Schedule: Public';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+}
+
+async function toggleScheduleVisibility() {
+  const btn = document.getElementById('schedVisBtn');
+  if (!btn) return;
+  const newHidden = !_scheduleHidden;
+  const label = newHidden ? 'hidden ("Full Schedule Coming Soon")' : 'public (live schedule visible)';
+  if (!confirm(`Set schedule to: ${label}?\n\nThis updates data/info.json on GitHub (~60s to take effect).`)) return;
+  btn.disabled = true; btn.textContent = 'Pushing…';
+  try {
+    if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available — check PAT in admin settings');
+    const info = _infoJsonCache || {};
+    info.schedule_hidden = newHidden;
+    await ghPutJSON('data/info.json', info, (newHidden ? 'admin: hide schedule' : 'admin: show schedule'));
+    _scheduleHidden = newHidden;
+    _infoJsonCache = info;
+    updateSchedVisBtn();
+    alert(newHidden
+      ? '✓ Schedule hidden — visitors will see "Full Schedule Coming Soon." (~60s)'
+      : '✓ Schedule now public — live schedule grid visible to visitors (~60s)');
+  } catch(e) {
+    alert('✗ Failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    updateSchedVisBtn();
+  }
+}
+
 // ─── ADD / DELETE BAND ────────────────────────────────────────────────────────
 function openAddBandModal() {
   document.getElementById('abName').value  = '';
@@ -1736,12 +1806,14 @@ document.getElementById('addBandOverlay').addEventListener('click', function(e) 
     // 2. Fall back to legacy state backup (mpf_state_saved) + partial mpf_schedule merge
     loadSavedState();
     loadFromStorage();
+    // 3. auto-read linked file only if no localStorage data (first-run or fresh install)
+    await tryAutoLoad();
+    syncToStorage();  // write hardcoded defaults into localStorage for next load
   }
-  await tryAutoLoad();  // 3. auto-read linked file if browser permission still granted
   buildSidebar();
-  syncToStorage();
   selectBand(0);
   updateUndoBtn();
+  loadScheduleVisibility();  // load schedule_hidden state from GitHub
 })();
 </script>
 <script src="assets/js/github-sync.js"></script>
