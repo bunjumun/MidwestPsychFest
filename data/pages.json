@@ -1,10 +1,68 @@
 [
-  { "id": "index",     "label": "Home",         "url": "index.html",          "nav": true,  "icon": "🏠" },
-  { "id": "schedule",  "label": "Schedule",     "url": "schedule.html",       "nav": true,  "icon": "📅" },
-  { "id": "map",       "label": "Map",          "url": "map.html",            "nav": true,  "icon": "🗺" },
-  { "id": "more-info", "label": "More Info",    "url": "more-info.html",      "nav": true,  "icon": "ℹ️" },
-  { "id": "volunteer", "label": "Volunteer",    "url": "volunteer.html",      "nav": true,  "icon": "🙋" },
-  { "id": "vendors",   "label": "Vendors",      "url": "vendors.html",        "nav": false, "icon": "🏪" },
-  { "id": "bar",       "label": "Bar",          "url": "bar.html",            "nav": false, "icon": "🍺", "condition": "bar_open" },
-  { "id": "admin",     "label": "Admin",        "url": "admin.html",          "nav": false, "icon": "⚙",  "protected": true }
+  {
+    "id": "index",
+    "label": "Home",
+    "url": "index.html",
+    "nav": true,
+    "icon": "🏠"
+  },
+  {
+    "id": "schedule",
+    "label": "Schedule",
+    "url": "schedule.html",
+    "nav": true,
+    "icon": "📅"
+  },
+  {
+    "id": "map",
+    "label": "Map",
+    "url": "map.html",
+    "nav": true,
+    "icon": "🗺"
+  },
+  {
+    "id": "more-info",
+    "label": "More Info",
+    "url": "more-info.html",
+    "nav": true,
+    "icon": "ℹ️"
+  },
+  {
+    "id": "volunteer",
+    "label": "Volunteer",
+    "url": "volunteer.html",
+    "nav": true,
+    "icon": "🙋"
+  },
+  {
+    "id": "vendors",
+    "label": "Vendors",
+    "url": "vendors.html",
+    "nav": false,
+    "icon": "🏪"
+  },
+  {
+    "id": "bar",
+    "label": "Bar",
+    "url": "bar.html",
+    "nav": false,
+    "icon": "🍺",
+    "condition": "bar_open"
+  },
+  {
+    "id": "admin",
+    "label": "Admin",
+    "url": "admin.html",
+    "nav": false,
+    "icon": "⚙",
+    "protected": true
+  },
+  {
+    "id": "hi",
+    "label": "hi",
+    "url": "hi.html",
+    "nav": true,
+    "navSection": "festival",
+    "icon": "📄"
+  }
 ]
