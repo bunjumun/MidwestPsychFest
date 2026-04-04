@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyBackground();
   renderAllBlocks();
   renderAllBanners();
-  injectEditPageBtn();
+  // injectEditPageBtn();  // REMOVED: Edit button no longer displayed
 
   // Expose admin controls to whatever page's admin panel loads them
   window.imageBlocksAdmin = {
@@ -37,6 +37,17 @@ function loadImageBlocks() {
 
 function saveImageBlocks() {
   localStorage.setItem(IMAGE_BLOCKS_KEY, JSON.stringify(imageBlocks));
+  syncImageBlocksToGitHub();
+}
+
+async function syncImageBlocksToGitHub() {
+  try {
+    if (typeof ghPutJSON !== 'function') return;
+    const blocks = JSON.parse(localStorage.getItem(IMAGE_BLOCKS_KEY) || '{}');
+    await ghPutJSON('data/image-blocks.json', blocks, 'admin: update image blocks');
+  } catch(e) {
+    console.error('Image sync to GitHub failed:', e);
+  }
 }
 
 // ── Background Image ──────────────────────────
