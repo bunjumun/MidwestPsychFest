@@ -3035,6 +3035,8 @@ function renderManagedPages() {
         ${isCore ? `<span style="font-size:0.66rem;background:rgba(79,255,176,0.1);color:var(--color-accent);border-radius:3px;padding:1px 5px;margin-left:4px;">core</span>` : ''}
       </span>
       <button onclick="togglePageVisibility(${i})" ${visBtn}>${isHidden ? '○ Hidden' : '● Visible'}</button>
+      ${!isCore ? `<button onclick="loadPageForEdit(${i})"
+        style="font-size:0.73rem;padding:3px 8px;border-radius:4px;cursor:pointer;border:1px solid rgba(79,255,176,0.3);background:transparent;color:var(--color-accent);">Edit</button>` : ''}
       ${!isCore ? `<button onclick="deletePage(${i})"
         style="font-size:0.73rem;padding:3px 8px;border-radius:4px;cursor:pointer;border:1px solid rgba(255,68,68,0.3);background:transparent;color:rgba(255,68,68,0.6);">Delete</button>` : ''}
     </div>`;
@@ -3083,6 +3085,73 @@ async function deletePage(i) {
 }
 
 document.getElementById('pagesRefreshBtn')?.addEventListener('click', loadManagedPages);
+
+/* ── Edit an existing page ─────────────────────── */
+async function loadPageForEdit(i) {
+  const page = managedPages[i];
+  if (!page) return;
+  showSyncMsg('pageManagerMsg', 'ok', `Loading ${page.url} for editing…`);
+  try {
+    const { text } = await ghGetFile(page.url);
+    const { title, blocks } = parseHtmlToBlocks(text);
+
+    // Populate the page creator form
+    document.getElementById('newPageTitle').value = title || page.label;
+    const slugEl = document.getElementById('newPageSlug');
+    slugEl.value = page.id;
+    slugEl.dataset.edited = '1'; // prevent auto-overwrite from title
+
+    const navSec = page.navSection || (page.nav ? 'festival' : 'none');
+    const navEl = document.getElementById('newPageNav');
+    if (navEl) navEl.value = navSec;
+
+    // Load blocks into editor
+    pageBlocks = blocks;
+    renderPageBlocks();
+    updatePagePreview();
+
+    // Switch to Add Page section and scroll form into view
+    document.querySelectorAll('.adm-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.adm-section').forEach(s => s.classList.remove('active'));
+    document.querySelector('.adm-nav-item[data-section="pagecreator"]')?.classList.add('active');
+    document.getElementById('section-pagecreator')?.classList.add('active');
+    document.getElementById('section-pagecreator')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    showSyncMsg('syncPageMsg', 'ok', `Editing ${page.url} — click "Create & Publish" to save changes.`);
+    showSyncMsg('pageManagerMsg', 'ok', `✓ Loaded "${page.label}" into editor`);
+  } catch(e) {
+    showSyncMsg('pageManagerMsg', 'err', '✗ Could not load page: ' + e.message);
+  }
+}
+
+function parseHtmlToBlocks(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const title = doc.querySelector('.gen-page-hero h1')?.textContent?.trim() || '';
+  const body  = doc.querySelector('.gen-page-body');
+  const blocks = [];
+  if (!body) return { title, blocks };
+
+  let uid = 0;
+  for (const el of body.children) {
+    const id = 'blk-edit-' + (++uid) + '-' + Date.now();
+    if (el.matches('h2.gen-page-heading')) {
+      blocks.push({ id, type: 'heading', content: el.textContent.trim(), href: '' });
+    } else if (el.matches('p.gen-page-text')) {
+      const txt = el.textContent.trim();
+      if (txt === 'Content coming soon.') continue; // skip default placeholder
+      blocks.push({ id, type: 'text', content: txt, href: '' });
+    } else if (el.matches('img.gen-page-img')) {
+      blocks.push({ id, type: 'image', content: el.getAttribute('src') || '', href: '' });
+    } else if (el.matches('a.btn')) {
+      blocks.push({ id, type: 'link', content: el.textContent.trim(), href: el.getAttribute('href') || '' });
+    } else if (el.id === 'widget-slot') {
+      blocks.push({ id, type: 'widget', content: '', href: '' });
+    } else {
+      blocks.push({ id, type: 'html', content: el.outerHTML.trim(), href: '' });
+    }
+  }
+  return { title, blocks };
+}
 
 /* ── Hook alerts section init on nav ─────────── */
 document.querySelectorAll('.adm-nav-item[data-section="alerts"]').forEach(btn => {
