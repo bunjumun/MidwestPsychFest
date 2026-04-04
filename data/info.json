@@ -13,5 +13,5 @@
   "bar_payment_link": "",
   "bg_image": "",
   "bg_opacity": "0.85",
-  "schedule_hidden": true
+  "schedule_hidden": false
 }
