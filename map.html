@@ -266,8 +266,12 @@
       <!-- Import / Export -->
       <div class="admin-section">
         <h4>Import / Export</h4>
+        <button class="btn btn-accent btn-sm w-full" id="pushMarkersBtn">
+          ↑ Save Markers to Site
+        </button>
+        <div id="pushMarkersMsg" style="font-size:0.72rem;min-height:16px;margin-top:4px;"></div>
         <input type="file" id="importMarkersFile" accept=".json" style="display:none" />
-        <button class="btn btn-ghost btn-sm w-full" onclick="document.getElementById('importMarkersFile').click()">
+        <button class="btn btn-ghost btn-sm w-full mt-1" onclick="document.getElementById('importMarkersFile').click()">
           Import markers.json
         </button>
         <button class="btn btn-ghost btn-sm w-full mt-1" id="exportMarkers">
@@ -314,6 +318,7 @@
   <script src="assets/js/site-info.js"></script>
   <script src="assets/js/stages.js"></script>
   <script src="assets/js/image-blocks.js"></script>
+  <script src="assets/js/github-sync.js"></script>
   <script src="assets/js/map.js"></script>
   <script>
     // Auto-open admin panel when redirected from admin.html with ?admin=1
@@ -321,6 +326,25 @@
       if (new URLSearchParams(location.search).get('admin') === '1') {
         openAdminWithAuth(openAdminPanel);
       }
+    });
+
+    document.getElementById('pushMarkersBtn')?.addEventListener('click', async function() {
+      const btn = this;
+      const msg = document.getElementById('pushMarkersMsg');
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      msg.style.color = ''; msg.textContent = '';
+      try {
+        await ghPutJSON('data/markers.json', markers, 'admin: update map markers');
+        msg.style.color = 'var(--color-accent)';
+        msg.textContent = '✓ Saved — live in ~60s';
+        btn.textContent = '↑ Save Markers to Site';
+        setTimeout(() => { msg.textContent = ''; }, 6000);
+      } catch(e) {
+        msg.style.color = '#e07070';
+        msg.textContent = '✗ ' + (e.message || 'Failed');
+        btn.textContent = '↑ Save Markers to Site';
+      }
+      btn.disabled = false;
     });
   </script>
   <div id="widget-slot" style="display:none"></div>
