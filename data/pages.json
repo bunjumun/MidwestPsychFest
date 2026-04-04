@@ -64,5 +64,13 @@
     "nav": true,
     "navSection": "festival",
     "icon": "📄"
+  },
+  {
+    "id": "bands",
+    "label": "BANDS",
+    "url": "bands.html",
+    "nav": true,
+    "navSection": "festival",
+    "icon": "📄"
   }
 ]
