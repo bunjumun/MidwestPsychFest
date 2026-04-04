@@ -1196,13 +1196,15 @@
 
           <div class="adm-card">
             <h3>Content Blocks</h3>
-            <p class="text-muted text-xs" style="margin-bottom:14px;">Add sections to your page. Drag to reorder isn't supported yet — they appear in order added.</p>
+            <p class="text-muted text-xs" style="margin-bottom:14px;">Add sections. Use ↑↓ to reorder.</p>
             <div id="pageBlockList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('heading')">+ Heading</button>
               <button class="btn btn-ghost btn-sm" onclick="addPageBlock('text')">+ Text</button>
               <button class="btn btn-ghost btn-sm" onclick="addPageBlock('image')">+ Image</button>
               <button class="btn btn-ghost btn-sm" onclick="addPageBlock('link')">+ Link Button</button>
-              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('heading')">+ Heading</button>
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('html')">+ HTML</button>
+              <button class="btn btn-ghost btn-sm" onclick="addPageBlock('widget')">+ Widget</button>
             </div>
           </div>
         </div>
@@ -2753,23 +2755,43 @@ function removePageBlock(id) {
   updatePagePreview();
 }
 
+function moveBlock(id, dir) {
+  const idx = pageBlocks.findIndex(b => b.id === id);
+  if (idx === -1) return;
+  const swap = idx + dir;
+  if (swap < 0 || swap >= pageBlocks.length) return;
+  [pageBlocks[idx], pageBlocks[swap]] = [pageBlocks[swap], pageBlocks[idx]];
+  renderPageBlocks();
+  updatePagePreview();
+}
+
 function renderPageBlocks() {
   const container = document.getElementById('pageBlockList');
   if (!container) return;
   if (!pageBlocks.length) { container.innerHTML = '<p class="text-muted text-xs">No blocks yet.</p>'; return; }
-  container.innerHTML = pageBlocks.map(b => {
-    const inputLabel = b.type === 'image' ? 'Image URL' : b.type === 'link' ? 'Button Label' : b.type === 'heading' ? 'Heading Text' : 'Text Content';
-    const hrefField  = (b.type === 'link') ? `<input type="text" placeholder="Link URL (https://…)" value="${escHtml(b.href||'')}" oninput="updateBlock('${b.id}','href',this.value);updatePagePreview()" style="margin-top:6px;width:100%;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />` : '';
-    const inputEl    = b.type === 'text' || b.type === 'heading'
-      ? `<input type="text" placeholder="${inputLabel}" value="${escHtml(b.content||'')}" oninput="updateBlock('${b.id}','content',this.value);updatePagePreview()" style="flex:1;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />`
-      : `<input type="text" placeholder="${inputLabel}" value="${escHtml(b.content||'')}" oninput="updateBlock('${b.id}','content',this.value);updatePagePreview()" style="flex:1;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />`;
+  const fs = `style="flex:1;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;"`;
+  container.innerHTML = pageBlocks.map((b, idx) => {
+    const isFirst = idx === 0, isLast = idx === pageBlocks.length - 1;
+    const reorderBtns = `<button onclick="moveBlock('${b.id}',-1)" ${isFirst?'disabled':''} title="Move up" style="background:transparent;border:none;color:var(--color-text-muted);cursor:pointer;font-size:0.9rem;padding:0 1px;line-height:1;">↑</button><button onclick="moveBlock('${b.id}',1)" ${isLast?'disabled':''} title="Move down" style="background:transparent;border:none;color:var(--color-text-muted);cursor:pointer;font-size:0.9rem;padding:0 1px;line-height:1;">↓</button>`;
+    const deleteBtn   = `<button onclick="removePageBlock('${b.id}')" style="background:transparent;border:none;color:rgba(255,68,68,0.5);cursor:pointer;font-size:1rem;flex-shrink:0;" title="Remove">✕</button>`;
+    const typeLabel   = `<span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);min-width:46px;">${b.type}</span>`;
+    let inputEl = '', extraField = '';
+    if (b.type === 'html') {
+      inputEl = `<textarea rows="4" placeholder="Raw HTML — iframes, embeds, custom markup…" onchange="updateBlock('${b.id}','content',this.value);updatePagePreview()" style="flex:1;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:monospace;font-size:0.75rem;resize:vertical;">${escHtml(b.content||'')}</textarea>`;
+    } else if (b.type === 'widget') {
+      inputEl = `<span style="flex:1;font-size:0.78rem;color:var(--color-text-muted);padding:5px 8px;font-style:italic;">Widget slot — configure embed code in the Widgets panel for this page's slug.</span>`;
+    } else if (b.type === 'link') {
+      inputEl    = `<input type="text" placeholder="Button Label" value="${escHtml(b.content||'')}" oninput="updateBlock('${b.id}','content',this.value);updatePagePreview()" ${fs} />`;
+      extraField = `<input type="text" placeholder="Link URL (https://…)" value="${escHtml(b.href||'')}" oninput="updateBlock('${b.id}','href',this.value);updatePagePreview()" style="margin-top:6px;width:100%;background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);padding:5px 8px;font-family:var(--font-body);font-size:0.82rem;" />`;
+    } else {
+      const ph = b.type === 'image' ? 'Image URL (https://…)' : b.type === 'heading' ? 'Heading Text' : 'Text Content';
+      inputEl  = `<input type="text" placeholder="${ph}" value="${escHtml(b.content||'')}" oninput="updateBlock('${b.id}','content',this.value);updatePagePreview()" ${fs} />`;
+    }
     return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--color-border);border-radius:var(--radius);padding:10px 12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);min-width:52px;">${b.type}</span>
-        ${inputEl}
-        <button onclick="removePageBlock('${b.id}')" style="background:transparent;border:none;color:rgba(255,68,68,0.5);cursor:pointer;font-size:1rem;flex-shrink:0;" title="Remove">✕</button>
-      </div>
-      ${hrefField}
+      <div style="display:flex;align-items:${b.type==='html'?'flex-start':'center'};gap:6px;margin-bottom:${extraField?'6px':'0'};">
+        <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">${reorderBtns}</div>
+        ${typeLabel}${inputEl}${deleteBtn}
+      </div>${extraField ? extraField : ''}
     </div>`;
   }).join('');
 }
@@ -2788,7 +2810,9 @@ function updatePagePreview() {
     if (b.type === 'heading')  html += `<h3 style="font-family:'Abril Fatface',serif;color:#f9c80e;margin:14px 0 6px;">${escHtml(b.content)}</h3>`;
     else if (b.type === 'text') html += `<p style="color:#e8e2d4;margin-bottom:12px;line-height:1.7;">${escHtml(b.content)}</p>`;
     else if (b.type === 'image') html += b.content ? `<img src="${escHtml(b.content)}" style="max-width:100%;border-radius:8px;margin-bottom:12px;" />` : `<div style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.15);border-radius:8px;padding:20px;text-align:center;color:rgba(255,255,255,0.3);margin-bottom:12px;font-size:0.82rem;">Image URL not set</div>`;
-    else if (b.type === 'link') html += `<a href="${escHtml(b.href||'#')}" style="display:inline-block;background:#ff3cac;color:#fff;padding:9px 20px;border-radius:6px;font-weight:700;font-size:0.85rem;text-decoration:none;margin-bottom:12px;">${escHtml(b.content||'Button')}</a>`;
+    else if (b.type === 'link')   html += `<a href="${escHtml(b.href||'#')}" style="display:inline-block;background:#ff3cac;color:#fff;padding:9px 20px;border-radius:6px;font-weight:700;font-size:0.85rem;text-decoration:none;margin-bottom:12px;">${escHtml(b.content||'Button')}</a>`;
+    else if (b.type === 'html')   html += b.content ? `<div style="background:rgba(79,255,176,0.06);border:1px dashed rgba(79,255,176,0.25);border-radius:6px;padding:10px;margin-bottom:12px;font-family:monospace;font-size:0.73rem;color:#4fffb0;white-space:pre-wrap;overflow:hidden;" title="Raw HTML block">${escHtml((b.content||'').slice(0,300))}${(b.content||'').length>300?'\n…':''}</div>` : `<div style="background:rgba(79,255,176,0.04);border:1px dashed rgba(79,255,176,0.15);border-radius:6px;padding:12px;margin-bottom:12px;text-align:center;font-size:0.78rem;color:rgba(79,255,176,0.4);">HTML block — paste code above</div>`;
+    else if (b.type === 'widget') html += `<div style="background:rgba(178,75,255,0.08);border:1px dashed rgba(178,75,255,0.35);border-radius:6px;padding:14px;margin-bottom:12px;text-align:center;color:rgba(178,75,255,0.8);font-size:0.82rem;">🔌 Widget Slot</div>`;
   });
   if (!pageBlocks.length) html += '<em style="color:rgba(255,255,255,0.3);">Add blocks on the left to preview.</em>';
   preview.innerHTML = html;
@@ -2819,6 +2843,8 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
     if (b.type === 'text')     return `\n    <p class="gen-page-text">${escHtml(b.content)}</p>`;
     if (b.type === 'image')    return b.content ? `\n    <img src="${escHtml(b.content)}" class="gen-page-img" alt="" />` : '';
     if (b.type === 'link')     return `\n    <a href="${escHtml(b.href||'#')}" class="btn btn-primary" style="display:inline-block;margin:8px 0;">${escHtml(b.content||'Link')}</a>`;
+    if (b.type === 'html')     return b.content ? `\n    ${b.content}` : '';   // raw HTML — intentionally not escaped
+    if (b.type === 'widget')   return `\n    <div id="widget-slot"></div>`;
     return '';
   }).join('');
 
