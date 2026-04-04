@@ -2,9 +2,9 @@
   {
     "name": "fredblasing455@gamil.com",
     "date": "3/29/2026 16:06:00",
-    "time": "",
+    "time": "Apr 4, 5:41 AM",
     "location": "",
-    "role": "cat",
+    "role": "FRED",
     "notes": "Pretty handy for set up and break down",
     "status": "pending"
   },
@@ -13,7 +13,7 @@
     "date": "3/29/2026 20:19:43",
     "time": "4:00",
     "location": "",
-    "role": "PERSON",
+    "role": "HELLO",
     "notes": "",
     "status": "pending"
   },
@@ -69,6 +69,15 @@
     "location": "",
     "role": "",
     "notes": "Bartender, event planner, POS proficient, nice,  and available on Friday May 8th",
+    "status": "pending"
+  },
+  {
+    "name": "PEEN@GMAIL.COM",
+    "date": "",
+    "time": "",
+    "location": "",
+    "role": "CAT",
+    "notes": "",
     "status": "pending"
   }
 ]
