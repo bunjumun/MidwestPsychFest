@@ -50,6 +50,13 @@
     "condition": "bar_open"
   },
   {
+    "id": "applications",
+    "label": "Applications",
+    "url": "applications.html",
+    "nav": true,
+    "icon": "📋"
+  },
+  {
     "id": "admin",
     "label": "Admin",
     "url": "admin.html",

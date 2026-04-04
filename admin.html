@@ -1154,6 +1154,23 @@
       </div>
       <div id="syncPageMsg" class="sync-msg"></div>
 
+      <!-- Application Forms Config -->
+      <div class="adm-card" style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">Application Forms</h3>
+          <a href="applications.html" target="_blank" class="btn btn-ghost btn-sm">View Page ↗</a>
+        </div>
+        <p class="text-muted text-xs" style="margin-bottom:16px;line-height:1.7;">
+          Paste a Google Form URL and set the status to <strong style="color:var(--color-text)">Open</strong> to show the form on the Applications page.
+          Set to <strong style="color:var(--color-text)">Coming Soon</strong> to hide the button.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:14px;" id="appFormsEditor"></div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button class="btn btn-accent btn-sm" id="appFormsSaveBtn">Push to GitHub</button>
+        </div>
+        <div id="appFormsMsg" class="sync-msg" style="margin-top:8px;"></div>
+      </div>
+
       <!-- Manage existing pages -->
       <div class="adm-card" style="margin-bottom:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -1421,6 +1438,7 @@ function bootDashboard() {
   loadVolunteerConfig();
   loadVolCompletions();
   loadManagedPages();
+  loadAppForms();
   fetchDeployStatus();
   loadBarConfig();
   updateDashboardSummary();
@@ -3016,6 +3034,76 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
   } catch(e) {
     showSyncMsg('syncPageMsg','err',`✗ Failed: ${e.message}`);
   } finally { btn.textContent = 'Create & Publish'; btn.disabled = false; }
+});
+
+/* ── Application Forms Config ─────────────────── */
+const APP_FORMS_DEFS = [
+  { key: 'volunteer', label: '🙋 Volunteer', color: 'var(--color-accent)' },
+  { key: 'band',      label: '🎸 Band / Artist', color: 'var(--color-primary)' },
+  { key: 'vendor',    label: '🛒 Vendor', color: 'var(--color-secondary)' },
+];
+let appFormsData = {};
+
+async function loadAppForms() {
+  try {
+    const { data } = await ghGetJSON('data/applications.json');
+    appFormsData = data || {};
+  } catch(e) { appFormsData = {}; }
+  renderAppFormsEditor();
+}
+
+function renderAppFormsEditor() {
+  const el = document.getElementById('appFormsEditor');
+  if (!el) return;
+  el.innerHTML = APP_FORMS_DEFS.map(def => {
+    const entry = appFormsData[def.key] || {};
+    const isOpen = entry.status === 'open';
+    return `<div style="border:1px solid var(--color-border);border-radius:var(--radius);padding:14px 16px;">
+      <div style="font-weight:700;color:${def.color};font-size:0.88rem;margin-bottom:10px;">${def.label}</div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Form URL</label>
+        <input type="url" id="appForm-url-${def.key}" placeholder="https://docs.google.com/forms/…"
+          value="${escHtml(entry.form_url || '')}"
+          style="font-size:0.82rem;" />
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
+          <input type="radio" name="appForm-status-${def.key}" value="open" ${isOpen ? 'checked' : ''} />
+          Open (show button &amp; embed)
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
+          <input type="radio" name="appForm-status-${def.key}" value="coming_soon" ${!isOpen ? 'checked' : ''} />
+          Coming Soon
+        </label>
+      </div>
+      <div class="form-group" style="margin-top:8px;margin-bottom:0;">
+        <label>Card note (shown under button)</label>
+        <input type="text" id="appForm-note-${def.key}" placeholder="e.g. Application is live — apply now!"
+          value="${escHtml(entry.note || '')}"
+          style="font-size:0.82rem;" />
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('appFormsSaveBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('appFormsSaveBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  const updated = {};
+  APP_FORMS_DEFS.forEach(def => {
+    const url    = document.getElementById(`appForm-url-${def.key}`)?.value.trim() || '';
+    const status = document.querySelector(`input[name="appForm-status-${def.key}"]:checked`)?.value || 'coming_soon';
+    const note   = document.getElementById(`appForm-note-${def.key}`)?.value.trim() || '';
+    updated[def.key] = { form_url: url, status, note };
+  });
+  try {
+    await ghPutJSON('data/applications.json', updated, 'admin: update application form config');
+    appFormsData = updated;
+    showSyncMsg('appFormsMsg', 'ok', '✓ Applications config saved — live in ~60s');
+  } catch(e) {
+    showSyncMsg('appFormsMsg', 'err', '✗ ' + e.message);
+  }
+  btn.textContent = 'Push to GitHub'; btn.disabled = false;
 });
 
 /* ── Page Manager ─────────────────────────────── */

@@ -222,10 +222,10 @@
         <a href="volunteer.html">Volunteer Check-In</a> page.
       </p>
       <div class="app-card-actions">
-        <a href="#volunteer-form" class="btn btn-accent">Sign Up →</a>
+        <a id="vol-apply-btn" href="#volunteer-form" class="btn btn-accent">Sign Up →</a>
         <a href="volunteer.html" class="btn btn-ghost btn-sm">Check-In Page</a>
       </div>
-      <p class="app-card-note">Google Form opens when available.</p>
+      <p class="app-card-note" id="vol-note">Loading…</p>
     </div>
 
     <!-- Band / Artist Card -->
@@ -238,9 +238,10 @@
         All genres considered — just bring the energy.
       </p>
       <div class="app-card-actions">
-        <a href="#band-form" class="btn btn-primary">Apply Now →</a>
+        <a id="band-apply-btn" href="#" class="btn btn-primary" style="display:none;">Apply Now →</a>
+        <span id="band-coming" class="btn btn-ghost btn-sm" style="opacity:0.5;cursor:default;">Coming Soon</span>
       </div>
-      <p class="app-card-note">Band application opens soon.</p>
+      <p class="app-card-note" id="band-note">Band application opens soon.</p>
     </div>
 
     <!-- Vendor Card -->
@@ -253,12 +254,27 @@
         Spaces are limited, so apply early.
       </p>
       <div class="app-card-actions">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdBclCjq9jJ813s57A2ql_9hZvA6yqg2hpbgn_QvYWAFPIaNQ/viewform"
-           target="_blank" rel="noopener" class="btn btn-secondary">Apply Now →</a>
+        <a id="vendor-apply-btn" href="#" class="btn btn-secondary" style="display:none;">Apply Now →</a>
+        <span id="vendor-coming" class="btn btn-ghost btn-sm" style="opacity:0.5;cursor:default;">Coming Soon</span>
       </div>
-      <p class="app-card-note">Vendor application is live — apply now!</p>
+      <p class="app-card-note" id="vendor-note">Vendor application opens soon.</p>
     </div>
 
+  </div>
+
+  <!-- VOLUNTEER FORM EMBED -->
+  <div id="volunteer-form-section" style="display:none;max-width:760px;margin:0 auto 60px;padding:0 24px;">
+    <h2 style="font-family:var(--font-display);font-size:1.6rem;color:var(--color-accent);margin-bottom:20px;text-align:center;">Volunteer Application</h2>
+    <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(79,255,176,0.2);background:rgba(79,255,176,0.03);">
+      <iframe id="volunteer-form-iframe"
+        src=""
+        width="100%" height="860" frameborder="0"
+        marginheight="0" marginwidth="0"
+        style="display:block;">Loading…</iframe>
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:0.82rem;color:var(--color-text-muted);">
+      Having trouble? <a id="vol-direct-link" href="#" target="_blank" rel="noopener" style="color:var(--color-accent);">Open form directly ↗</a>
+    </p>
   </div>
 
   <!-- FOOTER -->
@@ -276,5 +292,58 @@
   <script src="assets/js/nav.js"></script>
   <script src="assets/js/image-blocks.js"></script>
   <script src="assets/js/site-info.js"></script>
+  <script>
+  (async () => {
+    try {
+      const r = await fetch('data/applications.json?_=' + Date.now());
+      if (!r.ok) return;
+      const cfg = await r.json();
+
+      // ── Volunteer ──
+      const vol = cfg.volunteer || {};
+      const volBtn = document.getElementById('vol-apply-btn');
+      const volNote = document.getElementById('vol-note');
+      const volSection = document.getElementById('volunteer-form-section');
+      const volIframe = document.getElementById('volunteer-form-iframe');
+      const volDirect = document.getElementById('vol-direct-link');
+      if (vol.form_url && vol.status === 'open') {
+        if (volBtn) { volBtn.href = vol.form_url + '#volunteer-form'; }
+        if (volNote) volNote.textContent = vol.note || 'Volunteer application is live!';
+        if (volSection) volSection.style.display = 'block';
+        if (volIframe) volIframe.src = vol.form_url.includes('?') ? vol.form_url + '&embedded=true' : vol.form_url + '?embedded=true';
+        if (volDirect) volDirect.href = vol.form_url;
+      } else {
+        if (volBtn) { volBtn.textContent = 'Coming Soon'; volBtn.style.opacity = '0.55'; volBtn.style.pointerEvents = 'none'; }
+        if (volNote) volNote.textContent = vol.note || 'Application opens soon.';
+      }
+
+      // ── Band ──
+      const band = cfg.band || {};
+      const bandBtn = document.getElementById('band-apply-btn');
+      const bandComing = document.getElementById('band-coming');
+      const bandNote = document.getElementById('band-note');
+      if (band.form_url && band.status === 'open') {
+        if (bandBtn) { bandBtn.href = band.form_url; bandBtn.target = '_blank'; bandBtn.style.display = ''; }
+        if (bandComing) bandComing.style.display = 'none';
+        if (bandNote) bandNote.textContent = band.note || 'Application is live!';
+      } else {
+        if (bandNote) bandNote.textContent = band.note || 'Band application opens soon.';
+      }
+
+      // ── Vendor ──
+      const vendor = cfg.vendor || {};
+      const vendorBtn = document.getElementById('vendor-apply-btn');
+      const vendorComing = document.getElementById('vendor-coming');
+      const vendorNote = document.getElementById('vendor-note');
+      if (vendor.form_url && vendor.status === 'open') {
+        if (vendorBtn) { vendorBtn.href = vendor.form_url; vendorBtn.target = '_blank'; vendorBtn.style.display = ''; }
+        if (vendorComing) vendorComing.style.display = 'none';
+        if (vendorNote) vendorNote.textContent = vendor.note || 'Application is live!';
+      } else {
+        if (vendorNote) vendorNote.textContent = vendor.note || 'Vendor application opens soon.';
+      }
+    } catch(e) { console.warn('applications.json load failed', e); }
+  })();
+  </script>
 </body>
 </html>
