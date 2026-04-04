@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CIRCUS PERFORMERS — Midwest Psych Fest 2026</title>
+  <title>Circus Performers — Midwest Psych Fest 2026</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <style>
     .gen-page-hero { background: linear-gradient(160deg,#150020 0%,#0d0010 60%); border-bottom:1px solid var(--color-border); padding:60px 24px 44px; text-align:center; }
@@ -18,32 +18,57 @@
   <nav class="site-nav">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
-      <button class="nav-hamburger" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="schedule.html">Schedule</a></li>
-        <li><a href="map.html">Map</a></li>
-        <li><a href="applications.html">Applications</a></li>
-        <li><a href="more-info.html">More Info</a></li>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="hList" id="navLinks">
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Festival</h2>
+            <ul class="menu-dropdown">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="schedule.html">Schedule</a></li>
+              <li><a href="gallery.html">Gallery</a></li>
+              <li><a href="map.html">Map</a></li>
+              <li><a href="more-info.html">More Info</a></li>
+              <li><a href="applications.html">Applications</a></li>
+              <li><a href="vendors.html">Vendors</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Check-In</h2>
+            <ul class="menu-dropdown">
+              <li><a href="volunteer.html">Volunteer Check-In</a></li>
+              <li><a href="band-checkin.html">Band Check-In</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Bar &amp; Merch</h2>
+            <ul class="menu-dropdown">
+              <li><a href="bar.html">Bar</a></li>
+            </ul>
+          </a>
+        </li>
       </ul>
     </div>
   </nav>
   <div class="gen-page-hero">
-    <h1>CIRCUS PERFORMERS</h1>
+    <h1>Circus Performers</h1>
   </div>
+  <div id="widget-slot"></div>
   <div class="gen-page-body">
-    <h2 class="gen-page-heading">ORGANIZED AND PRESENTED BY</h2>
-    <a href="https://www.instagram.com/fanserviceproductions/" class="btn btn-primary" style="display:inline-block;margin:8px 0;">FANSERVICE PRODUCTIONS</a>
-    <h2 class="gen-page-heading"></h2>
-    <a href="https://l.instagram.com/?u=https%3A%2F%2Fdocs.google.com%2Fforms%2Fd%2Fe%2F1FAIpQLSc22oaaIBhT2KInYFK1YKo23wl9LmwSqz0RvAjctyV9quKt4Q%2Fviewform%3Fusp%3Dpublish-editor%26pli%3D1%26authuser%3D0%26utm_source%3Dig%26utm_medium%3Dsocial%26utm_content%3Dlink_in_bio%26fbclid%3DPAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQMMjU2MjgxMDQwNTU4AAGnGqT-1uG1B_KVajDborEgkDB33iU5C8PyyY20cDVUXn690zsbWpckpsOF0CA_aem_nRa_THB5Wirx0v3ZeLw3BA&amp;e=AT4LHvzUZfAXiNtGu1FpTMPiHAvaQgUs64eqkhl6qKG8uvBWqWn3ZU2r1VxVBDxVtiPSBk4KLPktGSNI4EOQ3Ng-LEozgOeSbGUMgiGHrw" class="btn btn-primary" style="display:inline-block;margin:8px 0;">APPLY HERE</a>
+    <p class="gen-page-text">Content coming soon.</p>
   </div>
   <footer class="site-footer">
     <div><span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span></div>
     <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
   </footer>
+  <script src="assets/js/nav.js"></script>
   <script src="assets/js/site-info.js"></script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
-  </script>
+  <script src="assets/js/widgets.js"></script>
 </body>
 </html>
