@@ -530,6 +530,25 @@
           <button class="btn btn-ghost btn-sm" id="setFormCancel">Cancel</button>
         </div>
       </div>
+
+      <!-- Schedule Settings -->
+      <div class="adm-card" style="margin-top:24px;">
+        <h3>Schedule Settings</h3>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
+            <input type="checkbox" id="schedHideToggle" style="width:18px;height:18px;cursor:pointer;" />
+            Hide schedule from public
+          </label>
+          <span class="text-muted text-xs" id="schedHideLabel">Schedule is visible</span>
+        </div>
+        <p class="text-muted text-xs" style="line-height:1.7;">
+          When hidden, visitors see <strong style="color:var(--color-text);">"Full Schedule coming soon."</strong> instead of the schedule grid and controls.
+        </p>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-accent btn-sm" id="schedHideSaveBtn">Push to GitHub</button>
+        </div>
+        <div id="schedHideMsg" class="sync-msg" style="margin-top:8px;"></div>
+      </div>
     </section>
 
     <!-- ── SITE INFO ── -->
@@ -1901,6 +1920,12 @@ function populateInfoForm(info) {
   set('infoTickets',   info.tickets);
   set('infoInstagram', info.instagram);
   set('infoFacebook',  info.facebook);
+  // Schedule hidden toggle
+  const schedHide = !!(info.schedule_hidden);
+  const tog = document.getElementById('schedHideToggle');
+  const lbl = document.getElementById('schedHideLabel');
+  if (tog) tog.checked = schedHide;
+  if (lbl) lbl.textContent = schedHide ? 'Schedule is HIDDEN' : 'Schedule is visible';
 }
 
 function collectInfoForm() {
@@ -1928,6 +1953,26 @@ document.getElementById('infoPreviewBtn').addEventListener('click', () => {
 document.getElementById('infoClearLocalBtn').addEventListener('click', () => {
   localStorage.removeItem(INFO_LS);
   showSyncMsg('syncInfoMsg', 'ok', 'Local override cleared — pages will use data/info.json.');
+});
+
+document.getElementById('schedHideToggle')?.addEventListener('change', function() {
+  document.getElementById('schedHideLabel').textContent = this.checked ? 'Schedule is HIDDEN' : 'Schedule is visible';
+});
+
+document.getElementById('schedHideSaveBtn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('schedHideSaveBtn');
+  btn.textContent = 'Pushing…'; btn.disabled = true;
+  const hidden = document.getElementById('schedHideToggle')?.checked || false;
+  adminInfo.schedule_hidden = hidden;
+  try {
+    await ghPutJSON('data/info.json', adminInfo, 'admin: ' + (hidden ? 'hide' : 'show') + ' schedule');
+    showSyncMsg('schedHideMsg', 'ok', hidden
+      ? '✓ Schedule hidden — visitors will see "Full Schedule coming soon." (~60s)'
+      : '✓ Schedule visible — schedule grid is now public (~60s)');
+  } catch(e) {
+    showSyncMsg('schedHideMsg', 'err', '✗ ' + e.message);
+  }
+  btn.textContent = 'Push to GitHub'; btn.disabled = false;
 });
 
 document.getElementById('infoReloadBtn').addEventListener('click', () => loadInfoData());

@@ -13,10 +13,26 @@ let activeDay   = null; // day string e.g. "Friday, May 8" or 'all'
 let activeStage = 'all'; // stage_id or 'all'
 let adminOpen   = false;
 let editingSetId = null;
+let scheduleHidden = false; // set from info.json schedule_hidden flag
 
 // ── Init ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  dayMap = await buildDayMap();
+  dayMap = await buildDayMap(); // also sets scheduleHidden
+
+  if (scheduleHidden) {
+    // Hide controls, show coming-soon message
+    const controls = document.querySelector('.schedule-controls');
+    if (controls) controls.style.display = 'none';
+    const grid = document.getElementById('scheduleGrid');
+    if (grid) grid.innerHTML = `
+      <div class="schedule-empty" style="padding:60px 20px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:12px;">🎶</div>
+        <div style="font-size:1.25rem;font-weight:700;color:var(--color-primary);margin-bottom:8px;">Full Schedule coming soon.</div>
+        <div style="color:var(--color-text-muted);font-size:0.95rem;">Check back closer to the fest for the full lineup.</div>
+      </div>`;
+    return; // skip all schedule rendering
+  }
+
   await loadStages();
   await loadSchedule();
   hydrateDayButtons();
@@ -38,10 +54,12 @@ async function buildDayMap() {
   } catch(e) {}
   if (!info.day1) {
     try {
-      const r = await fetch('data/info.json');
+      const r = await fetch('data/info.json?_=' + Date.now());
       if (r.ok) info = await r.json();
     } catch(e) {}
   }
+  // Set hidden flag from info
+  scheduleHidden = !!(info.schedule_hidden);
   return {
     1: isoToDayLabel(info.day1) || 'Friday, May 8',
     2: isoToDayLabel(info.day2) || 'Saturday, May 9',
