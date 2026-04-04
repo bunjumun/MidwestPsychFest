@@ -74,6 +74,21 @@
 
   .photo-preview { width: 80px; height: 80px; border-radius: 3px; object-fit: cover; border: 1px solid var(--border); margin-top: 6px; }
 
+  /* EMAIL */
+  .email-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 5px 10px; border-radius: 2px; width: 280px; outline: none; transition: border-color 0.15s; }
+  .email-input:focus { border-color: var(--accent); }
+  .email-input::placeholder { color: var(--muted); }
+  .email-body { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 24px 28px; white-space: pre-wrap; font-size: 13px; line-height: 1.75; color: var(--text); font-family: 'Archivo', sans-serif; }
+  .subject-line { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 9px 14px; margin-bottom: 16px; font-size: 12px; color: var(--muted); }
+  .subject-line strong { color: var(--text); font-weight: 500; }
+  .copy-btn { background: var(--accent); color: #0e0c09; border: none; padding: 8px 18px; font-family: 'Archivo Black', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: opacity 0.15s; }
+  .copy-btn:hover { opacity: 0.85; }
+  .copy-btn.copied { background: var(--outdoor); }
+  .copy-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .missing-banner { background: rgba(155,107,107,0.08); border: 1px solid rgba(155,107,107,0.25); border-radius: 3px; padding: 7px 12px; font-size: 11px; color: var(--missing); margin-bottom: 14px; }
+  .tag.no-email { background: rgba(155,107,107,0.18); color: var(--missing); }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
   /* DASHBOARD */
   .dashboard { padding: 4px 0; }
   .dash-title { font-family: 'Archivo Black', sans-serif; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
@@ -332,6 +347,7 @@ function parseCSV(csvText) {
       social:           vals[colMap.social] ? { link: vals[colMap.social] } : {},
       streaming:        vals[colMap.streaming] || '',
       image:            vals[colMap.image] || '',
+      email:            vals[colMap.email] || '',
     });
   }
   return entries;
@@ -440,6 +456,7 @@ async function syncFromSheet() {
         social:           row[col.social] ? { link: String(row[col.social]).trim() } : {},
         streaming:        String(row[col.streaming] ?? '').trim(),
         image:            String(row[col.image] ?? '').trim(),
+        email:            col.email !== undefined ? String(row[col.email] ?? '').trim() : '',
       });
     }
 
@@ -553,6 +570,7 @@ function buildSidebar() {
       const btn = document.createElement('button');
       btn.className = 'band-btn' + (currentIdx === i ? ' active' : '');
       let tags = `<span class="tag ${stageType}">${isBarn ? 'Barn' : 'Outdoor'}</span>`;
+      if (!b.email) tags += `<span class="tag no-email">No email</span>`;
       if (b.status === 'confirmed') tags += `<span class="tag confirmed">Confirmed</span>`;
       else if (b.status === 'sent') tags += `<span class="tag sent">Sent</span>`;
       btn.innerHTML = `<span class="bname">${escHtml(b.band)}</span><div class="bmeta">${tags}<span class="btime">${escHtml(b.set_time_display || '')}</span></div>`;
@@ -564,6 +582,109 @@ function buildSidebar() {
       sidebarEl.appendChild(btn);
     });
   });
+}
+
+// ─── EMAIL TEMPLATES ─────────────────────────────────────────────────────────
+function computeArriveStr(time12) {
+  const t24 = parseTime12to24(time12);
+  const [hh, mm] = t24.split(':').map(Number);
+  let total = hh * 60 + mm - 90;
+  if (total < 0) total += 24 * 60;
+  const ah = Math.floor(total / 60) % 24;
+  const am = String(total % 60).padStart(2, '0');
+  return parse24to12(`${String(ah).padStart(2,'0')}:${am}`);
+}
+
+const sharedSections = `TICKET GIVEAWAY
+Along with your band passes, we'll send you a code for 2 additional weekend passes to give away to your fans. We'd love for you to use these as part of a Midwest Psych Fest promo post — a giveaway, a story, a share, whatever feels natural for you and your audience. The winners just need the code to apply it at checkout. Any way you can use these to spread the word is genuinely appreciated.
+
+VOLUNTEER
+If anyone in your band is interested in helping the event run smoothly for the rest of the artists, we'd love to have you involved. Stage managing, working the sound booth, ticket taking — there's a lot of useful stuff to be done and every hand helps. If you're interested, fill out our short volunteer questionnaire here: https://docs.google.com/forms/d/e/1FAIpQLSeLKMIZIUYsJ_a_7uEzekLejEBo4Qv2UQh9rMYiq9ew20toGA/viewform?usp=sharing`;
+
+const payoutSection = `PAYOUT
+Performer payouts come from a split of ticket sale revenue after the festival closes out its accounting. The festival takes nothing from this pool — it goes entirely to the performers. Any touring acts with a guarantee have had that covered by an individual sponsor, so it doesn't affect anyone else's share. We'll turn payouts around as quickly as we can. If you have traveling expenses and need yours expedited, please mention it in your confirmation email. If you have a PayPal, include that link in your confirmation as well.`;
+
+const closingSection = `This is a large DIY event with a lot of moving parts — we'll do everything we can to stay on schedule, but some patience and flexibility is genuinely appreciated.
+
+—
+
+If this time doesn't work for you, please let us know as soon as possible and include the window that works best for your schedule. We'll do everything we can to find you another slot, but with so many schedules to balance we can't guarantee we'll land on something that works for everyone. If we aren't able to make it happen for the spring, we'd love to have you at Fall 2026 Midwest Psych Fest in October.
+
+Questions in the meantime? Reach out to Ben Ahlteen at 614-572-7502.
+
+Can't wait to have you out here,
+Midwest Psych Fest`;
+
+function buildOutdoorEmail(b) {
+  const arrive = computeArriveStr(b.set_time_display);
+  return `Hey ${b.band},
+
+We've got you on the schedule for Midwest Psych Fest 2026 and we'd love to lock you in. Your current slot is ${b.day} at ${b.set_time_display} on ${b.stage}. If this works for you, read on — everything you need to know to show up and play is below.
+
+TICKETS & ADMISSION
+Each member of your band can receive a full weekend pass at no cost using your discount code — good for the entire weekend. We'll send the code along when your time slot is confirmed. When you reply to confirm, please include the number of members in your band so we can make sure everyone is taken care of. We'll provide 2 weekend passes per member.
+
+CHECK-IN
+When you arrive, head to Entrance A — the main parking lot entrance. Check in there to pick up your wristbands and drink tickets for each member of the band.
+
+LOAD-IN
+After checking in, a parking attendant will direct you to the correct load-in spot behind your stage. We recommend arriving by ${arrive} to give yourself plenty of time before you're due to line check.
+
+STAGE FLOW
+We're running two stages side by side. While one band performs, the next is line-checking on the other stage. When a set ends there's a short transition — usually under 10 minutes — and the next stage kicks off. Expect to line check roughly 10–20 minutes into the set before yours.
+
+YOUR SET
+Sets start right on the hour, with a target of 45 minutes and a hard cap at 50. Shorter sets are completely fine. If you already know you'll be running short, let us know so we can make good use of the extra time.
+
+BACKLINE
+Each stage has a full drum kit (minus breakables), bass amp, and a guitar amp (most likely a 50w combo). We strongly encourage use of our kit and bass amp — it keeps transitions fast and the day moving. Direct boxes and two monitor mixes are provided at each stage, one at the front and one at the back.
+
+AFTER YOUR SET
+Once you're done, parking staff can direct you to a camp spot or parking area.
+
+${sharedSections}
+
+${payoutSection}
+
+${closingSection}`;
+}
+
+function buildBarnEmail(b) {
+  const arrive = computeArriveStr(b.set_time_display);
+  return `Hey ${b.band},
+
+We've got you on the schedule for Midwest Psych Fest 2026 and we'd love to lock you in. Your current slot is ${b.day} at ${b.set_time_display} on the Barn Stage. If this works for you, read on — everything you need to know to show up and play is below.
+
+TICKETS & ADMISSION
+Each member of your band can receive a full weekend pass at no cost using your discount code — good for the entire weekend. We'll send the code along when your time slot is confirmed. When you reply to confirm, please include the number of members in your band so we can make sure everyone is taken care of. We'll provide 2 weekend passes per member.
+
+CHECK-IN
+When you arrive, head to Entrance A — the main parking lot entrance, not the house driveway. Check in there to pick up your wristbands and drink tickets for each member of the band.
+
+LOAD-IN
+After checking in at Entrance A, parking staff will direct you to Entrance B, which is the house driveway. After parking, load in through the narrow hallway on the road-facing side of the barn, door on the right — this brings you straight into the stage area. We recommend arriving by ${arrive} to give yourself enough time to check in and get settled before your set.
+
+YOUR SET
+Barn sets start on the 30-minute mark of each hour and run 35 minutes, with a hard cap at 40. Shorter is always fine. Quick changeovers are important on this stage, so the more of our backline you can use, the smoother things will go for everyone.
+
+BACKLINE & SOUND
+We'll have a full drum kit (minus breakables), bass amp, and guitar amp in the barn. We strongly encourage use of our kit and bass amp — it makes changeovers much smoother, and on this stage especially, quick transitions matter. The guitar amp is there as an extra option if you need it. Two monitor mixes are provided, one at the front of stage and one at the back.
+
+A note on the barn mix: we typically only amplify vocals and anything that requires a direct box or further reinforcement. Guitar amps, bass amps, and drums are normally fine unmic'd and should be set at levels that don't overpower the vocals. It's going to feel like a house show in there — in the best possible way.
+
+AFTER YOUR SET
+Once you're loaded out, please move your vehicle to the main parking or camping area. Parking staff can point you in the right direction.
+
+${sharedSections}
+
+${payoutSection}
+
+${closingSection}`;
+}
+
+function getEmailBody(b) {
+  const isBarn = (b.stage_id || '').includes('barn') || (b.stage || '').toLowerCase().includes('barn');
+  return isBarn ? buildBarnEmail(b) : buildOutdoorEmail(b);
 }
 
 // ─── SELECT / RENDER BAND ────────────────────────────────────────────────────
@@ -663,6 +784,21 @@ function renderBand(idx) {
         </div>
       </div>
 
+      <div class="edit-section">
+        <div class="edit-section-title">Email Draft</div>
+        <div class="field-cell" style="margin-bottom:12px;">
+          <label>Email Address</label>
+          <input class="email-input" type="email" placeholder="band@email.com"
+            value="${escAttr(b.email || '')}" oninput="editEmail(${idx},this.value)" />
+        </div>
+        ${!b.email ? '<div class="missing-banner">No email address — add one above to enable copy.</div>' : ''}
+        <div class="subject-line"><strong>Subject:</strong> Midwest Psych Fest 2026 — ${escHtml(b.band)} — ${escHtml(b.day || 'TBD')} at ${escHtml(b.set_time_display || 'TBD')}</div>
+        <div class="email-body" id="emailBody">${escHtml(getEmailBody(b))}</div>
+        <div class="btn-row">
+          <button class="copy-btn" id="copyEmailBtn" onclick="copyEmail(${idx})" ${!b.email ? 'disabled' : ''}>Copy Email</button>
+        </div>
+      </div>
+
       <div style="margin-top:28px;padding-top:18px;border-top:1px solid var(--border);">
         <button class="delete-btn" onclick="deleteBand(${idx})">Delete Band</button>
       </div>
@@ -701,6 +837,7 @@ function renderDashboard() {
       <td style="color:var(--muted);font-size:11px">${escHtml(b.day || 'TBD')}</td>
       <td style="font-size:11px">${escHtml(b.set_time_display || '')}</td>
       <td><span class="tag ${isBarn ? 'barn' : 'outdoor'}" style="font-size:9px">${isBarn ? 'Barn' : 'Outdoor'}</span></td>
+      <td style="font-size:11px;color:${b.email ? 'var(--text)' : 'var(--missing)'}">${b.email ? escHtml(b.email) : '—'}</td>
       <td><span class="status-pill ${pillClass}">${pillText}</span></td>
     </tr>`;
   });
@@ -716,7 +853,7 @@ function renderDashboard() {
       </div>
       ${Object.keys(byDay).length > 1 ? `<div style="margin-bottom:20px;font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">${Object.entries(byDay).map(([d,c]) => `${d}: ${c}`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
       <table class="dash-table">
-        <thead><tr><th>Band</th><th>Date</th><th>Time</th><th>Stage</th><th>Status</th></tr></thead>
+        <thead><tr><th>Band</th><th>Date</th><th>Time</th><th>Stage</th><th>Email</th><th>Status</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -759,6 +896,33 @@ function editPhoto(idx, url) {
   if (img) { img.src = url; img.style.display = url ? '' : 'none'; }
 }
 
+function editEmail(idx, val) {
+  bands[idx].email = val;
+  saveToStorage();
+  buildSidebar();
+  // Update copy button disabled state
+  const btn = document.getElementById('copyEmailBtn');
+  if (btn) btn.disabled = !val;
+  // Update missing banner
+  const banner = document.querySelector('.missing-banner');
+  if (banner) banner.style.display = val ? 'none' : '';
+}
+
+async function copyEmail(idx) {
+  const b = bands[idx];
+  if (!b || !b.email) return;
+  const subject = `Midwest Psych Fest 2026 — ${b.band} — ${b.day || 'TBD'} at ${b.set_time_display || 'TBD'}`;
+  const body = getEmailBody(b);
+  const text = `To: ${b.email}\nSubject: ${subject}\n\n${body}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('copyEmailBtn');
+    if (btn) { btn.textContent = 'Copied!'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'Copy Email'; btn.classList.remove('copied'); }, 2000); }
+  } catch(e) {
+    alert('Copy failed — check browser permissions.');
+  }
+}
+
 // ─── ADD / DELETE BAND ───────────────────────────────────────────────────────
 function openAddBandModal() {
   document.getElementById('abName').value = '';
@@ -794,6 +958,7 @@ function saveNewBand() {
     social:           {},
     streaming:        '',
     image:            '',
+    email:            '',
   });
   closeAddBandModal();
   saveToStorage();
@@ -831,13 +996,13 @@ function exportCSV() {
       b.set_time_display || '',
       b.stage || '',
       isBarn ? 'barn' : 'outdoor',
-      '',  // Email — not stored in tool
+      b.email || '',
       b.status || '',
       social,
       b.streaming || '',
       (b.bio || '').replace(/\r?\n/g, ' '),
       (b.image && !b.image.startsWith('data:')) ? b.image : '',
-      '',  // Email Body — not stored in tool
+      getEmailBody(b).replace(/\r?\n/g, '\\n')
     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
   });
   const csv = [headers.join(','), ...rows].join('\r\n');
