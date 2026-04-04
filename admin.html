@@ -1057,10 +1057,14 @@
                    autocomplete="off" />
           </div>
           <div id="patStatus" style="font-size:0.78rem;margin-bottom:10px;"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-accent btn-sm" id="patVerifyBtn">Verify &amp; Save Token</button>
+            <button class="btn btn-sm" id="patCopyBtn" style="background:transparent;border:1px solid var(--color-border);">Copy PAT</button>
             <button class="btn btn-danger btn-sm" id="patClearBtn">Remove Token</button>
           </div>
+          <p class="text-muted text-xs" style="margin-top:10px;padding:6px 10px;background:rgba(255,200,0,0.07);border-left:2px solid var(--color-secondary);border-radius:2px;">
+            ⚠ Your PAT is stored in browser storage. <strong>Clearing site data or cookies will erase it.</strong> Save your PAT in a password manager so you can re-enter it quickly.
+          </p>
         </div>
         <div class="adm-card">
           <h3>Admin Password</h3>
@@ -2147,6 +2151,16 @@ document.getElementById('widgetClearBtn').addEventListener('click', () => {
 // PAT management
 const savedPat = ghPat();
 if (savedPat) document.getElementById('settingsPat').value = savedPat.slice(0,4) + '●●●●●●●●●●●●';
+
+document.getElementById('patCopyBtn').addEventListener('click', () => {
+  const pat = ghPat();
+  if (!pat) { document.getElementById('patStatus').innerHTML = '<span style="color:#ff7070;">No PAT saved yet.</span>'; return; }
+  navigator.clipboard.writeText(pat).then(() => {
+    const btn = document.getElementById('patCopyBtn');
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = 'Copy PAT'; }, 2000);
+  });
+});
 
 document.getElementById('patVerifyBtn').addEventListener('click', async () => {
   const btn = document.getElementById('patVerifyBtn');

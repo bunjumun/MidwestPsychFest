@@ -182,13 +182,12 @@
     <span class="sync-indicator" id="fileIndicator">No file linked</span>
     <div class="header-btns">
       <button class="hdr-btn" id="dashBtn" onclick="toggleDashboard()">Status Dashboard</button>
-      <button class="hdr-btn" onclick="exportScheduleJSON()" title="Download schedule JSON for the MPF website">Export JSON</button>
+      <button class="hdr-btn" onclick="exportScheduleJSON()" title="Export schedule as mpf_schedule.json — push to live site via admin">Export Schedule</button>
       <button class="hdr-btn" onclick="exportCSV()" title="Export all data as CSV for Google Sheets">Export CSV</button>
       <button class="hdr-btn" id="undoBtn" onclick="undo()" disabled>Undo</button>
-      <button class="hdr-btn" onclick="linkFile()" title="Link a local JSON file — auto-saves to disk on Save Draft (Chrome/Edge only)">Link Local File</button>
-      <button class="hdr-btn save" onclick="saveChanges()" title="Save all edits to this browser only">Save Draft</button>
-      <button class="hdr-btn" onclick="downloadBackup()" title="Download current state as a backup JSON file">Backup JSON</button>
-      <label class="hdr-btn" style="cursor:pointer" title="Load a previously saved data file">Load Data <input type="file" accept=".json" style="display:none" onchange="importState(event)"></label>
+      <button class="hdr-btn save" onclick="saveChanges()" title="Save all edits to this browser only (survives refresh, not cookie clear)">Save Draft</button>
+      <button class="hdr-btn" onclick="downloadBackup()" title="Download full state as mpf_state.json — use this to restore later">Backup State</button>
+      <label class="hdr-btn" style="cursor:pointer" title="Restore from a Backup State file (mpf_state.json) or merge from Export Schedule (mpf_schedule.json)">Restore Backup <input type="file" accept=".json" style="display:none" onchange="importState(event)"></label>
       <button class="hdr-btn sync-sheet" id="syncSheetBtn" onclick="syncEmailBodiesToSheet()" title="Push all email bodies to column L of the Bands sheet">Sync to Sheet</button>
       <button class="hdr-btn" onclick="toggleSheetConfig()" title="Configure Google Sheet connection">⚙ Sheet</button>
     </div>
@@ -640,13 +639,56 @@ function importState(event) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      applyLoadedState(JSON.parse(e.target.result));
+      const data = JSON.parse(e.target.result);
+
+      // Detect which format this file is
+      const isStateBackup  = data && typeof data === 'object' && !Array.isArray(data) &&
+        ('emails' in data || 'bodies' in data || 'status' in data || 'times' in data);
+      const isScheduleExport = Array.isArray(data) && data.length > 0 && 'band' in data[0];
+
+      if (!isStateBackup && !isScheduleExport) {
+        alert('Unrecognized file.\n\nUse a file from "Backup State" (mpf_state.json) or "Export Schedule JSON" (mpf_schedule.json).');
+        return; // ← do NOT touch current state
+      }
+
+      if (isStateBackup) {
+        const ec = Object.keys(data.emails || {}).length;
+        const bc = Object.keys(data.bodies || {}).length;
+        const sc = Object.keys(data.status || {}).length;
+        const tc = Object.keys(data.times || {}).length;
+        if (ec + bc + sc + tc === 0) {
+          alert('This backup is empty — nothing was loaded.');
+          return;
+        }
+        if (!confirm(`Restore from state backup?\n\n• ${ec} email addresses\n• ${bc} email bodies\n• ${sc} statuses\n• ${tc} time overrides\n\nThis replaces your current edits.`)) return;
+        applyLoadedState(data);
+      } else {
+        // Schedule-export array — merge time/status/email only
+        if (!confirm(`Merge ${data.length} bands from schedule export?\nTime and status updates will merge into your current state.`)) return;
+        data.forEach(entry => {
+          const idx = bands.findIndex(b => b.band.toLowerCase() === (entry.band || '').toLowerCase());
+          if (idx === -1) return;
+          if (entry.email)            state.emails[idx] = entry.email;
+          if (entry.status)           state.status[idx] = entry.status;
+          if (entry.set_time_display) state.times[idx]  = entry.set_time_display;
+        });
+        state._patchWarn = {};
+      }
+
+      // Persist everything properly — state + mpf_schedule
+      saveChanges();
       buildSidebar();
       if (dashboardOpen)           renderDashboard();
       else if (currentIdx !== null) renderBand(currentIdx);
       else document.getElementById('main').innerHTML = '<div class="placeholder">← Select a band to view their details</div>';
-      syncToStorage();
-    } catch(err) { alert('Could not load file — make sure it is a valid mpf_state.json.'); }
+
+      const el = document.getElementById('syncIndicator');
+      if (el) { el.textContent = '✓ Restored'; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 3000); }
+
+    } catch(err) {
+      alert('Could not read file — make sure it is valid JSON.');
+      // ← current state untouched
+    }
   };
   reader.readAsText(file);
   event.target.value = '';
