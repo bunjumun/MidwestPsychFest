@@ -414,11 +414,35 @@ async function syncEmailBodiesToSheet() {
       }
     }
 
-    btn.textContent = `✓ ${synced} synced` + (added ? `, ${added} added` : '');
+    // 3. Delete sheet rows for bands that no longer exist in the tool
+    let deleted = 0;
+    const toolNames = new Set(bands.map((b, i) => (state.fieldOverrides[i]?.band ?? b.band).trim().toUpperCase()));
+    // Collect orphan rows (sheet bands not in tool), then delete bottom-to-top
+    const orphanRows = [];
+    for (const [name, row] of Object.entries(nameToRow)) {
+      if (!toolNames.has(name)) orphanRows.push(row);
+    }
+    orphanRows.sort((a, b) => b - a); // descending so row numbers stay valid
+    for (const row of orphanRows) {
+      btn.textContent = `Cleaning up…`;
+      await fetch(cfg.scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ sheetId: cfg.sheetId, sheetName: cfg.sheetName, action: 'deleteRow', row })
+      });
+      deleted++;
+    }
+
+    const parts = [];
+    if (synced) parts.push(`${synced} synced`);
+    if (added)  parts.push(`${added} added`);
+    if (deleted) parts.push(`${deleted} removed`);
+    const summary = parts.join(', ') || 'Up to date';
+    btn.textContent = `✓ ${summary}`;
     btn.disabled = false;
     const el = document.getElementById('syncIndicator');
-    if (el) { el.textContent = `✓ ${synced} synced${added ? ', ' + added + ' added' : ''} → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
-    setTimeout(() => { btn.textContent = 'Sync to Sheet'; }, 3500);
+    if (el) { el.textContent = `✓ ${summary} → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
+    setTimeout(() => { btn.textContent = 'Sync to Sheet ↑'; }, 3500);
   } catch(e) {
     console.error('Sheet sync error:', e);
     btn.textContent = '✗ Sync failed';

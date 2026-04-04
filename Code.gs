@@ -41,6 +41,19 @@ function doPost(e) {
       throw new Error('Tab "' + d.sheetName + '" not found. Available tabs: ' + allTabs);
     }
 
+    // ── Delete row action ──
+    if (d.action === 'deleteRow') {
+      var delRow = parseInt(d.row);
+      if (isNaN(delRow) || delRow < 2) {
+        throw new Error('Bad row for delete: ' + d.row);
+      }
+      sheet.deleteRow(delRow);
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'success', ok: true, action: 'deleteRow', tab: d.sheetName, row: delRow }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── Write cell action (default) ──
     // col is always a 1-indexed integer sent from the client (A=1, B=2, … O=15, …).
     // row is always 1-indexed (matches the spreadsheet row number).
     var colNum = parseInt(d.col);
