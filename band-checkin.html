@@ -669,8 +669,8 @@
           <p class="field-hint">File → Share → Publish to web → select the band roster tab → CSV.</p>
         </div>
         <div class="config-field">
-          <label>Sheet Tab Index (0 = first tab)</label>
-          <input type="number" id="sheetIndex" placeholder="0" min="0" value="0" style="max-width:80px;" />
+          <label>Sheet Tab Name <span class="field-hint" style="font-weight:400;">(exact name of the tab in Google Sheets)</span></label>
+          <input type="text" id="sheetName" placeholder="Bands" style="max-width:200px;" />
         </div>
 
         <hr class="admin-section-divider" />
@@ -809,7 +809,7 @@ function doGet(e) {
 
   const DEFAULT_CONFIG = {
     sheetUrl:'https://docs.google.com/spreadsheets/d/1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI/export?format=csv&gid=1311731562',
-    sheetId:'1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI', sheetIndex:1,
+    sheetId:'1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI', sheetName:'Bands',
     scriptUrl:'https://script.google.com/macros/s/AKfycbz8yTyFXr7CO2VVwwWQxdBEI2RdMfz5c_57y44PGEtUVPv13bxLopDx8CBYXd549J2K3w/exec',
     nameCol:'A', checkinCol:'Q', checkinLabel:'Band Arrived',
     completeCol:'', completeLabel:'',
@@ -897,7 +897,7 @@ function doGet(e) {
       const res = await fetch(config.scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ sheetId: config.sheetId, sheetName: 'Bands', row, col, value })
+        body: JSON.stringify({ sheetId: config.sheetId, sheetName: config.sheetName || 'Bands', row, col, value })
       });
       if (!res.ok) { console.error('Sheet write HTTP error:', res.status); return false; }
       const data = await res.json().catch(() => ({}));
@@ -1022,7 +1022,7 @@ function doGet(e) {
   function loadConfigForm() {
     const cfg = getConfig();
     document.getElementById('sheetUrl').value      = cfg.sheetUrl      || '';
-    document.getElementById('sheetIndex').value    = cfg.sheetIndex    ?? 0;
+    document.getElementById('sheetName').value     = cfg.sheetName     || 'Bands';
     document.getElementById('scriptUrl').value     = cfg.scriptUrl     || '';
     document.getElementById('nameCol').value       = cfg.nameCol       || 'A';
     document.getElementById('checkinCol').value    = cfg.checkinCol    || '';
@@ -1054,7 +1054,7 @@ function doGet(e) {
     const sheetUrl = document.getElementById('sheetUrl').value.trim();
     const cfg = {
       sheetUrl, sheetId: extractSheetId(sheetUrl),
-      sheetIndex:    parseInt(document.getElementById('sheetIndex').value) || 0,
+      sheetName:     document.getElementById('sheetName').value.trim() || 'Bands',
       scriptUrl:     document.getElementById('scriptUrl').value.trim(),
       nameCol:       document.getElementById('nameCol').value.trim().toUpperCase() || 'A',
       checkinCol:    document.getElementById('checkinCol').value.trim().toUpperCase(),

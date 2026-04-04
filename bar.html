@@ -77,6 +77,9 @@
 </div>
 
 <div id="barMenu">
+  <div style="text-align:center;padding:16px 0 0;">
+    <a href="index.html" style="font-size:0.8rem;color:var(--color-text-muted);text-decoration:none;opacity:0.7;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">← Main Menu</a>
+  </div>
   <h1 class="bar-title">🍺 Bar Menu</h1>
   <p class="bar-subtitle">Build your order — we'll handle the rest</p>
   <div id="menuItems"></div>
@@ -246,6 +249,67 @@ function esc(s) {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+</script>
+
+<!-- 🍺 Bartender Simulator Easter Egg -->
+<style>
+  @keyframes barSimJiggle {
+    0%,100%  { transform: rotate(0deg); }
+    20%      { transform: rotate(-4deg) scale(1.04); }
+    40%      { transform: rotate(4deg) scale(1.04); }
+    60%      { transform: rotate(-3deg); }
+    80%      { transform: rotate(3deg); }
+  }
+  #barSimBtn {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 700;
+    background: rgba(13,0,16,0.88);
+    border: 1px solid rgba(255,200,60,0.45);
+    color: rgba(255,200,60,0.85);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 6px 14px;
+    border-radius: 99px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    opacity: 0.55;
+    transition: opacity 0.2s;
+  }
+  #barSimBtn:hover { opacity: 1; border-color: rgba(255,200,60,0.9); color: #ffc83c; }
+  #barSimBtn.jiggle { animation: barSimJiggle 0.6s ease; }
+</style>
+<button id="barSimBtn">🍺 Bartender Simulator</button>
+<script>
+(function () {
+  const btn = document.getElementById('barSimBtn');
+  // Show the button only once the bar menu is visible
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('barMenu').style.display !== 'none') {
+      btn.style.display = 'block';
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.getElementById('barMenu'), { attributes: true, attributeFilter: ['style'] });
+
+  // Periodic jiggle every 12–20 seconds
+  function scheduleJiggle() {
+    const delay = 12000 + Math.random() * 8000;
+    setTimeout(() => {
+      btn.classList.add('jiggle');
+      btn.addEventListener('animationend', () => btn.classList.remove('jiggle'), { once: true });
+      scheduleJiggle();
+    }, delay);
+  }
+  scheduleJiggle();
+
+  btn.addEventListener('click', () => {
+    window.open('bartender-sim.html', '_blank', 'noopener');
+  });
+})();
 </script>
 </body>
 </html>

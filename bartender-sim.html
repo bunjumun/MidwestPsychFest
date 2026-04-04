@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bartender Simulator — Midwest Psych Fest</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d000f;
+      --primary:   #ff3cac;
+      --gold:      #ffc83c;
+      --beer:      #f5a623;
+      --foam:      #fff6d0;
+      --mug-body:  rgba(255,255,255,0.08);
+      --mug-rim:   rgba(255,255,255,0.22);
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 32px 16px 60px;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* ── Header ── */
+    .back-link {
+      align-self: flex-start;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      margin-bottom: 20px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: rgba(255,255,255,0.8); }
+
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 800;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(255,200,60,0.35);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    h1 span { color: var(--primary); }
+
+    #target {
+      font-size: 1.1em;
+      color: var(--primary);
+    }
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 4px;
+      text-align: center;
+      min-height: 1.4em;
+    }
+
+    h3 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-align: center;
+      min-height: 1.6em;
+      margin-bottom: 8px;
+    }
+
+    .helper {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .helper.tap  { margin-bottom: 10px; }
+    .helper.mug  { margin-top: 10px; }
+
+    /* ── Tap ── */
+    #tap-container {
+      position: relative;
+      width: 80px;
+      height: 130px;
+      margin: 0 auto 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    #tap {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 60px;
+      background: linear-gradient(180deg, #bbb 0%, #888 100%);
+      border-radius: 6px 6px 0 0;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+
+    #handle {
+      position: absolute;
+      top: 10px; right: 4px;
+      width: 28px;
+      height: 40px;
+      border: 5px solid #999;
+      border-left: none;
+      border-radius: 0 14px 14px 0;
+      background: transparent;
+      transition: transform 0.15s;
+    }
+    #tap-container:hover #handle,
+    #tap-container.active #handle {
+      transform: rotate(18deg);
+      transform-origin: left center;
+      border-color: var(--gold);
+    }
+
+    #pour {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 0;
+      background: linear-gradient(180deg, rgba(245,166,35,0.9), rgba(245,166,35,0.4));
+      border-radius: 0 0 4px 4px;
+      transition: height 0.05s linear, opacity 0.1s;
+      opacity: 0;
+    }
+    #tap-container:hover #pour,
+    #tap-container.active #pour {
+      opacity: 1;
+    }
+
+    /* ── Mug ── */
+    #mug-container {
+      position: relative;
+      margin: 0 auto;
+      width: 120px;
+      cursor: pointer;
+    }
+
+    #mug {
+      position: relative;
+      width: 100px;
+      height: 140px;
+      margin: 0 auto;
+      background: var(--mug-body);
+      border: 3px solid var(--mug-rim);
+      border-radius: 6px 6px 16px 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* Handle */
+    #mug::after {
+      content: '';
+      position: absolute;
+      right: -22px;
+      top: 20px;
+      width: 22px;
+      height: 50px;
+      border: 5px solid var(--mug-rim);
+      border-left: none;
+      border-radius: 0 16px 16px 0;
+    }
+
+    #beer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 0%;
+      background: linear-gradient(180deg, var(--foam) 0%, var(--foam) 12%, var(--beer) 12%);
+      transition: height 0.12s ease-out;
+    }
+
+    /* ── Layout ── */
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 360px;
+      margin-top: 16px;
+    }
+
+    /* ── Result messages ── */
+    h3.perfect { color: #4fff9b; text-shadow: 0 0 20px rgba(79,255,155,0.4); }
+    h3.close   { color: var(--gold); text-shadow: 0 0 20px rgba(255,200,60,0.3); }
+    h3.fail    { color: var(--primary); text-shadow: 0 0 20px rgba(255,60,172,0.4); }
+
+    /* ── High score ── */
+    .stats {
+      margin-top: 24px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 20px;
+      text-align: center;
+      min-width: 90px;
+    }
+    .stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); }
+    .stat-val   { font-size: 1.3rem; font-weight: 700; color: var(--gold); margin-top: 2px; }
+
+    /* ── Foam drip animation ── */
+    @keyframes foamDrip {
+      0%   { transform: translateY(0) scaleX(1); opacity: 1; }
+      100% { transform: translateY(20px) scaleX(0.6); opacity: 0; }
+    }
+    .foam-particle {
+      position: fixed;
+      pointer-events: none;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--foam);
+      animation: foamDrip 0.7s ease-out forwards;
+    }
+
+    /* ── Overflow splash ── */
+    @keyframes splash {
+      0%   { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    .splash-ring {
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      border: 3px solid var(--beer);
+      animation: splash 0.6s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <a href="bar.html" class="back-link">← Back to Bar</a>
+
+  <h1>Fill the mug <span id="target">0</span>%</h1>
+  <h2 id="percent-filled"></h2>
+  <h3 id="result"></h3>
+
+  <div class="game-area">
+    <p class="helper tap">Hover over the tap to fill the mug</p>
+
+    <div id="tap-container">
+      <div id="tap"></div>
+      <div id="handle"></div>
+      <div id="pour"></div>
+    </div>
+
+    <div id="mug-container">
+      <div id="mug">
+        <div id="beer"></div>
+      </div>
+      <p class="helper mug">Click the mug to reset</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-label">Rounds</div>
+      <div class="stat-val" id="statRounds">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Best</div>
+      <div class="stat-val" id="statBest">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Perfects</div>
+      <div class="stat-val" id="statPerfect">0</div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  /* ── State ── */
+  let target    = 0;
+  let filled    = 0;
+  let pouring   = false;
+  let locked    = false;   // true after mug full or stop hover
+  let animId    = null;
+  let rounds    = 0;
+  let perfects  = 0;
+  let bestDelta = null;    // lowest abs error
+
+  const FILL_RATE   = 0.55;  // % per frame (~33fps target)
+  const POUR_HEIGHT = 70;    // px of pour stream shown
+
+  /* ── Elements ── */
+  const tapEl      = document.getElementById('tap-container');
+  const pourEl     = document.getElementById('pour');
+  const beerEl     = document.getElementById('beer');
+  const mugEl      = document.getElementById('mug-container');
+  const pctEl      = document.getElementById('percent-filled');
+  const resultEl   = document.getElementById('result');
+  const targetEl   = document.getElementById('target');
+  const statRounds = document.getElementById('statRounds');
+  const statBest   = document.getElementById('statBest');
+  const statPerfect= document.getElementById('statPerfect');
+
+  /* ── Init ── */
+  function newRound() {
+    filled  = 0;
+    locked  = false;
+    pouring = false;
+    target  = Math.round(50 + Math.random() * 45); // 50–95%
+    targetEl.textContent = target;
+    beerEl.style.height  = '0%';
+    pourEl.style.height  = '0px';
+    pourEl.style.opacity = '0';
+    pctEl.textContent    = '';
+    resultEl.textContent = '';
+    resultEl.className   = '';
+  }
+
+  /* ── Pour loop ── */
+  function startPour() {
+    if (locked || pouring) return;
+    pouring = true;
+    pourEl.style.height  = POUR_HEIGHT + 'px';
+    pourEl.style.opacity = '1';
+    loop();
+  }
+
+  function stopPour() {
+    if (!pouring) return;
+    pouring = false;
+    pourEl.style.height  = '0px';
+    pourEl.style.opacity = '0';
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    if (!locked && filled > 0) evaluate();
+  }
+
+  function loop() {
+    if (!pouring) return;
+    filled = Math.min(100, filled + FILL_RATE);
+    beerEl.style.height = filled + '%';
+
+    if (filled >= 100) {
+      pouring = false;
+      locked  = true;
+      pourEl.style.height  = '0px';
+      pourEl.style.opacity = '0';
+      splashFX();
+      evaluate();
+      return;
+    }
+    animId = requestAnimationFrame(loop);
+  }
+
+  /* ── Evaluate result ── */
+  function evaluate() {
+    locked = true;
+    rounds++;
+    const delta = Math.abs(filled - target);
+    pctEl.textContent = Math.round(filled) + '% filled';
+
+    if (bestDelta === null || delta < bestDelta) bestDelta = delta;
+
+    let msg = '', cls = '';
+    if (delta <= 2) {
+      msg = '🎯 Perfect pour!'; cls = 'perfect'; perfects++;
+      foamFX();
+    } else if (delta <= 8) {
+      msg = delta < 4 ? '🍺 Nailed it!' : '✨ Close enough!'; cls = 'close';
+    } else if (delta <= 20) {
+      msg = filled > target ? '😅 A little over...' : '😬 A little short...'; cls = 'close';
+    } else {
+      msg = filled > target ? '🌊 It overflowed!' : '🏜️ Come on, more!'; cls = 'fail';
+    }
+
+    resultEl.textContent = msg;
+    resultEl.className   = cls;
+    updateStats();
+  }
+
+  function updateStats() {
+    statRounds.textContent  = rounds;
+    statPerfect.textContent = perfects;
+    statBest.textContent    = bestDelta !== null ? (bestDelta <= 0.5 ? '±0%' : '±' + Math.round(bestDelta) + '%') : '—';
+  }
+
+  /* ── FX ── */
+  function foamFX() {
+    const rect = beerEl.getBoundingClientRect();
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'foam-particle';
+      p.style.left = (rect.left + Math.random() * rect.width) + 'px';
+      p.style.top  = rect.top + 'px';
+      p.style.width = p.style.height = (4 + Math.random() * 8) + 'px';
+      p.style.animationDuration = (0.5 + Math.random() * 0.4) + 's';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 900);
+    }
+  }
+
+  function splashFX() {
+    const rect = document.getElementById('mug').getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < 3; i++) {
+      const r = document.createElement('div');
+      r.className = 'splash-ring';
+      const size = 60 + i * 30;
+      r.style.cssText = `width:${size}px;height:${size}px;left:${cx - size/2}px;top:${cy - size/2}px;animation-delay:${i*0.1}s;`;
+      document.body.appendChild(r);
+      setTimeout(() => r.remove(), 900);
+    }
+  }
+
+  /* ── Events ── */
+  // Hover to pour
+  tapEl.addEventListener('mouseenter', startPour);
+  tapEl.addEventListener('mouseleave', stopPour);
+
+  // Touch support
+  tapEl.addEventListener('touchstart', e => { e.preventDefault(); startPour(); }, { passive: false });
+  tapEl.addEventListener('touchend',   e => { e.preventDefault(); stopPour();  }, { passive: false });
+
+  // Click mug to reset
+  mugEl.addEventListener('click', newRound);
+  mugEl.addEventListener('touchend', e => { e.preventDefault(); newRound(); }, { passive: false });
+
+  /* ── Start ── */
+  newRound();
+})();
+</script>
+</body>
+</html>
