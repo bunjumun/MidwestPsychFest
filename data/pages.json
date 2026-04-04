@@ -26,7 +26,7 @@
     "url": "more-info.html",
     "nav": true,
     "icon": "ℹ️",
-    "hidden": true
+    "hidden": false
   },
   {
     "id": "volunteer",
@@ -63,7 +63,8 @@
     "url": "admin.html",
     "nav": false,
     "icon": "⚙",
-    "protected": true
+    "protected": true,
+    "hidden": false
   },
   {
     "id": "circus-performers",
