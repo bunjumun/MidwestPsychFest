@@ -1,83 +1,92 @@
 [
   {
+    "status": "pending",
     "name": "Fred blasing",
     "date": "",
     "time": "",
     "location": "",
-    "role": "tba",
-    "notes": "Pretty handy for set up and break down",
-    "status": "pending"
+    "role": "gate check",
+    "notes": "Pretty handy for set up and break down"
   },
   {
+    "status": "pending",
     "name": "Joe Shamis",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "",
-    "status": "pending"
+    "notes": ""
   },
   {
+    "status": "pending",
     "name": "Frederick",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Sound. Time management. Shoulder rubs.",
-    "status": "pending"
+    "notes": "Sound. Time management. Shoulder rubs."
   },
   {
+    "status": "pending",
     "name": "Pixie",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "My art",
-    "status": "pending"
+    "notes": "My art"
   },
   {
+    "status": "pending",
     "name": "Jen Asson",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "",
-    "status": "pending"
+    "notes": ""
   },
   {
+    "status": "pending",
     "name": "Sarah guinther",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "",
-    "status": "pending"
+    "notes": ""
   },
   {
+    "status": "pending",
     "name": "Jayhmeee",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "I can be a circus fortune teller behind plexi glass",
-    "status": "pending"
+    "notes": "I can be a circus fortune teller behind plexi glass"
   },
   {
+    "status": "pending",
     "name": "Melissa",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Bartender, event planner, POS proficient, nice,  and available on Friday May 8th",
-    "status": "pending"
+    "notes": "Bartender, event planner, POS proficient, nice,  and available on Friday May 8th"
   },
   {
+    "status": "pending",
     "name": "Kaula Clynes",
     "date": "",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Very charismatic, fast learner, easy to get along with.",
-    "status": "pending"
+    "notes": "Very charismatic, fast learner, easy to get along with."
+  },
+  {
+    "status": "pending",
+    "name": "Seth Moherman",
+    "date": "",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Video and Photography are my profession."
   }
 ]
