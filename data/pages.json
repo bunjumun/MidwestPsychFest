@@ -63,7 +63,8 @@
     "url": "hi.html",
     "nav": true,
     "navSection": "festival",
-    "icon": "📄"
+    "icon": "📄",
+    "hidden": true
   },
   {
     "id": "circus-performers",
@@ -71,6 +72,7 @@
     "url": "circus-performers.html",
     "nav": true,
     "navSection": "festival",
-    "icon": "📄"
+    "icon": "📄",
+    "hidden": true
   }
 ]
