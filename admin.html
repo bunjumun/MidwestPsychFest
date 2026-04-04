@@ -1153,6 +1153,16 @@
       </div>
       <div id="syncPageMsg" class="sync-msg"></div>
 
+      <!-- Manage existing pages -->
+      <div class="adm-card" style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">Manage Pages</h3>
+          <button class="btn btn-ghost btn-sm" id="pagesRefreshBtn">↻ Refresh</button>
+        </div>
+        <div id="pageManagerList"><span class="text-muted text-xs">Loading…</span></div>
+        <div id="pageManagerMsg" class="sync-msg" style="margin-top:8px;"></div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div>
           <div class="adm-card">
@@ -1409,6 +1419,7 @@ function bootDashboard() {
   loadInfoImages();
   loadVolunteerConfig();
   loadVolCompletions();
+  loadManagedPages();
   fetchDeployStatus();
   loadBarConfig();
   updateDashboardSummary();
@@ -2978,6 +2989,7 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
 
     showSyncMsg('syncPageMsg','ok',`✓ ${existingPageSha ? 'Updated' : 'Created'} ${slug}.html — live in ~60s. <a href="${slug}.html" target="_blank" style="color:var(--color-accent);">Open ↗</a>`);
     pageBlocks = []; renderPageBlocks(); updatePagePreview();
+    loadManagedPages();
     document.getElementById('newPageTitle').value = '';
     document.getElementById('newPageSlug').value  = '';
     document.getElementById('newPageSlug').dataset.edited = '';
@@ -2985,6 +2997,92 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
     showSyncMsg('syncPageMsg','err',`✗ Failed: ${e.message}`);
   } finally { btn.textContent = 'Create & Publish'; btn.disabled = false; }
 });
+
+/* ── Page Manager ─────────────────────────────── */
+let managedPages = [];
+
+async function loadManagedPages() {
+  const listEl = document.getElementById('pageManagerList');
+  const msgEl  = document.getElementById('pageManagerMsg');
+  if (listEl) listEl.innerHTML = '<span class="text-muted text-xs">Loading…</span>';
+  if (msgEl)  { msgEl.textContent = ''; msgEl.className = 'sync-msg'; }
+  try {
+    const { data } = await ghGetJSON('data/pages.json');
+    managedPages = Array.isArray(data) ? data : [];
+    renderManagedPages();
+  } catch(e) {
+    if (listEl) listEl.innerHTML = `<span class="text-muted text-xs" style="color:var(--color-danger);">Error: ${escHtml(e.message)}</span>`;
+  }
+}
+
+const CORE_PAGE_IDS = new Set(['index','schedule','map','more-info','volunteer','admin','bar','vendors']);
+
+function renderManagedPages() {
+  const listEl = document.getElementById('pageManagerList');
+  if (!listEl) return;
+  if (!managedPages.length) {
+    listEl.innerHTML = '<span class="text-muted text-xs">No pages found.</span>';
+    return;
+  }
+  listEl.innerHTML = managedPages.map((p, i) => {
+    const isHidden = !!p.hidden;
+    const isCore   = CORE_PAGE_IDS.has(p.id);
+    const visBtn   = isHidden
+      ? `style="font-size:0.73rem;padding:3px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(249,200,14,0.4);background:rgba(249,200,14,0.08);color:#f9c80e;"`
+      : `style="font-size:0.73rem;padding:3px 10px;border-radius:4px;cursor:pointer;border:1px solid rgba(79,255,176,0.35);background:rgba(79,255,176,0.08);color:var(--color-accent);"`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border);flex-wrap:wrap;">
+      <span style="flex:1;min-width:120px;">
+        <span style="font-weight:600;color:${isHidden ? 'var(--color-text-muted)' : 'var(--color-text)'};">${escHtml(p.label)}</span>
+        <a href="${escHtml(p.url)}" target="_blank" style="font-size:0.73rem;color:var(--color-text-muted);margin-left:6px;">${escHtml(p.url)} ↗</a>
+        ${isCore ? `<span style="font-size:0.66rem;background:rgba(79,255,176,0.1);color:var(--color-accent);border-radius:3px;padding:1px 5px;margin-left:4px;">core</span>` : ''}
+      </span>
+      <button onclick="togglePageVisibility(${i})" ${visBtn}>${isHidden ? '○ Hidden' : '● Visible'}</button>
+      ${!isCore ? `<button onclick="deletePage(${i})"
+        style="font-size:0.73rem;padding:3px 8px;border-radius:4px;cursor:pointer;border:1px solid rgba(255,68,68,0.3);background:transparent;color:rgba(255,68,68,0.6);">Delete</button>` : ''}
+    </div>`;
+  }).join('') +
+  `<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-accent btn-sm" onclick="savePageVisibility()">Push Visibility Changes</button>
+  </div>`;
+}
+
+function togglePageVisibility(i) {
+  managedPages[i] = { ...managedPages[i], hidden: !managedPages[i].hidden };
+  renderManagedPages();
+}
+
+async function savePageVisibility() {
+  const msgEl = document.getElementById('pageManagerMsg');
+  try {
+    await ghPutJSON('data/pages.json', managedPages, 'admin: update page visibility');
+    showSyncMsg('pageManagerMsg', 'ok', '✓ pages.json updated — nav changes live in ~60s');
+  } catch(e) {
+    showSyncMsg('pageManagerMsg', 'err', '✗ ' + e.message);
+  }
+}
+
+async function deletePage(i) {
+  const page = managedPages[i];
+  if (!confirm(`Delete "${page.label}" (${page.url})?\n\nThis will permanently remove the HTML file from GitHub and unlist it from pages.json. This cannot be undone.`)) return;
+  const msgEl = document.getElementById('pageManagerMsg');
+  showSyncMsg('pageManagerMsg', '', `Deleting ${page.url}…`);
+  try {
+    // Delete the HTML file (ignore 404 — already gone)
+    try {
+      const { sha } = await ghGetFile(page.url);
+      await ghDeleteFile(page.url, sha, `admin: delete ${page.url}`);
+    } catch(e) { if (e.status !== 404) throw e; }
+    // Remove from pages array and push
+    managedPages.splice(i, 1);
+    await ghPutJSON('data/pages.json', managedPages, `admin: remove ${page.id} from pages.json`);
+    showSyncMsg('pageManagerMsg', 'ok', `✓ "${page.label}" deleted — changes live in ~60s`);
+    renderManagedPages();
+  } catch(e) {
+    showSyncMsg('pageManagerMsg', 'err', '✗ ' + e.message);
+  }
+}
+
+document.getElementById('pagesRefreshBtn')?.addEventListener('click', loadManagedPages);
 
 /* ── Hook alerts section init on nav ─────────── */
 document.querySelectorAll('.adm-nav-item[data-section="alerts"]').forEach(btn => {

@@ -83,6 +83,22 @@ async function ghPutJSON(path, obj, commitMsg) {
   return ghPutFile(path, JSON.stringify(obj, null, 2) + '\n', commitMsg, sha);
 }
 
+// ── Delete a file from the repo ──────────────
+async function ghDeleteFile(path, sha, commitMsg) {
+  _ghHeaders(true);
+  const [owner, repo] = ghRepo().split('/');
+  const res = await fetch(`${GH_API}/repos/${owner}/${repo}/contents/${path}`, {
+    method: 'DELETE',
+    headers: { ..._ghHeaders(true), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: commitMsg, sha, branch: GH_BRANCH }),
+  });
+  if (!res.ok && res.status !== 404) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GitHub delete failed (${res.status})`);
+  }
+  return res.status === 404 ? null : res.json();
+}
+
 // ── Trigger a manual deploy ───────────────────
 async function ghTriggerDeploy(workflowId) {
   const [owner, repo] = ghRepo().split('/');

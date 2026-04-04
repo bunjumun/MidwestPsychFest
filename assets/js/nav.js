@@ -29,7 +29,7 @@
     const res = await fetch('data/pages.json?_=' + Date.now());
     if (!res.ok) return;
     const pages = await res.json();
-    const customPages = pages.filter(function(p) { return p.navSection === 'festival'; });
+    const customPages = pages.filter(function(p) { return p.navSection === 'festival' && !p.hidden; });
     if (!customPages.length) return;
     // First .menu-dropdown inside #navLinks is the Festival dropdown
     var festivalDropdown = document.querySelector('#navLinks .menu-dropdown');
