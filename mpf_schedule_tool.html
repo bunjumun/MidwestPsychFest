@@ -351,7 +351,8 @@ async function syncEmailBodiesToSheet() {
 
     const bodyColNum  = cfg.emailBodyCol.trim().toUpperCase().charCodeAt(0) - 64;
     const photoColNum = (cfg.photoUrlCol || 'K').trim().toUpperCase().charCodeAt(0) - 64;
-    let synced = 0, skipped = 0;
+    let synced = 0, skipped = 0, added = 0;
+    let nextRow = dataRows.length + 2; // next empty row (1-indexed, after header)
 
     // Helper: write one cell via Apps Script
     const writeCell = (row, col, value) => fetch(cfg.scriptUrl, {
@@ -360,13 +361,43 @@ async function syncEmailBodiesToSheet() {
       body: JSON.stringify({ sheetId: cfg.sheetId, sheetName: cfg.sheetName, row, col, value })
     });
 
-    // 2. Push email bodies + photo URLs for each band
+    // 2. Push email bodies + photo URLs for each band; add new bands as full rows
     for (let idx = 0; idx < bands.length; idx++) {
       const bandName = (state.fieldOverrides[idx]?.band ?? bands[idx].band).trim().toUpperCase();
       const row = nameToRow[bandName];
-      if (!row) { skipped++; continue; }
 
       btn.textContent = `Syncing ${idx + 1}/${bands.length}…`;
+
+      if (!row) {
+        // New band — write a full row to the sheet
+        // Cols: A=Band, B=Date, C=Time, D=Stage, E=Type, F=Email, G=Status,
+        //       H=Social, I=Streaming, J=Bio, K=Photo URL, L=Email Body
+        const b   = bands[idx];
+        const ex  = getExtra(idx);
+        const cells = [
+          [1, getBandName(idx)],
+          [2, getBandDate(idx)],
+          [3, getTime(idx)],
+          [4, getBandStage(idx)],
+          [5, b.type || ''],
+          [6, state.emails[idx] || b.email || ''],
+          [7, getStatus(idx)],
+          [8, ex.social || ''],
+          [9, ex.streaming || ''],
+          [10, ex.bio || ''],
+        ];
+        const photo = getPhoto(idx);
+        if (photo && !photo.startsWith('data:')) cells.push([photoColNum, photo]);
+        const body = getBody(idx);
+        if (body) cells.push([bodyColNum, body]);
+
+        for (const [col, val] of cells) {
+          if (val) await writeCell(nextRow, col, val);
+        }
+        added++;
+        nextRow++;
+        continue;
+      }
 
       const body  = getBody(idx);
       const photo = getPhoto(idx);
@@ -383,10 +414,10 @@ async function syncEmailBodiesToSheet() {
       }
     }
 
-    btn.textContent = `✓ ${synced} synced`;
+    btn.textContent = `✓ ${synced} synced` + (added ? `, ${added} added` : '');
     btn.disabled = false;
     const el = document.getElementById('syncIndicator');
-    if (el) { el.textContent = `✓ ${synced} → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
+    if (el) { el.textContent = `✓ ${synced} synced${added ? ', ' + added + ' added' : ''} → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
     setTimeout(() => { btn.textContent = 'Sync to Sheet'; }, 3500);
   } catch(e) {
     console.error('Sheet sync error:', e);
