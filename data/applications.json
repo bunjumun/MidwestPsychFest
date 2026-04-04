@@ -10,7 +10,7 @@
     "note": "Volunteer application is live — sign up now!"
   },
   {
-    "key": "band",
+    "key": "band-/-artist",
     "emoji": "🎸",
     "label": "Band / Artist",
     "color": "#ff3cac",
@@ -25,8 +25,18 @@
     "label": "Vendor",
     "color": "#f9c80e",
     "description": "Bring your business to the fest. Food trucks, craft vendors, artists, makers — if you've got something cool to sell, we want you there. Spaces are limited, so apply early.",
-    "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdBclCjq9jJ813s57A2ql_9hZvA6yqg2hpbgn_QvYWAFPIaNQ/viewform",
-    "status": "open",
-    "note": "Vendor application is OPEN!"
+    "form_url": "",
+    "status": "coming_soon",
+    "note": ""
+  },
+  {
+    "key": "cifcus-performer",
+    "emoji": "🤡",
+    "label": "CIfcus Performer",
+    "color": "#aaaaff",
+    "description": "",
+    "form_url": "https://l.instagram.com/?u=https%3A%2F%2Fdocs.google.com%2Fforms%2Fd%2Fe%2F1FAIpQLSc22oaaIBhT2KInYFK1YKo23wl9LmwSqz0RvAjctyV9quKt4Q%2Fviewform%3Fusp%3Dpublish-editor%26pli%3D1%26authuser%3D0%26utm_source%3Dig%26utm_medium%3Dsocial%26utm_content%3Dlink_in_bio%26fbclid%3DPAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQMMjU2MjgxMDQwNTU4AAGngz7ufrVmnseJNOIqxxmAYrfrOCm2nOIqc6M-cUFOOcvEB_dYSmi0FVk1nEw_aem_orlsJCLnaWrQ-FzpF1lL9w&e=AT5uragLk0F5H3K_uhhYjHMoHVYRlLscWFiQ_FhHNahL4wXETwADDLcZ3m1H6Q3coWHAyUg4q5Ol-XKmkSg6csnHiDlE32ON5fGxWLa5GQ",
+    "status": "coming_soon",
+    "note": "Are you a visual performer? Apply here?"
   }
 ]
