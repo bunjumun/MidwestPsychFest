@@ -66,9 +66,15 @@
     .shift-card.completed { border-color:rgba(249,200,14,0.4);background:rgba(249,200,14,0.05); }
     .shift-name { font-family:var(--font-display);font-size:1.2rem;color:var(--color-text);margin-bottom:14px; }
     .shift-meta { display:grid;gap:7px;margin-bottom:16px; }
-    .shift-meta-row { display:flex;align-items:flex-start;gap:10px;font-size:0.9rem; }
-    .shift-meta-label { color:var(--color-text-muted);min-width:120px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;padding-top:2px;flex-shrink:0; }
+    .shift-meta-row { display:flex;align-items:center;gap:8px;font-size:0.9rem;margin-bottom:4px; }
+    .shift-meta-label { color:var(--color-text-muted);min-width:110px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0; }
     .shift-meta-value { color:var(--color-text); }
+    .shift-meta-editable { align-items:center; }
+    .shift-meta-input { flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--color-border);border-radius:4px;color:var(--color-text);font-family:var(--font-body);font-size:0.88rem;padding:4px 8px;outline:none;transition:border-color 0.15s;min-width:0; }
+    .shift-meta-input:focus { border-color:var(--color-accent); }
+    .shift-meta-save { flex-shrink:0;background:transparent;border:1px solid var(--color-border);color:var(--color-text-muted);font-size:0.72rem;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all 0.15s;font-family:var(--font-body);white-space:nowrap; }
+    .shift-meta-save:hover:not(:disabled) { border-color:var(--color-accent);color:var(--color-accent); }
+    .shift-meta-save:disabled { opacity:0.5;cursor:not-allowed; }
     .shift-status { margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px; }
     .shift-actions { display:flex;gap:10px;flex-wrap:wrap; }
     .status-chip { display:inline-flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;padding:3px 10px;border-radius:99px; }
@@ -348,14 +354,14 @@ function doGet(e) {
         <hr class="admin-section-divider" />
 
         <!-- Dynamic display fields -->
-        <span class="admin-section-label">Display Fields (shown on volunteer shift card)</span>
+        <span class="admin-section-label">Display &amp; Edit Fields (shown on shift card — editable by staff)</span>
         <div class="field-rows-header">
-          <span class="fh-label">Label shown to volunteer</span>
+          <span class="fh-label">Label shown to staff</span>
           <span class="fh-col">Col</span>
           <span class="fh-del"></span>
         </div>
         <div id="fieldRows"></div>
-        <button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="addFieldRow()">+ Add Field</button>
+        <button class="btn btn-sm btn-ghost" style="margin-top:8px;font-size:0.8rem;" onclick="addFieldRow()">＋ Add Column</button>
 
         <div class="config-actions">
           <button class="btn btn-sm btn-accent" onclick="saveConfig()">Save &amp; Test</button>
@@ -463,6 +469,12 @@ function doGet(e) {
   function updateLocalRecord(row, field, value) {
     const rec = currentRecords.find(r => r._row === row);
     if (rec) { if (field === 'checkin') rec.checkinValue = value; if (field === 'complete') rec.completeValue = value; }
+    return rec || null;
+  }
+
+  function updateLocalField(row, col, value) {
+    const rec = currentRecords.find(r => r._row === row);
+    if (rec) rec.fields[col] = value;
     return rec || null;
   }
 
@@ -583,9 +595,15 @@ function doGet(e) {
     const isDone = !!record.completeValue;
 
     const meta = config.fields.map(f => {
-      const val = record.fields[f.col];
-      if (!val) return '';
-      return `<div class="shift-meta-row"><span class="shift-meta-label">${escHtml(f.label)}</span><span class="shift-meta-value">${escHtml(val)}</span></div>`;
+      const val = record.fields[f.col] || '';
+      const inputId = `vfield-${record._row}-${f.col}`;
+      const btnId   = `vfbtn-${record._row}-${f.col}`;
+      return `<div class="shift-meta-row shift-meta-editable">
+        <span class="shift-meta-label">${escHtml(f.label)}</span>
+        <input class="shift-meta-input" id="${inputId}" type="text" value="${escHtml(val)}" placeholder="—"
+          onkeydown="if(event.key==='Enter')saveField(${record._row},'${f.col}','${inputId}','${btnId}')" />
+        <button class="shift-meta-save" id="${btnId}" onclick="saveField(${record._row},'${f.col}','${inputId}','${btnId}')">Save</button>
+      </div>`;
     }).join('');
 
     let statusHtml = '';
@@ -695,6 +713,29 @@ function doGet(e) {
     }
   }
 
+  async function saveField(row, col, inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn   = document.getElementById(btnId);
+    if (!input || !btn) return;
+    const value = input.value.trim();
+    btn.textContent = '…'; btn.disabled = true;
+    updateLocalField(row, col, value);
+    const notice = document.getElementById(`vsync-${row}`);
+    if (notice) { notice.textContent = 'Saving…'; notice.className = 'sync-notice'; }
+    const result = await writeToSheet(row, col, value);
+    if (result.ok) {
+      btn.textContent = '✓'; btn.disabled = false;
+      input.style.borderColor = 'var(--color-accent)';
+      if (notice) { notice.textContent = '✓ Saved to sheet'; notice.className = 'sync-notice synced'; }
+      setTimeout(() => { btn.textContent = 'Save'; input.style.borderColor = ''; if (notice) { notice.textContent = ''; } }, 2500);
+    } else {
+      btn.textContent = '✗'; btn.disabled = false;
+      input.style.borderColor = '#ff6666';
+      if (notice) { notice.textContent = `✗ Save failed: ${result.error}`; notice.className = 'sync-notice failed'; }
+      setTimeout(() => { btn.textContent = 'Save'; input.style.borderColor = ''; }, 3000);
+    }
+  }
+
   /* ══════════════════════════════════════════════
      ADMIN CONFIG FORM
   ══════════════════════════════════════════════ */
@@ -720,17 +761,18 @@ function doGet(e) {
   function renderFieldRows(fields) {
     document.getElementById('fieldRows').innerHTML = fields.map((f, i) => `
       <div class="field-row" data-idx="${i}">
-        <input class="fr-label" type="text" placeholder="Label shown to volunteer" value="${escHtml(f.label)}" />
+        <input class="fr-label" type="text" placeholder="e.g. Shift Location" value="${escHtml(f.label)}" />
         <input class="fr-col"   type="text" placeholder="Col" maxlength="2" value="${escHtml(f.col)}" />
-        <button class="fr-remove" onclick="this.closest('.field-row').remove()">✕</button>
+        <button class="fr-remove" onclick="this.closest('.field-row').remove()" title="Remove column">−</button>
       </div>`).join('');
   }
 
   function addFieldRow() {
     const row = document.createElement('div');
     row.className = 'field-row';
-    row.innerHTML = `<input class="fr-label" type="text" placeholder="Label shown to volunteer" /><input class="fr-col" type="text" placeholder="Col" maxlength="2" /><button class="fr-remove" onclick="this.closest('.field-row').remove()">✕</button>`;
+    row.innerHTML = `<input class="fr-label" type="text" placeholder="e.g. Shift Location" /><input class="fr-col" type="text" placeholder="Col" maxlength="2" /><button class="fr-remove" onclick="this.closest('.field-row').remove()" title="Remove column">−</button>`;
     document.getElementById('fieldRows').appendChild(row);
+    row.querySelector('.fr-label').focus();
   }
 
   function getFieldsFromForm() {
