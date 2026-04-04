@@ -64,5 +64,13 @@
     "nav": true,
     "navSection": "festival",
     "icon": "📄"
+  },
+  {
+    "id": "circus-performers",
+    "label": "Circus Performers",
+    "url": "circus-performers.html",
+    "nav": true,
+    "navSection": "festival",
+    "icon": "📄"
   }
 ]
