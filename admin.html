@@ -999,6 +999,7 @@
               <option value="index">Home</option>
               <option value="schedule">Schedule</option>
               <option value="map">Map</option>
+              <!-- custom pages injected by populateWidgetPageSelect() -->
             </select>
           </div>
           <div class="form-group">
@@ -2208,7 +2209,28 @@ document.getElementById('stagesSyncBtn').addEventListener('click', async () => {
    WIDGETS
    ════════════════════════════════════════════════════════ */
 
+const WIDGET_CORE_PAGES = [
+  { id: 'index',     label: 'Home' },
+  { id: 'schedule',  label: 'Schedule' },
+  { id: 'map',       label: 'Map' },
+  { id: 'more-info', label: 'More Info' },
+  { id: 'volunteer', label: 'Volunteer' },
+];
+
+function populateWidgetPageSelect() {
+  const sel = document.getElementById('widgetPage');
+  if (!sel) return;
+  const current = sel.value;
+  const custom = managedPages.filter(p => !CORE_PAGE_IDS.has(p.id));
+  sel.innerHTML =
+    WIDGET_CORE_PAGES.map(p => `<option value="${escHtml(p.id)}">${escHtml(p.label)}</option>`).join('') +
+    (custom.length ? `<optgroup label="Custom Pages">${custom.map(p =>
+      `<option value="${escHtml(p.id)}">${escHtml(p.label)}</option>`).join('')}</optgroup>` : '');
+  if (current && sel.querySelector(`option[value="${CSS.escape(current)}"]`)) sel.value = current;
+}
+
 function loadWidgetEditor() {
+  populateWidgetPageSelect();
   const page = document.getElementById('widgetPage').value;
   const w    = getAllWidgets()[page] || {};
   document.getElementById('widgetCode').value     = w.code     || '';
@@ -3044,6 +3066,7 @@ function renderManagedPages() {
   `<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
     <button class="btn btn-accent btn-sm" onclick="savePageVisibility()">Push Visibility Changes</button>
   </div>`;
+  populateWidgetPageSelect();
 }
 
 function togglePageVisibility(i) {
