@@ -523,5 +523,20 @@
     "social": {},
     "streaming": "",
     "image": ""
+  },
+  {
+    "id": "circus-performer-friday",
+    "band": "CIRCUS PERFORMER",
+    "stage": "Outdoor Stage A",
+    "stage_id": "outdoor-stage-a",
+    "day": "Friday, May 8",
+    "date": "2026-05-08",
+    "set_time": "20:50",
+    "set_time_display": "8:50 PM",
+    "status": "pending",
+    "bio": "",
+    "social": {},
+    "streaming": "",
+    "image": ""
   }
 ]
