@@ -1,6 +1,6 @@
 {
-  "active": true,
-  "type": "warning",
-  "message": "TICKETS ON SALE. https://theticketing.co/e/springmpf",
-  "updated": "2026-04-04T17:24:16.373Z"
+  "active": false,
+  "type": "info",
+  "message": "",
+  "updated": "2026-04-04T17:24:39.691Z"
 }
