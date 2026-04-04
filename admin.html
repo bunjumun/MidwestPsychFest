@@ -2970,26 +2970,24 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
     await ghPutFile(`${slug}.html`, pageHtml, `feat: create/update ${slug}.html via admin page creator`, existingPageSha);
 
     // Register page in data/pages.json (if not already listed)
+    const newPageEntry = { id: slug, label: title, url: `${slug}.html`, nav: navSec !== 'none', navSection: navSec, icon: '📄' };
     try {
       const { data: pagesData } = await ghGetJSON('data/pages.json');
       const pages = Array.isArray(pagesData) ? pagesData : [];
-      const alreadyListed = pages.some(p => p.id === slug);
-      if (!alreadyListed) {
-        pages.push({
-          id:    slug,
-          label: title,
-          url:   `${slug}.html`,
-          nav:   navSec !== 'none',
-          navSection: navSec,
-          icon:  '📄'
-        });
+      if (!pages.some(p => p.id === slug)) {
+        pages.push(newPageEntry);
         await ghPutJSON('data/pages.json', pages, `feat: register ${slug}.html in pages.json`);
       }
     } catch(pErr) { console.warn('pages.json update skipped:', pErr.message); }
 
+    // Update the Manage Pages list in-memory (avoids stale GitHub read after immediate write)
+    if (!managedPages.some(p => p.id === slug)) {
+      managedPages.push(newPageEntry);
+    }
+    renderManagedPages();
+
     showSyncMsg('syncPageMsg','ok',`✓ ${existingPageSha ? 'Updated' : 'Created'} ${slug}.html — live in ~60s. <a href="${slug}.html" target="_blank" style="color:var(--color-accent);">Open ↗</a>`);
     pageBlocks = []; renderPageBlocks(); updatePagePreview();
-    loadManagedPages();
     document.getElementById('newPageTitle').value = '';
     document.getElementById('newPageSlug').value  = '';
     document.getElementById('newPageSlug').dataset.edited = '';
@@ -3063,18 +3061,20 @@ async function savePageVisibility() {
 
 async function deletePage(i) {
   const page = managedPages[i];
+  if (!page) return;
   if (!confirm(`Delete "${page.label}" (${page.url})?\n\nThis will permanently remove the HTML file from GitHub and unlist it from pages.json. This cannot be undone.`)) return;
-  const msgEl = document.getElementById('pageManagerMsg');
-  showSyncMsg('pageManagerMsg', '', `Deleting ${page.url}…`);
+  showSyncMsg('pageManagerMsg', 'ok', `Deleting ${page.url}…`);
   try {
-    // Delete the HTML file (ignore 404 — already gone)
-    try {
-      const { sha } = await ghGetFile(page.url);
-      await ghDeleteFile(page.url, sha, `admin: delete ${page.url}`);
-    } catch(e) { if (e.status !== 404) throw e; }
-    // Remove from pages array and push
-    managedPages.splice(i, 1);
-    await ghPutJSON('data/pages.json', managedPages, `admin: remove ${page.id} from pages.json`);
+    // Delete the HTML file — fetch fresh SHA to avoid mismatch; ignore 404 (already gone)
+    let fileSha;
+    try { fileSha = (await ghGetFile(page.url)).sha; } catch(fileErr) {
+      if ((fileErr.status || 0) !== 404) throw fileErr;
+    }
+    if (fileSha) await ghDeleteFile(page.url, fileSha, `admin: delete ${page.url}`);
+    // Update pages.json — splice AFTER the write succeeds
+    const updated = managedPages.filter((_, idx) => idx !== i);
+    await ghPutJSON('data/pages.json', updated, `admin: remove ${page.id} from pages.json`);
+    managedPages = updated;
     showSyncMsg('pageManagerMsg', 'ok', `✓ "${page.label}" deleted — changes live in ~60s`);
     renderManagedPages();
   } catch(e) {
