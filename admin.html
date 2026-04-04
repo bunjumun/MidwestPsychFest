@@ -416,10 +416,13 @@
     <section class="adm-section" id="section-schedule">
       <div class="adm-section-header">
         <h2>Schedule Editor</h2>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="schedUndoBtn" disabled title="Undo last change">↩ Undo</button>
           <button class="btn btn-ghost btn-sm" id="schedImportBtn">Import JSON</button>
           <input type="file" id="schedImportFile" accept=".json" style="display:none" />
           <button class="btn btn-ghost btn-sm" id="schedExportBtn">Export JSON</button>
+          <button class="btn btn-ghost btn-sm" id="schedPullToolBtn" title="Merge status, email, and photo updates from the Schedule Tool (this browser)">↓ From Band Tool</button>
+          <button class="btn btn-ghost btn-sm" id="schedPullSheetBtn" title="Pull status, email, and photo URL from Google Sheets">↓ From Sheet</button>
           <button class="btn btn-accent btn-sm" id="schedSyncBtn">Push to GitHub</button>
         </div>
       </div>
@@ -1249,6 +1252,19 @@ let schedDayFilter   = 'all';
 let schedStageFilter = 'all';
 let editingSetId     = null;
 let editingMarkerIdx = null;
+let schedUndoStack   = [];   // array of JSON snapshots for undo
+
+// Apps Script config — read from same key the schedule tool writes
+const SCHED_SYNC_CFG_KEY = 'mpf_tool_sync_config';
+const SCHED_SYNC_DEFAULTS = {
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec',
+  sheetId:   '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI',
+  sheetName: 'Bands',
+};
+function getSchedSyncCfg() {
+  try { return Object.assign({}, SCHED_SYNC_DEFAULTS, JSON.parse(localStorage.getItem(SCHED_SYNC_CFG_KEY) || '{}')); }
+  catch { return Object.assign({}, SCHED_SYNC_DEFAULTS); }
+}
 
 /* ── Auth ──────────────────────────────────────────────── */
 // AUTH_SESSION const is defined in stages.js
@@ -1631,6 +1647,7 @@ function clearSetForm() {
 document.getElementById('setFormSave').addEventListener('click', () => {
   const band = document.getElementById('fBand').value.trim();
   if (!band) { alert('Band name is required.'); return; }
+  schedPushUndo();
   const stageId  = document.getElementById('fStage').value;
   const stageMap = { 'outdoor-stage-a':'Outdoor Stage A', 'outdoor-stage-b':'Outdoor Stage B', 'barn-stage':'Barn Stage' };
   const day      = document.getElementById('fDay').value;
@@ -1673,7 +1690,8 @@ document.getElementById('setFormSave').addEventListener('click', () => {
 
 document.getElementById('setFormDelete').addEventListener('click', () => {
   if (!editingSetId) return;
-  if (!confirm('Delete this set? This cannot be undone.')) return;
+  if (!confirm('Delete this set? Use Undo if you change your mind.')) return;
+  schedPushUndo();
   adminSchedule = adminSchedule.filter(s => s.id !== editingSetId);
   saveScheduleToStorage();
   renderScheduleTable();
@@ -1692,6 +1710,105 @@ function saveScheduleToStorage() {
   window.dispatchEvent(new StorageEvent('storage', { key: SCHEDULE_LS }));
 }
 
+// ── Undo stack ────────────────────────────────────────────
+function schedPushUndo() {
+  schedUndoStack.push(JSON.stringify(adminSchedule));
+  if (schedUndoStack.length > 30) schedUndoStack.shift(); // cap at 30 levels
+  document.getElementById('schedUndoBtn').disabled = false;
+}
+
+document.getElementById('schedUndoBtn').addEventListener('click', () => {
+  if (!schedUndoStack.length) return;
+  adminSchedule = JSON.parse(schedUndoStack.pop());
+  saveScheduleToStorage();
+  renderScheduleTable();
+  document.getElementById('setEditForm').style.display = 'none';
+  editingSetId = null;
+  if (!schedUndoStack.length) document.getElementById('schedUndoBtn').disabled = true;
+  showSyncMsg('syncSchedMsg', 'ok', 'Undone — ' + adminSchedule.length + ' sets restored.');
+});
+
+// ── Pull from Band Tool (localStorage) ───────────────────
+document.getElementById('schedPullToolBtn').addEventListener('click', () => {
+  try {
+    const raw = localStorage.getItem(SCHEDULE_LS);
+    if (!raw) { showSyncMsg('syncSchedMsg', 'err', 'No Band Tool data found in this browser. Open the Schedule Tool and save first.'); return; }
+    const toolData = JSON.parse(raw);
+    if (!Array.isArray(toolData) || !toolData.length) { showSyncMsg('syncSchedMsg', 'err', 'Band Tool data is empty.'); return; }
+
+    schedPushUndo();
+    let updated = 0;
+    toolData.forEach(toolEntry => {
+      const idx = adminSchedule.findIndex(s =>
+        (s.band || '').toUpperCase() === (toolEntry.band || '').toUpperCase()
+      );
+      if (idx === -1) return;
+      const s = adminSchedule[idx];
+      if (toolEntry.status)            { s.status = toolEntry.status; updated++; }
+      if (toolEntry.email)             s._email  = toolEntry.email;
+      if (toolEntry.image)             s.image   = toolEntry.image;
+      if (toolEntry.bio)               s.bio     = toolEntry.bio;
+      if (toolEntry.set_time_display)  s.set_time_display = toolEntry.set_time_display;
+      if (toolEntry.set_time)          s.set_time = toolEntry.set_time;
+    });
+
+    saveScheduleToStorage();
+    renderScheduleTable();
+    showSyncMsg('syncSchedMsg', 'ok', `↓ Merged ${updated} updates from Band Tool. Push to GitHub when ready.`);
+  } catch(e) {
+    showSyncMsg('syncSchedMsg', 'err', 'Pull failed: ' + e.message);
+  }
+});
+
+// ── Pull from Sheet (Apps Script) ────────────────────────
+document.getElementById('schedPullSheetBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('schedPullSheetBtn');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  try {
+    const cfg = getSchedSyncCfg();
+    if (!cfg.scriptUrl || !cfg.sheetId) throw new Error('No Apps Script URL configured. Set it in the Schedule Tool → ⚙ Sheet config.');
+
+    const url = `${cfg.scriptUrl}?sheet=${encodeURIComponent(cfg.sheetName)}&sheetId=${encodeURIComponent(cfg.sheetId)}&_=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Script error');
+
+    const [headerRow, ...dataRows] = json.rows;
+    const hdr = headerRow.map(h => String(h).trim().toUpperCase());
+    const iName   = 0;
+    const iEmail  = hdr.indexOf('EMAIL');
+    const iStatus = hdr.indexOf('STATUS');
+    const iPhoto  = hdr.indexOf('PHOTO URL');
+    const iBio    = hdr.indexOf('BIO');
+
+    schedPushUndo();
+    let updated = 0;
+    dataRows.forEach(row => {
+      const name = String(row[iName] || '').trim().toUpperCase();
+      const idx  = adminSchedule.findIndex(s => (s.band || '').toUpperCase() === name);
+      if (idx === -1) return;
+      const s = adminSchedule[idx];
+      const email  = iEmail  >= 0 ? String(row[iEmail]  || '').trim() : '';
+      const status = iStatus >= 0 ? String(row[iStatus] || '').trim() : '';
+      const photo  = iPhoto  >= 0 ? String(row[iPhoto]  || '').trim() : '';
+      const bio    = iBio    >= 0 ? String(row[iBio]    || '').trim() : '';
+      if (email)  s._email  = email;
+      if (status) { s.status = status; updated++; }
+      if (photo)  s.image   = photo;
+      if (bio)    s.bio     = bio;
+    });
+
+    saveScheduleToStorage();
+    renderScheduleTable();
+    showSyncMsg('syncSchedMsg', 'ok', `↓ Merged ${updated} status updates from Sheet. Push to GitHub when ready.`);
+  } catch(e) {
+    showSyncMsg('syncSchedMsg', 'err', 'Sheet pull failed: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '↓ From Sheet';
+  }
+});
+
 // Export
 document.getElementById('schedExportBtn').addEventListener('click', () => {
   dlJson(adminSchedule, 'schedule.json');
@@ -1707,6 +1824,7 @@ document.getElementById('schedImportFile').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
+      schedPushUndo();
       adminSchedule = Array.isArray(data) ? data : [];
       saveScheduleToStorage();
       renderScheduleTable();
