@@ -1165,7 +1165,8 @@
           Set to <strong style="color:var(--color-text)">Coming Soon</strong> to hide the button.
         </p>
         <div style="display:flex;flex-direction:column;gap:14px;" id="appFormsEditor"></div>
-        <div style="display:flex;gap:8px;margin-top:16px;">
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="appFormsAddBtn">＋ Add Application</button>
           <button class="btn btn-accent btn-sm" id="appFormsSaveBtn">Push to GitHub</button>
         </div>
         <div id="appFormsMsg" class="sync-msg" style="margin-top:8px;"></div>
@@ -3037,68 +3038,127 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
 });
 
 /* ── Application Forms Config ─────────────────── */
-const APP_FORMS_DEFS = [
-  { key: 'volunteer', label: '🙋 Volunteer', color: 'var(--color-accent)' },
-  { key: 'band',      label: '🎸 Band / Artist', color: 'var(--color-primary)' },
-  { key: 'vendor',    label: '🛒 Vendor', color: 'var(--color-secondary)' },
-];
-let appFormsData = {};
+let appFormsArr = [];
 
 async function loadAppForms() {
   try {
     const { data } = await ghGetJSON('data/applications.json');
-    appFormsData = data || {};
-  } catch(e) { appFormsData = {}; }
+    if (Array.isArray(data)) {
+      appFormsArr = data;
+    } else if (data && typeof data === 'object') {
+      // migrate old object format → array
+      appFormsArr = Object.entries(data).map(([key, v]) => ({
+        key,
+        emoji: key === 'volunteer' ? '🙋' : key === 'band' ? '🎸' : key === 'vendor' ? '🛒' : '📋',
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+        color: key === 'volunteer' ? '#4fffb0' : key === 'band' ? '#ff3cac' : key === 'vendor' ? '#f9c80e' : '#aaaaff',
+        description: v.description || '',
+        form_url: v.form_url || '',
+        status: v.status || 'coming_soon',
+        note: v.note || '',
+      }));
+    } else {
+      appFormsArr = [];
+    }
+  } catch(e) { appFormsArr = []; }
+  renderAppFormsEditor();
+}
+
+function removeAppForm(i) {
+  appFormsArr.splice(i, 1);
   renderAppFormsEditor();
 }
 
 function renderAppFormsEditor() {
   const el = document.getElementById('appFormsEditor');
   if (!el) return;
-  el.innerHTML = APP_FORMS_DEFS.map(def => {
-    const entry = appFormsData[def.key] || {};
+  if (!appFormsArr.length) {
+    el.innerHTML = '<p class="text-muted text-xs">No applications yet. Click ＋ Add Application to create one.</p>';
+    return;
+  }
+  el.innerHTML = appFormsArr.map((entry, i) => {
     const isOpen = entry.status === 'open';
-    return `<div style="border:1px solid var(--color-border);border-radius:var(--radius);padding:14px 16px;">
-      <div style="font-weight:700;color:${def.color};font-size:0.88rem;margin-bottom:10px;">${def.label}</div>
+    const col = escHtml(entry.color || '#aaaaff');
+    return `<div style="border:1px solid var(--color-border);border-radius:var(--radius);padding:14px 16px;position:relative;">
+      <button onclick="removeAppForm(${i})" title="Remove"
+        style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:rgba(255,68,68,0.55);cursor:pointer;font-size:1rem;line-height:1;padding:0;">✕</button>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+        <div class="form-group" style="margin:0;flex:0 0 64px;">
+          <label style="font-size:0.7rem;">Emoji</label>
+          <input type="text" id="appForm-emoji-${i}" value="${escHtml(entry.emoji || '📋')}"
+            style="font-size:1.1rem;text-align:center;padding:4px 6px;" />
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+          <label style="font-size:0.7rem;">Label</label>
+          <input type="text" id="appForm-label-${i}" placeholder="e.g. Volunteer"
+            value="${escHtml(entry.label || '')}" style="font-size:0.82rem;" />
+        </div>
+        <div class="form-group" style="margin:0;flex:0 0 auto;">
+          <label style="font-size:0.7rem;">Color</label>
+          <input type="color" id="appForm-color-${i}" value="${col}"
+            style="width:44px;height:34px;padding:2px;cursor:pointer;border:1px solid var(--color-border);border-radius:var(--radius);background:transparent;" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Card Description</label>
+        <textarea id="appForm-desc-${i}" rows="2" placeholder="Short description shown on the card…"
+          style="font-size:0.82rem;resize:vertical;">${escHtml(entry.description || '')}</textarea>
+      </div>
       <div class="form-group" style="margin-bottom:8px;">
         <label>Form URL</label>
-        <input type="url" id="appForm-url-${def.key}" placeholder="https://docs.google.com/forms/…"
-          value="${escHtml(entry.form_url || '')}"
-          style="font-size:0.82rem;" />
+        <input type="url" id="appForm-url-${i}" placeholder="https://docs.google.com/forms/…"
+          value="${escHtml(entry.form_url || '')}" style="font-size:0.82rem;" />
       </div>
-      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
-          <input type="radio" name="appForm-status-${def.key}" value="open" ${isOpen ? 'checked' : ''} />
+          <input type="radio" name="appForm-status-${i}" value="open" ${isOpen ? 'checked' : ''} />
           Open (show button &amp; embed)
         </label>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;">
-          <input type="radio" name="appForm-status-${def.key}" value="coming_soon" ${!isOpen ? 'checked' : ''} />
+          <input type="radio" name="appForm-status-${i}" value="coming_soon" ${!isOpen ? 'checked' : ''} />
           Coming Soon
         </label>
       </div>
-      <div class="form-group" style="margin-top:8px;margin-bottom:0;">
-        <label>Card note (shown under button)</label>
-        <input type="text" id="appForm-note-${def.key}" placeholder="e.g. Application is live — apply now!"
-          value="${escHtml(entry.note || '')}"
-          style="font-size:0.82rem;" />
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Card Note <span class="text-muted" style="font-weight:400;">(shown under button)</span></label>
+        <input type="text" id="appForm-note-${i}" placeholder="e.g. Application is live — apply now!"
+          value="${escHtml(entry.note || '')}" style="font-size:0.82rem;" />
       </div>
     </div>`;
   }).join('');
 }
 
+document.getElementById('appFormsAddBtn')?.addEventListener('click', () => {
+  appFormsArr.push({
+    key: 'app-' + Date.now(),
+    emoji: '📋',
+    label: 'New Application',
+    color: '#aaaaff',
+    description: '',
+    form_url: '',
+    status: 'coming_soon',
+    note: '',
+  });
+  renderAppFormsEditor();
+  document.getElementById('appFormsEditor')?.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
 document.getElementById('appFormsSaveBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('appFormsSaveBtn');
   btn.textContent = 'Pushing…'; btn.disabled = true;
-  const updated = {};
-  APP_FORMS_DEFS.forEach(def => {
-    const url    = document.getElementById(`appForm-url-${def.key}`)?.value.trim() || '';
-    const status = document.querySelector(`input[name="appForm-status-${def.key}"]:checked`)?.value || 'coming_soon';
-    const note   = document.getElementById(`appForm-note-${def.key}`)?.value.trim() || '';
-    updated[def.key] = { form_url: url, status, note };
-  });
+  const updated = appFormsArr.map((entry, i) => ({
+    key:         document.getElementById(`appForm-label-${i}`)?.value.trim().toLowerCase().replace(/\s+/g,'-') || entry.key,
+    emoji:       document.getElementById(`appForm-emoji-${i}`)?.value.trim() || entry.emoji,
+    label:       document.getElementById(`appForm-label-${i}`)?.value.trim() || entry.label,
+    color:       document.getElementById(`appForm-color-${i}`)?.value || entry.color,
+    description: document.getElementById(`appForm-desc-${i}`)?.value.trim() || entry.description,
+    form_url:    document.getElementById(`appForm-url-${i}`)?.value.trim() || '',
+    status:      document.querySelector(`input[name="appForm-status-${i}"]:checked`)?.value || 'coming_soon',
+    note:        document.getElementById(`appForm-note-${i}`)?.value.trim() || '',
+  }));
   try {
     await ghPutJSON('data/applications.json', updated, 'admin: update application form config');
-    appFormsData = updated;
+    appFormsArr = updated;
     showSyncMsg('appFormsMsg', 'ok', '✓ Applications config saved — live in ~60s');
   } catch(e) {
     showSyncMsg('appFormsMsg', 'err', '✗ ' + e.message);

@@ -1,17 +1,32 @@
-{
-  "volunteer": {
+[
+  {
+    "key": "volunteer",
+    "emoji": "🙋",
+    "label": "Volunteer",
+    "color": "#4fffb0",
+    "description": "Help make the magic happen. Volunteers get in free and work alongside an incredible team of humans to build one of Ohio's best psych fests. After signing up, check your shifts on the Volunteer Check-In page.",
     "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdBclCjq9jJ813s57A2ql_9hZvA6yqg2hpbgn_QvYWAFPIaNQ/viewform",
     "status": "open",
     "note": "Volunteer application is live — sign up now!"
   },
-  "band": {
+  {
+    "key": "band",
+    "emoji": "🎸",
+    "label": "Band / Artist",
+    "color": "#ff3cac",
+    "description": "Submit your act for consideration. We're looking for psychedelic, krautrock, shoegaze, garage, experimental, and all things weird & wonderful. All genres considered — just bring the energy.",
     "form_url": "",
     "status": "coming_soon",
     "note": "Band application is CLOSED"
   },
-  "vendor": {
+  {
+    "key": "vendor",
+    "emoji": "🛒",
+    "label": "Vendor",
+    "color": "#f9c80e",
+    "description": "Bring your business to the fest. Food trucks, craft vendors, artists, makers — if you've got something cool to sell, we want you there. Spaces are limited, so apply early.",
     "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdBclCjq9jJ813s57A2ql_9hZvA6yqg2hpbgn_QvYWAFPIaNQ/viewform",
     "status": "open",
     "note": "Vendor application is OPEN!"
   }
-}
+]

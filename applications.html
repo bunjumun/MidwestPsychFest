@@ -207,75 +207,13 @@
     <p>Volunteers, Artists, and Vendors — join the magic</p>
   </section>
 
-  <!-- APPLICATION CARDS -->
-  <div class="apps-grid">
-
-    <!-- Volunteer Card -->
-    <div class="app-card card-volunteer">
-      <div class="app-card-icon">🙋</div>
-      <h2>Volunteer</h2>
-      <p>
-        Help make the magic happen. Volunteers get in free and work alongside an incredible
-        team of humans to build one of Ohio's best psych fests.
-        <br><br>
-        After signing up, you can check your shifts on the
-        <a href="volunteer.html">Volunteer Check-In</a> page.
-      </p>
-      <div class="app-card-actions">
-        <a id="vol-apply-btn" href="#volunteer-form" class="btn btn-accent">Sign Up →</a>
-        <a href="volunteer.html" class="btn btn-ghost btn-sm">Check-In Page</a>
-      </div>
-      <p class="app-card-note" id="vol-note">Loading…</p>
-    </div>
-
-    <!-- Band / Artist Card -->
-    <div class="app-card card-band">
-      <div class="app-card-icon">🎸</div>
-      <h2>Band / Artist</h2>
-      <p>
-        Submit your act for consideration. We're looking for psychedelic, krautrock,
-        shoegaze, garage, experimental, and all things weird &amp; wonderful.
-        All genres considered — just bring the energy.
-      </p>
-      <div class="app-card-actions">
-        <a id="band-apply-btn" href="#" class="btn btn-primary" style="display:none;">Apply Now →</a>
-        <span id="band-coming" class="btn btn-ghost btn-sm" style="opacity:0.5;cursor:default;">Coming Soon</span>
-      </div>
-      <p class="app-card-note" id="band-note">Band application opens soon.</p>
-    </div>
-
-    <!-- Vendor Card -->
-    <div class="app-card card-vendor">
-      <div class="app-card-icon">🛒</div>
-      <h2>Vendor</h2>
-      <p>
-        Bring your business to the fest. Food trucks, craft vendors, artists, makers —
-        if you've got something cool to sell, we want you there.
-        Spaces are limited, so apply early.
-      </p>
-      <div class="app-card-actions">
-        <a id="vendor-apply-btn" href="#" class="btn btn-secondary" style="display:none;">Apply Now →</a>
-        <span id="vendor-coming" class="btn btn-ghost btn-sm" style="opacity:0.5;cursor:default;">Coming Soon</span>
-      </div>
-      <p class="app-card-note" id="vendor-note">Vendor application opens soon.</p>
-    </div>
-
+  <!-- APPLICATION CARDS — rendered by JS from data/applications.json -->
+  <div class="apps-grid" id="appsGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--color-text-muted);font-size:0.9rem;">Loading applications…</div>
   </div>
 
-  <!-- VOLUNTEER FORM EMBED -->
-  <div id="volunteer-form-section" style="display:none;max-width:760px;margin:0 auto 60px;padding:0 24px;">
-    <h2 style="font-family:var(--font-display);font-size:1.6rem;color:var(--color-accent);margin-bottom:20px;text-align:center;">Volunteer Application</h2>
-    <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(79,255,176,0.2);background:rgba(79,255,176,0.03);">
-      <iframe id="volunteer-form-iframe"
-        src=""
-        width="100%" height="860" frameborder="0"
-        marginheight="0" marginwidth="0"
-        style="display:block;">Loading…</iframe>
-    </div>
-    <p style="text-align:center;margin-top:12px;font-size:0.82rem;color:var(--color-text-muted);">
-      Having trouble? <a id="vol-direct-link" href="#" target="_blank" rel="noopener" style="color:var(--color-accent);">Open form directly ↗</a>
-    </p>
-  </div>
+  <!-- FORM EMBEDS — rendered by JS -->
+  <div id="formEmbeds"></div>
 
   <!-- FOOTER -->
   <footer class="site-footer">
@@ -297,51 +235,87 @@
     try {
       const r = await fetch('data/applications.json?_=' + Date.now());
       if (!r.ok) return;
-      const cfg = await r.json();
+      let apps = await r.json();
 
-      // ── Volunteer ──
-      const vol = cfg.volunteer || {};
-      const volBtn = document.getElementById('vol-apply-btn');
-      const volNote = document.getElementById('vol-note');
-      const volSection = document.getElementById('volunteer-form-section');
-      const volIframe = document.getElementById('volunteer-form-iframe');
-      const volDirect = document.getElementById('vol-direct-link');
-      if (vol.form_url && vol.status === 'open') {
-        if (volBtn) { volBtn.href = vol.form_url + '#volunteer-form'; }
-        if (volNote) volNote.textContent = vol.note || 'Volunteer application is live!';
-        if (volSection) volSection.style.display = 'block';
-        if (volIframe) volIframe.src = vol.form_url.includes('?') ? vol.form_url + '&embedded=true' : vol.form_url + '?embedded=true';
-        if (volDirect) volDirect.href = vol.form_url;
-      } else {
-        if (volBtn) { volBtn.textContent = 'Coming Soon'; volBtn.style.opacity = '0.55'; volBtn.style.pointerEvents = 'none'; }
-        if (volNote) volNote.textContent = vol.note || 'Application opens soon.';
+      // Normalise: support both array and legacy object formats
+      if (!Array.isArray(apps)) {
+        apps = Object.entries(apps).map(([key, v]) => ({
+          key,
+          emoji: key === 'volunteer' ? '🙋' : key === 'band' ? '🎸' : key === 'vendor' ? '🛒' : '📋',
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+          color: key === 'volunteer' ? '#4fffb0' : key === 'band' ? '#ff3cac' : key === 'vendor' ? '#f9c80e' : '#aaaaff',
+          description: v.description || '',
+          form_url: v.form_url || '',
+          status: v.status || 'coming_soon',
+          note: v.note || '',
+        }));
       }
 
-      // ── Band ──
-      const band = cfg.band || {};
-      const bandBtn = document.getElementById('band-apply-btn');
-      const bandComing = document.getElementById('band-coming');
-      const bandNote = document.getElementById('band-note');
-      if (band.form_url && band.status === 'open') {
-        if (bandBtn) { bandBtn.href = band.form_url; bandBtn.target = '_blank'; bandBtn.style.display = ''; }
-        if (bandComing) bandComing.style.display = 'none';
-        if (bandNote) bandNote.textContent = band.note || 'Application is live!';
-      } else {
-        if (bandNote) bandNote.textContent = band.note || 'Band application opens soon.';
+      const grid = document.getElementById('appsGrid');
+      const embeds = document.getElementById('formEmbeds');
+
+      // ── Render cards ──
+      if (grid) {
+        grid.innerHTML = apps.map(app => {
+          const color = app.color || '#aaaaff';
+          const isOpen = app.status === 'open' && app.form_url;
+          const btnStyle = isOpen
+            ? `background:${color};color:#000;border:none;`
+            : `background:transparent;border:1px solid ${color}40;color:${color};opacity:0.5;pointer-events:none;`;
+          const btnText = isOpen ? 'Apply Now →' : 'Coming Soon';
+          const btnHref = isOpen ? `#form-${app.key}` : '#';
+
+          return `<div class="app-card" style="border-color:${color}40;">
+            <div class="app-card-icon">${app.emoji || '📋'}</div>
+            <h2 style="color:${color};">${app.label || ''}</h2>
+            <p>${app.description || ''}</p>
+            <div class="app-card-actions">
+              <a href="${btnHref}" class="btn btn-sm" style="${btnStyle}">${btnText}</a>
+              ${app.note ? `<span class="app-card-note">${app.note}</span>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+
+        // Hover effects via JS (since colors are dynamic)
+        grid.querySelectorAll('.app-card').forEach((card, i) => {
+          const color = apps[i]?.color || '#aaaaff';
+          card.addEventListener('mouseenter', () => {
+            card.style.borderColor = color + '99';
+            card.style.boxShadow = `0 0 40px ${color}14`;
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.borderColor = color + '40';
+            card.style.boxShadow = '';
+          });
+        });
       }
 
-      // ── Vendor ──
-      const vendor = cfg.vendor || {};
-      const vendorBtn = document.getElementById('vendor-apply-btn');
-      const vendorComing = document.getElementById('vendor-coming');
-      const vendorNote = document.getElementById('vendor-note');
-      if (vendor.form_url && vendor.status === 'open') {
-        if (vendorBtn) { vendorBtn.href = vendor.form_url; vendorBtn.target = '_blank'; vendorBtn.style.display = ''; }
-        if (vendorComing) vendorComing.style.display = 'none';
-        if (vendorNote) vendorNote.textContent = vendor.note || 'Application is live!';
-      } else {
-        if (vendorNote) vendorNote.textContent = vendor.note || 'Vendor application opens soon.';
+      // ── Render form embeds ──
+      if (embeds) {
+        embeds.innerHTML = apps
+          .filter(app => app.status === 'open' && app.form_url)
+          .map(app => {
+            const color = app.color || '#aaaaff';
+            const embedUrl = app.form_url.includes('?')
+              ? app.form_url + '&embedded=true'
+              : app.form_url + '?embedded=true';
+            return `<section id="form-${app.key}" style="max-width:760px;margin:0 auto;padding:0 24px 64px;">
+              <h2 style="color:${color};font-family:var(--font-display);margin-bottom:16px;font-size:1.6rem;">
+                ${app.emoji || ''} ${app.label || ''} Application
+              </h2>
+              <iframe src="${embedUrl}" width="100%" height="700" frameborder="0" marginheight="0" marginwidth="0"
+                style="border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,0.08);display:block;">
+                Loading form…
+              </iframe>
+              <p style="text-align:center;margin-top:10px;font-size:0.82rem;">
+                <a href="${app.form_url}" target="_blank" rel="noopener" style="color:${color};">
+                  Open form in new tab ↗
+                </a>
+              </p>
+            </section>`;
+          }).join('');
       }
+
     } catch(e) { console.warn('applications.json load failed', e); }
   })();
   </script>
