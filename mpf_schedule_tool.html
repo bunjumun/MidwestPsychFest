@@ -240,6 +240,24 @@ function dateToISO(dayStr) {
   return `2026-${months[m[2]] || '00'}-${String(parseInt(m[3])).padStart(2,'0')}`;
 }
 
+// Convert ISO date string or Date-like value to display string "Friday, May 8"
+function normalizeDayStr(raw) {
+  const s = String(raw || '').trim();
+  // Already a display string like "Friday, May 8"
+  if (/^\w+,\s+\w+\s+\d+$/.test(s)) return s;
+  // ISO date: "2026-05-08" or "2026-05-08T04:00:00.000Z"
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    // Parse as local date (avoid timezone shift by using parts directly)
+    const y = parseInt(isoMatch[1]), m = parseInt(isoMatch[2]) - 1, d = parseInt(isoMatch[3]);
+    const dt = new Date(y, m, d);
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
+  }
+  return s || '';
+}
+
 // Festival sort key: 12am-5:59am treated as late night (sorts after 11:59pm)
 function festKey(t12) {
   const t24 = parseTime12to24(t12);
@@ -298,7 +316,7 @@ function parseCSV(csvText) {
     if (/^\d{1,2}:\d{2}$/.test(rawTime) && !rawTime.match(/[APap]/)) {
       timeDisplay = parse24to12(rawTime);
     }
-    const day = vals[colMap.day] || '';
+    const day = normalizeDayStr(vals[colMap.day]);
 
     entries.push({
       id:               `${slugify(bandName)}-${slugify(day.split(',')[0] || 'tbd')}`,
@@ -406,7 +424,7 @@ async function syncFromSheet() {
       } else if (/^\d{1,2}:\d{2}$/.test(rawTime)) {
         timeDisplay = parse24to12(rawTime);
       }
-      const day = String(row[col.day] ?? '').trim();
+      const day = normalizeDayStr(row[col.day]);
 
       entries.push({
         id:               `${slugify(bandName)}-${slugify(day.split(',')[0] || 'tbd')}`,
@@ -476,7 +494,7 @@ async function loadFromLiveSite() {
     if (!res.ok) return false;
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) {
-      bands = data;
+      bands = data.map(b => ({ ...b, day: normalizeDayStr(b.day), date: dateToISO(normalizeDayStr(b.day)) || b.date }));
       saveToStorage();
       return true;
     }
@@ -487,7 +505,7 @@ async function loadFromLiveSite() {
     if (!res.ok) return false;
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) {
-      bands = data;
+      bands = data.map(b => ({ ...b, day: normalizeDayStr(b.day), date: dateToISO(normalizeDayStr(b.day)) || b.date }));
       saveToStorage();
       return true;
     }
