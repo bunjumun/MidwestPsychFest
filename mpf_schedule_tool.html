@@ -149,7 +149,8 @@
     <div class="header-btns">
       <button class="hdr-btn" id="dashBtn" onclick="toggleDashboard()">Dashboard</button>
       <button class="hdr-btn" onclick="openAddBandModal()">+ Add Band</button>
-      <label class="hdr-btn upload" title="Upload a CSV exported from Google Sheets to replace all schedule data">Upload CSV <input type="file" accept=".csv" style="display:none" id="csvInput" onchange="handleCSVUpload(event)"></label>
+      <button class="hdr-btn upload" id="syncSheetBtn" onclick="syncFromSheet()" title="Pull latest schedule directly from the Google Sheet">Sync from Sheet</button>
+      <label class="hdr-btn" title="Upload a CSV exported from Google Sheets to replace all schedule data">Upload CSV <input type="file" accept=".csv" style="display:none" id="csvInput" onchange="handleCSVUpload(event)"></label>
       <button class="hdr-btn danger" onclick="clearAllBands()" title="Remove all bands from the tool (does not affect live site until you push)">Clear All</button>
       <button class="hdr-btn" onclick="exportCSV()" title="Export current schedule as CSV">Export CSV</button>
       <button class="hdr-btn" id="pushLiveBtn" onclick="pushToLiveSite()" title="Commit current schedule to data/schedule.json on GitHub (updates live site in ~60s)">Push to Live Site</button>
@@ -267,22 +268,21 @@ function parseCSV(csvText) {
   // Map common header variations to our field names
   const colMap = {};
   headers.forEach((h, i) => {
-    if (/^band|^artist|^act/i.test(h))           colMap.band = i;
-    else if (/^date|^day/i.test(h))               colMap.day = i;
-    else if (/^(set[_ ]?)?time|^start/i.test(h))  colMap.time = i;
-    else if (/^stage/i.test(h))                    colMap.stage = i;
-    else if (/^type/i.test(h))                     colMap.type = i;
-    else if (/^status/i.test(h))                   colMap.status = i;
-    else if (/^social/i.test(h))                   colMap.social = i;
-    else if (/^stream/i.test(h))                   colMap.streaming = i;
-    else if (/^bio/i.test(h))                      colMap.bio = i;
-    else if (/^photo|^image/i.test(h))             colMap.image = i;
+    if (/band|artist|act|name/i.test(h) && colMap.band === undefined)  colMap.band = i;
+    else if (/date|day/i.test(h) && colMap.day === undefined)           colMap.day = i;
+    else if (/time|start/i.test(h) && colMap.time === undefined)        colMap.time = i;
+    else if (/stage/i.test(h) && colMap.stage === undefined)            colMap.stage = i;
+    else if (/^type$/i.test(h))                                         colMap.type = i;
+    else if (/email/i.test(h) && !/body/i.test(h) && colMap.email === undefined) colMap.email = i;
+    else if (/status/i.test(h))                                         colMap.status = i;
+    else if (/social/i.test(h))                                         colMap.social = i;
+    else if (/stream/i.test(h))                                         colMap.streaming = i;
+    else if (/^bio/i.test(h))                                           colMap.bio = i;
+    else if (/photo|image/i.test(h))                                    colMap.image = i;
   });
 
-  if (colMap.band === undefined) {
-    alert('CSV must have a "Band" or "Artist" column header.');
-    return null;
-  }
+  // If no header matched "band", assume first column is the band name
+  if (colMap.band === undefined) colMap.band = 0;
 
   const entries = [];
   for (let r = 1; r < lines.length; r++) {
@@ -328,7 +328,9 @@ function handleCSVUpload(event) {
     const parsed = parseCSV(e.target.result);
     if (parsed === null) return; // error already shown
     if (parsed.length === 0) {
-      alert('No bands found in CSV. Check that the file has data rows with a Band/Artist column.');
+      // Show first line of CSV to help debug
+      const firstLine = e.target.result.trim().split('\n')[0] || '(empty)';
+      alert(`No bands found in CSV.\n\nHeaders detected: ${firstLine}\n\nCheck that the file has data rows and a Band/Name column.`);
       return;
     }
     const msg = bands.length > 0
@@ -345,6 +347,107 @@ function handleCSVUpload(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ─── SYNC FROM GOOGLE SHEET ──────────────────────────────────────────────────
+const SHEET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec';
+const SHEET_ID         = '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI';
+const SHEET_TAB        = 'Bands';
+
+async function syncFromSheet() {
+  const btn = document.getElementById('syncSheetBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Fetching…'; }
+
+  try {
+    const url = `${SHEET_SCRIPT_URL}?sheet=${encodeURIComponent(SHEET_TAB)}&sheetId=${encodeURIComponent(SHEET_ID)}&_=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Script error');
+
+    const [headerRow, ...dataRows] = json.rows;
+    if (!headerRow || dataRows.length === 0) {
+      alert('Sheet returned no data rows.');
+      return;
+    }
+
+    // Map header names to column indices
+    const headers = headerRow.map(h => String(h).trim().toLowerCase());
+    const col = {};
+    headers.forEach((h, i) => {
+      if (/band|artist|act|name/i.test(h) && col.band === undefined)   col.band = i;
+      else if (/date|day/i.test(h) && col.day === undefined)            col.day = i;
+      else if (/time|start/i.test(h) && col.time === undefined)         col.time = i;
+      else if (/stage/i.test(h) && col.stage === undefined)             col.stage = i;
+      else if (/^type$/i.test(h))                                       col.type = i;
+      else if (/email/i.test(h) && !/body/i.test(h) && col.email === undefined) col.email = i;
+      else if (/status/i.test(h))                                       col.status = i;
+      else if (/social/i.test(h))                                       col.social = i;
+      else if (/stream/i.test(h))                                       col.streaming = i;
+      else if (/^bio/i.test(h))                                         col.bio = i;
+      else if (/photo|image/i.test(h))                                  col.image = i;
+    });
+
+    // Fall back: if no header matched "band", assume col A
+    if (col.band === undefined) col.band = 0;
+
+    const entries = [];
+    for (const row of dataRows) {
+      const bandName = String(row[col.band] || '').trim();
+      if (!bandName) continue;
+
+      const stage = String(row[col.stage] ?? 'Outdoor Stage A').trim();
+      const rawTime = String(row[col.time] ?? '').trim();
+      let timeDisplay = rawTime;
+      // Handle Google Sheets Date objects (come as ISO strings)
+      if (rawTime && rawTime.includes('T')) {
+        const d = new Date(rawTime);
+        if (!isNaN(d)) timeDisplay = parse24to12(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);
+      } else if (/^\d{1,2}:\d{2}$/.test(rawTime)) {
+        timeDisplay = parse24to12(rawTime);
+      }
+      const day = String(row[col.day] ?? '').trim();
+
+      entries.push({
+        id:               `${slugify(bandName)}-${slugify(day.split(',')[0] || 'tbd')}`,
+        band:             bandName.toUpperCase(),
+        stage:            stage,
+        stage_id:         slugify(stage),
+        day:              day,
+        date:             dateToISO(day),
+        set_time:         parseTime12to24(timeDisplay),
+        set_time_display: timeDisplay,
+        status:           String(row[col.status] ?? 'pending').trim() || 'pending',
+        bio:              String(row[col.bio] ?? '').trim(),
+        social:           row[col.social] ? { link: String(row[col.social]).trim() } : {},
+        streaming:        String(row[col.streaming] ?? '').trim(),
+        image:            String(row[col.image] ?? '').trim(),
+      });
+    }
+
+    if (entries.length === 0) {
+      alert('No bands found in sheet. Check that the Bands tab has data.');
+      return;
+    }
+
+    const msg = bands.length > 0
+      ? `Replace all ${bands.length} current bands with ${entries.length} bands from Google Sheet?`
+      : `Load ${entries.length} bands from Google Sheet?`;
+    if (!confirm(msg)) return;
+
+    bands = entries;
+    saveToStorage();
+    currentIdx = null;
+    dashboardOpen = false;
+    buildSidebar();
+    document.getElementById('main').innerHTML = `<div class="placeholder">${bands.length} bands synced from Google Sheet &mdash; select a band or Push to Live Site</div>`;
+    flash('Sheet synced');
+
+  } catch(e) {
+    alert(`✗ Sheet sync failed: ${e.message}`);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync from Sheet'; }
+  }
 }
 
 // ─── CLEAR ALL ───────────────────────────────────────────────────────────────
@@ -728,29 +831,45 @@ function exportCSV() {
 
 // ─── PUSH TO LIVE SITE ──────────────────────────────────────────────────────
 async function pushToLiveSite() {
-  if (bands.length === 0) { alert('No bands to push. Upload a CSV first.'); return; }
   const btn = document.getElementById('pushLiveBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Pushing…'; }
 
-  // Build public schedule — strip any private fields
-  const schedule = bands.map(b => ({
-    id:               b.id || `${slugify(b.band)}-${slugify((b.day || '').split(',')[0])}`,
-    band:             b.band,
-    stage:            b.stage,
-    stage_id:         b.stage_id || slugify(b.stage),
-    day:              b.day,
-    date:             b.date || dateToISO(b.day),
-    set_time:         b.set_time || parseTime12to24(b.set_time_display),
-    set_time_display: b.set_time_display,
-    status:           b.status || 'pending',
-    bio:              b.bio || '',
-    social:           b.social || {},
-    streaming:        b.streaming || '',
-    image:            (b.image && !b.image.startsWith('data:')) ? b.image : '',
-  }));
-
   try {
     if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available — check PAT in admin settings');
+
+    if (bands.length === 0) {
+      // Empty schedule — push empty array and auto-hide schedule
+      if (!confirm('No bands loaded. Push empty schedule and show "Schedule Coming Soon" on the public site?')) return;
+      await ghPutJSON('data/schedule.json', [], 'admin: clear schedule');
+      // Auto-hide schedule on public site
+      const info = _infoJsonCache || {};
+      info.schedule_hidden = true;
+      await ghPutJSON('data/info.json', info, 'admin: hide schedule (empty)');
+      _scheduleHidden = true;
+      _infoJsonCache = info;
+      updateSchedVisBtn();
+      flash('Live (hidden)');
+      alert('✓ Schedule cleared and hidden. Public site will show "Schedule Coming Soon" (~60s).');
+      return;
+    }
+
+    // Build public schedule — strip any private fields
+    const schedule = bands.map(b => ({
+      id:               b.id || `${slugify(b.band)}-${slugify((b.day || '').split(',')[0])}`,
+      band:             b.band,
+      stage:            b.stage,
+      stage_id:         b.stage_id || slugify(b.stage),
+      day:              b.day,
+      date:             b.date || dateToISO(b.day),
+      set_time:         b.set_time || parseTime12to24(b.set_time_display),
+      set_time_display: b.set_time_display,
+      status:           b.status || 'pending',
+      bio:              b.bio || '',
+      social:           b.social || {},
+      streaming:        b.streaming || '',
+      image:            (b.image && !b.image.startsWith('data:')) ? b.image : '',
+    }));
+
     await ghPutJSON('data/schedule.json', schedule, 'feat: update schedule via schedule tool');
     flash('Live');
     alert(`✓ ${schedule.length} bands pushed to live site. Changes appear in ~60 seconds.`);
