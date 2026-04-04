@@ -847,13 +847,30 @@ function exportCSV() {
   URL.revokeObjectURL(a.href);
 }
 
+// ─── AUTH: ensure PAT is loaded before GitHub operations ────────────────────
+async function ensurePat() {
+  if (typeof ghPat === 'function' && ghPat()) return true;
+  // Try to unlock from encrypted storage
+  if (typeof ghUnlockPat !== 'function') throw new Error('GitHub sync not available.');
+  const pw = prompt('Enter admin password to push changes:');
+  if (!pw) return false;
+  try {
+    await ghUnlockPat(pw);
+    return true;
+  } catch(e) {
+    alert(e.message);
+    return false;
+  }
+}
+
 // ─── PUSH TO LIVE SITE ──────────────────────────────────────────────────────
 async function pushToLiveSite() {
   const btn = document.getElementById('pushLiveBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Pushing…'; }
 
   try {
-    if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available — check PAT in admin settings');
+    if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available.');
+    if (!(await ensurePat())) return;
 
     if (bands.length === 0) {
       // Empty schedule — push empty array and auto-hide schedule
@@ -942,7 +959,8 @@ async function toggleScheduleVisibility() {
   if (!confirm(`Set schedule to: ${label}?\n\nThis updates data/info.json on GitHub (~60s to take effect).`)) return;
   btn.disabled = true; btn.textContent = 'Pushing…';
   try {
-    if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available — check PAT in admin settings');
+    if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available.');
+    if (!(await ensurePat())) return;
     const info = _infoJsonCache || {};
     info.schedule_hidden = newHidden;
     await ghPutJSON('data/info.json', info, (newHidden ? 'admin: hide schedule' : 'admin: show schedule'));

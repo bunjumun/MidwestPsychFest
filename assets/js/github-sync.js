@@ -152,9 +152,81 @@ async function ghFetchPasswordHash() {
   return null;
 }
 
-async function ghWritePasswordHash(hash) {
+async function ghWritePasswordHash(hash, encryptedPat) {
   const cfg = { pw_hash: hash, _updated: new Date().toISOString() };
-  return ghPutJSON(ADMIN_CFG_PATH, cfg, 'chore: update admin password hash');
+  if (encryptedPat) cfg.encrypted_pat = encryptedPat;
+  return ghPutJSON(ADMIN_CFG_PATH, cfg, 'chore: update admin config');
+}
+
+// ── AES-GCM Encrypt / Decrypt (password-based) ─
+async function _deriveKey(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  // Use a fixed salt derived from the repo name — not secret, just prevents rainbow tables
+  const salt = enc.encode('mpf-admin-' + ghRepo());
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptWithPassword(plaintext, password) {
+  const key = await _deriveKey(password);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plaintext);
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+  // Pack iv + ciphertext as base64
+  const packed = new Uint8Array(iv.length + ciphertext.byteLength);
+  packed.set(iv);
+  packed.set(new Uint8Array(ciphertext), iv.length);
+  return btoa(String.fromCharCode(...packed));
+}
+
+async function decryptWithPassword(encrypted, password) {
+  const key = await _deriveKey(password);
+  const packed = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+  const iv = packed.slice(0, 12);
+  const ciphertext = packed.slice(12);
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new TextDecoder().decode(decrypted);
+}
+
+// ── Encrypted PAT: read from admin-config.json ──
+async function ghFetchEncryptedPat() {
+  try {
+    const res = await fetch('data/admin-config.json?_=' + Date.now());
+    if (res.ok) {
+      const cfg = await res.json();
+      return cfg.encrypted_pat || null;
+    }
+  } catch(e) {}
+  try {
+    const [owner, repo] = ghRepo().split('/');
+    const res = await fetch(
+      `https://raw.githubusercontent.com/${owner}/${repo}/${GH_BRANCH}/${ADMIN_CFG_PATH}?_=${Date.now()}`
+    );
+    if (res.ok) {
+      const cfg = await res.json();
+      return cfg.encrypted_pat || null;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// Decrypt PAT with admin password and load into system
+async function ghUnlockPat(password) {
+  const encrypted = await ghFetchEncryptedPat();
+  if (!encrypted) throw new Error('No encrypted PAT found. Set one up in admin settings.');
+  try {
+    const pat = await decryptWithPassword(encrypted, password);
+    ghSetPat(pat);
+    return pat;
+  } catch(e) {
+    throw new Error('Wrong password — could not decrypt PAT.');
+  }
 }
 
 // ── Cloud Draft ───────────────────────────────

@@ -1278,7 +1278,9 @@ document.getElementById('setupSubmit').addEventListener('click', async () => {
     try {
       await ghVerifyPat(pat);
       ghSetPat(pat);
-      await ghWritePasswordHash(hash);
+      // Encrypt PAT with the password and store alongside hash
+      const encPat = await encryptWithPassword(pat, pw1);
+      await ghWritePasswordHash(hash, encPat);
     } catch(e) {
       errEl.textContent = 'Password saved locally, but GitHub write failed: ' + e.message;
       errEl.style.display = 'block';
@@ -1924,6 +1926,21 @@ document.getElementById('patVerifyBtn').addEventListener('click', async () => {
   try {
     const user = await ghVerifyPat(pat);
     ghSetPat(pat);
+    // Re-encrypt PAT with current password and update admin-config.json
+    const storedHash = await getStoredHash();
+    if (storedHash && typeof encryptWithPassword === 'function') {
+      // We need the raw password to encrypt — prompt for it
+      const pw = prompt('Enter admin password to encrypt PAT for remote access:');
+      if (pw) {
+        const h = await sha256(pw);
+        if (h === storedHash) {
+          try {
+            const encPat = await encryptWithPassword(pat, pw);
+            await ghWritePasswordHash(storedHash, encPat);
+          } catch(e) { /* silent — PAT still saved locally */ }
+        }
+      }
+    }
     document.getElementById('patStatus').innerHTML =
       `<span style="color:var(--color-accent);">✓ Verified as @${user.login}</span>`;
     document.getElementById('settingsPat').value = pat.slice(0,4) + '●●●●●●●●●●●●';
@@ -1951,7 +1968,13 @@ document.getElementById('chPwBtn').addEventListener('click', async () => {
   const hash = await sha256(pw1);
   localStorage.setItem('mpf_admin_pw', hash);
   try {
-    await ghWritePasswordHash(hash);
+    // Re-encrypt PAT with new password if one exists
+    let encPat;
+    const currentPat = ghPat();
+    if (currentPat && typeof encryptWithPassword === 'function') {
+      encPat = await encryptWithPassword(currentPat, pw1);
+    }
+    await ghWritePasswordHash(hash, encPat);
     errEl.textContent = '✓ Password updated and pushed to GitHub.';
     errEl.style.background = 'rgba(79,255,176,0.08)';
     errEl.style.color      = 'var(--color-accent)';
