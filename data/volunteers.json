@@ -1,65 +1,74 @@
 [
   {
-    "name": "Fred blasing",
-    "date": "fredblasing455@gamil.com",
-    "time": "5",
-    "location": "STAGE",
-    "role": "Cool Person",
-    "notes": "Mind expanding",
-    "status": "confirmed"
-  },
-  {
-    "name": "Joe Shamis",
-    "date": "joseph.shamis@gmail.com",
-    "time": "",
+    "name": "fredblasing455@gamil.com",
+    "date": "3/29/2026 16:06:00",
+    "time": "4 - 6",
     "location": "",
     "role": "",
-    "notes": "Jimi Hendrix",
+    "notes": "Pretty handy for set up and break down",
     "status": "pending"
   },
   {
-    "name": "Frederick",
-    "date": "frederickfoxtrott@gmail.com",
-    "time": "",
+    "name": "joseph.shamis@gmail.com",
+    "date": "3/29/2026 20:19:43",
+    "time": "4:00 -6:00",
     "location": "",
     "role": "",
-    "notes": "Experiencing multiple senses both simultaneously and intensely, provoking thought and introspection.",
+    "notes": "",
     "status": "pending"
   },
   {
-    "name": "Pixie",
-    "date": "angeldye29@gmail.com",
+    "name": "frederickfoxtrott@gmail.com",
+    "date": "3/29/2026 20:42:17",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Weirdness with a purpose",
+    "notes": "Sound. Time management. Shoulder rubs.",
     "status": "pending"
   },
   {
-    "name": "Jen Asson",
-    "date": "jenasson@gmail.com",
+    "name": "angeldye29@gmail.com",
+    "date": "3/30/2026 8:26:57",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Delving deeper into depths of divinity",
+    "notes": "My art",
     "status": "pending"
   },
   {
-    "name": "Sarah guinther",
-    "date": "sarahxking@gmail.com",
+    "name": "jenasson@gmail.com",
+    "date": "3/30/2026 17:46:46",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Creating new pathways in your brain and beauty",
+    "notes": "",
     "status": "pending"
   },
   {
-    "name": "Jayhmeee",
-    "date": "jamie_snyder@ymail.com",
+    "name": "sarahxking@gmail.com",
+    "date": "4/1/2026 12:56:15",
     "time": "",
     "location": "",
     "role": "",
-    "notes": "Lots of acid",
+    "notes": "",
+    "status": "pending"
+  },
+  {
+    "name": "jamie_snyder@ymail.com",
+    "date": "4/1/2026 19:52:43",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "I can be a circus fortune teller behind plexi glass",
+    "status": "pending"
+  },
+  {
+    "name": "mmeyer608@gmail.com",
+    "date": "4/3/2026 10:53:30",
+    "time": "",
+    "location": "",
+    "role": "",
+    "notes": "Bartender, event planner, POS proficient, nice,  and available on Friday May 8th",
     "status": "pending"
   }
 ]
