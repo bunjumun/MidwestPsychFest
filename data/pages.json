@@ -58,15 +58,6 @@
     "protected": true
   },
   {
-    "id": "hi",
-    "label": "hi",
-    "url": "hi.html",
-    "nav": true,
-    "navSection": "festival",
-    "icon": "📄",
-    "hidden": true
-  },
-  {
     "id": "circus-performers",
     "label": "Circus Performers",
     "url": "circus-performers.html",
