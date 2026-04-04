@@ -465,7 +465,7 @@ function clearAllBands() {
 
 // ─── STORAGE ─────────────────────────────────────────────────────────────────
 function saveToStorage() {
-  try { localStorage.setItem('mpf_schedule', JSON.stringify(bands)); } catch(e) {}
+  try { localStorage.setItem('mpf_schedule_tool', JSON.stringify(bands)); } catch(e) {}
 }
 
 // Load schedule from the live public site (data/schedule.json on GitHub)
@@ -848,6 +848,8 @@ async function pushToLiveSite() {
       _scheduleHidden = true;
       _infoJsonCache = info;
       updateSchedVisBtn();
+      // Clear public schedule cache so schedule page fetches fresh data
+      try { localStorage.removeItem('mpf_schedule'); } catch(e) {}
       flash('Live (hidden)');
       alert('✓ Schedule cleared and hidden. Public site will show "Schedule Coming Soon" (~60s).');
       return;
@@ -871,6 +873,8 @@ async function pushToLiveSite() {
     }));
 
     await ghPutJSON('data/schedule.json', schedule, 'feat: update schedule via schedule tool');
+    // Clear public schedule cache so schedule page fetches fresh data
+    try { localStorage.removeItem('mpf_schedule'); } catch(e) {}
     flash('Live');
     alert(`✓ ${schedule.length} bands pushed to live site. Changes appear in ~60 seconds.`);
   } catch(e) {
