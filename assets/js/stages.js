@@ -75,9 +75,20 @@ function normalizeEntry(raw, dayMap) {
 
   // v1 uses integer day; v2 and mpf_schedule use string "Friday, May 8"
   let day  = raw.day;
-  const date = raw.date || '';
+  let date = raw.date || '';
   if (typeof day === 'number') {
     day = dayMap[day] || (day === 1 ? 'Day 1' : 'Day 2');
+  }
+  // Handle ISO date strings from Google Sheets (e.g. "2026-05-08T04:00:00.000Z")
+  if (typeof day === 'string' && /^\d{4}-\d{2}-\d{2}/.test(day)) {
+    const m = day.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      const dt = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      if (!date) date = `${m[1]}-${m[2]}-${m[3]}`;
+      day = `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}`;
+    }
   }
 
   const set_time         = raw.set_time || raw.start || '';
