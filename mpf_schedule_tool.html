@@ -171,7 +171,7 @@
   .extra-textarea:focus { border-color: var(--accent2); }
 </style>
 </head>
-<body>
+<body data-repo="bunjumun/MidwestPsychFest">
 <header>
   <div class="header-left">
     <h1>Midwest Psych Fest 2026</h1>
@@ -188,7 +188,9 @@
       <button class="hdr-btn save" onclick="saveChanges()" title="Save all edits to this browser only (survives refresh, not cookie clear)">Save Draft</button>
       <button class="hdr-btn" onclick="downloadBackup()" title="Download full state as mpf_state.json — use this to restore later">Backup State</button>
       <label class="hdr-btn" style="cursor:pointer" title="Restore from a Backup State file (mpf_state.json) or merge from Export Schedule (mpf_schedule.json)">Restore Backup <input type="file" accept=".json" style="display:none" onchange="importState(event)"></label>
-      <button class="hdr-btn sync-sheet" id="syncSheetBtn" onclick="syncEmailBodiesToSheet()" title="Push all email bodies to column L of the Bands sheet">Sync to Sheet</button>
+      <button class="hdr-btn sync-sheet" id="syncSheetBtn" onclick="syncEmailBodiesToSheet()" title="Push email bodies and photo URLs to the Bands sheet">Sync to Sheet ↑</button>
+      <button class="hdr-btn" id="pullSheetBtn" onclick="pullFromSheet()" title="Pull status, email, and photo URL from the Bands sheet into this tool">Pull from Sheet ↓</button>
+      <button class="hdr-btn" id="pushLiveBtn" onclick="pushToLiveSite()" title="Commit current schedule to data/schedule.json on GitHub (updates live site in ~60s)">Push to Live Site</button>
       <button class="hdr-btn" onclick="toggleSheetConfig()" title="Configure Google Sheet connection">⚙ Sheet</button>
     </div>
   </div>
@@ -203,6 +205,8 @@
   <input class="cfg-input" id="syncSheetName" style="width:80px" placeholder="Bands" />
   <label>Email body col</label>
   <input class="cfg-input" id="syncEmailCol" style="width:50px" placeholder="L" />
+  <label>Photo URL col</label>
+  <input class="cfg-input" id="syncPhotoCol" style="width:50px" placeholder="K" />
   <button class="hdr-btn save" onclick="saveSyncConfigForm()">Save</button>
   <span class="sheet-cfg-status" id="sheetCfgStatus"></span>
 </div>
@@ -221,7 +225,8 @@ const DEFAULT_SYNC_CONFIG = {
   scriptUrl:    'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec',
   sheetId:      '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI',
   sheetName:    'Bands',
-  emailBodyCol: 'L'
+  emailBodyCol: 'L',
+  photoUrlCol:  'K'
 };
 
 function getSyncConfig() {
@@ -240,6 +245,7 @@ function toggleSheetConfig() {
     document.getElementById('syncSheetUrl').value  = cfg.sheetId      || '';
     document.getElementById('syncSheetName').value = cfg.sheetName    || 'Bands';
     document.getElementById('syncEmailCol').value  = cfg.emailBodyCol || 'L';
+    document.getElementById('syncPhotoCol').value  = cfg.photoUrlCol  || 'K';
   }
 }
 
@@ -249,7 +255,8 @@ function saveSyncConfigForm() {
     scriptUrl:    document.getElementById('syncScriptUrl').value.trim(),
     sheetId:      extractSheetId(sheetUrlOrId),
     sheetName:    document.getElementById('syncSheetName').value.trim() || 'Bands',
-    emailBodyCol: document.getElementById('syncEmailCol').value.trim().toUpperCase() || 'L'
+    emailBodyCol: document.getElementById('syncEmailCol').value.trim().toUpperCase() || 'L',
+    photoUrlCol:  document.getElementById('syncPhotoCol').value.trim().toUpperCase() || 'K'
   };
   saveSyncConfig(cfg);
   const s = document.getElementById('sheetCfgStatus');
@@ -281,35 +288,108 @@ async function syncEmailBodiesToSheet() {
       if (name) nameToRow[name] = i + 2; // 1-indexed, skip header
     });
 
-    const colNum = cfg.emailBodyCol.trim().toUpperCase().charCodeAt(0) - 64;
+    const bodyColNum  = cfg.emailBodyCol.trim().toUpperCase().charCodeAt(0) - 64;
+    const photoColNum = (cfg.photoUrlCol || 'K').trim().toUpperCase().charCodeAt(0) - 64;
     let synced = 0, skipped = 0;
 
-    // 2. Push each band's email body to col L
+    // Helper: write one cell via Apps Script
+    const writeCell = (row, col, value) => fetch(cfg.scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ sheetId: cfg.sheetId, sheetName: cfg.sheetName, row, col, value })
+    });
+
+    // 2. Push email bodies + photo URLs for each band
     for (let idx = 0; idx < bands.length; idx++) {
-      const body = getBody(idx);
-      if (!body) { skipped++; continue; }
       const bandName = (state.fieldOverrides[idx]?.band ?? bands[idx].band).trim().toUpperCase();
       const row = nameToRow[bandName];
       if (!row) { skipped++; continue; }
+
       btn.textContent = `Syncing ${idx + 1}/${bands.length}…`;
-      const postRes = await fetch(cfg.scriptUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ sheetId: cfg.sheetId, sheetName: cfg.sheetName, row, col: colNum, value: body })
-      });
-      if (postRes.ok) synced++; else skipped++;
+
+      const body  = getBody(idx);
+      const photo = getPhoto(idx);
+
+      // Email body → col L (or configured column)
+      if (body) {
+        const res = await writeCell(row, bodyColNum, body);
+        if (res.ok) synced++; else skipped++;
+      }
+
+      // Photo URL → col K (only URL strings, not data: blobs)
+      if (photo && !photo.startsWith('data:')) {
+        await writeCell(row, photoColNum, photo);
+      }
     }
 
     btn.textContent = `✓ ${synced} synced`;
     btn.disabled = false;
     const el = document.getElementById('syncIndicator');
-    if (el) { el.textContent = `✓ ${synced} bodies → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
+    if (el) { el.textContent = `✓ ${synced} → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
     setTimeout(() => { btn.textContent = 'Sync to Sheet'; }, 3500);
   } catch(e) {
     console.error('Sheet sync error:', e);
     btn.textContent = '✗ Sync failed';
     btn.disabled = false;
     setTimeout(() => { btn.textContent = 'Sync to Sheet'; }, 3000);
+  }
+}
+
+// ─── PULL FROM SHEET ─────────────────────────────────────────────────────────
+async function pullFromSheet() {
+  const cfg = getSyncConfig();
+  if (!cfg.scriptUrl || !cfg.sheetId) {
+    toggleSheetConfig();
+    document.getElementById('sheetCfgStatus').textContent = '← Enter connection details first';
+    return;
+  }
+  const btn = document.getElementById('pullSheetBtn');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+
+  try {
+    const getUrl = `${cfg.scriptUrl}?sheet=${encodeURIComponent(cfg.sheetName)}&sheetId=${encodeURIComponent(cfg.sheetId)}&_=${Date.now()}`;
+    const res = await fetch(getUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Script error');
+
+    const [headerRow, ...dataRows] = json.rows;
+    // Find column indices from header row (0-based)
+    const hdr = headerRow.map(h => String(h).trim().toUpperCase());
+    const COL = name => hdr.indexOf(name);
+    const iEmail  = COL('EMAIL');
+    const iStatus = COL('STATUS');
+    const iPhoto  = COL('PHOTO URL');
+    const iName   = 0; // Band name is always col A
+
+    let updated = 0;
+    dataRows.forEach(row => {
+      const name = String(row[iName] || '').trim().toUpperCase();
+      const idx  = bands.findIndex(b => b.band.toUpperCase() === name);
+      if (idx === -1) return;
+
+      const email  = iEmail  >= 0 ? String(row[iEmail]  || '').trim() : '';
+      const status = iStatus >= 0 ? String(row[iStatus] || '').trim() : '';
+      const photo  = iPhoto  >= 0 ? String(row[iPhoto]  || '').trim() : '';
+
+      if (email)  state.emails[idx] = email;
+      if (status) state.status[idx] = status;
+      if (photo)  state.photos[idx] = photo;
+      if (email || status || photo) updated++;
+    });
+
+    saveChanges(); // persist merged state and rebuild schedule
+    if (currentIdx !== null) selectBand(currentIdx); // refresh detail panel
+
+    btn.textContent = `✓ ${updated} updated`;
+    const el = document.getElementById('syncIndicator');
+    if (el) { el.textContent = `✓ Pulled ${updated} from Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
+    setTimeout(() => { btn.textContent = 'Pull from Sheet ↓'; btn.disabled = false; }, 3500);
+  } catch(e) {
+    console.error('Sheet pull error:', e);
+    btn.textContent = '✗ Pull failed';
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = 'Pull from Sheet ↓'; }, 3000);
   }
 }
 
@@ -1412,6 +1492,53 @@ window.addEventListener('storage', e => {
   if (e.key === 'mpf_schedule') reloadBandsFromStorage();
 });
 
+// ─── PUSH TO LIVE SITE ────────────────────────────────────────────────────────
+async function pushToLiveSite() {
+  const btn = document.getElementById('pushLiveBtn');
+  const ind = document.getElementById('syncIndicator');
+  if (btn) { btn.disabled = true; btn.textContent = 'Pushing…'; }
+
+  // Flush any in-progress edits first
+  const ta = document.getElementById('bodyEdit');
+  const ef = document.getElementById('emailField');
+  if (ta && currentIdx !== null) commitBodyEdit(currentIdx, ta.value);
+  if (ef && currentIdx !== null) state.emails[currentIdx] = ef.value.trim();
+
+  // Build the schedule array (same as syncToStorage)
+  const schedule = bands.map((b, i) => {
+    const ex = getExtra(i);
+    return {
+      id:                `${slugify(getBandName(i))}-${slugify(getBandDate(i).split(',')[0])}`,
+      band:              getBandName(i),
+      stage:             getBandStage(i),
+      stage_id:          slugify(getBandStage(i)),
+      day:               getBandDate(i),
+      date:              dateToISO(getBandDate(i)),
+      set_time:          parseTime12to24(getTime(i)),
+      set_time_display:  getTime(i),
+      arrive_by:         parseTime12to24(getArrive(i)),
+      arrive_by_display: getArrive(i),
+      email:             getEmail(i),
+      status:            getStatus(i),
+      bio:               ex.bio || '',
+      social:            ex.social ? { link: ex.social } : {},
+      streaming:         ex.streaming || '',
+      image:             getPhoto(i),
+    };
+  });
+
+  try {
+    if (typeof ghPutJSON !== 'function') throw new Error('GitHub sync not available — check PAT in admin settings');
+    await ghPutJSON('data/schedule.json', schedule, 'feat: update schedule via schedule tool');
+    if (ind) { ind.textContent = '✓ Live'; ind.classList.add('synced'); clearTimeout(ind._t); ind._t = setTimeout(() => { ind.textContent = 'Browser only'; ind.classList.remove('synced'); }, 3000); }
+    alert('✓ Schedule pushed to live site. Changes appear in ~60 seconds.');
+  } catch(e) {
+    alert(`✗ Push failed: ${e.message}\n\nMake sure your GitHub PAT is configured in admin settings.`);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Push to Live Site'; }
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
   loadSavedState();     // 1. full state from localStorage (survives refresh, not cache clear)
@@ -1423,5 +1550,6 @@ window.addEventListener('storage', e => {
   updateUndoBtn();
 })();
 </script>
+<script src="assets/js/github-sync.js"></script>
 </body>
 </html>

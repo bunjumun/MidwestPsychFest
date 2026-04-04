@@ -1030,10 +1030,12 @@
           <textarea id="widgetCode" rows="5" placeholder="&lt;iframe …&gt;&lt;/iframe&gt;"
                     style="font-family:monospace;font-size:0.78rem;"></textarea>
         </div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
           <button class="btn btn-accent btn-sm" id="widgetSaveBtn">Save Widget</button>
           <button class="btn btn-danger btn-sm" id="widgetClearBtn">Remove</button>
+          <button class="btn btn-sm" id="widgetPushBtn" style="background:var(--color-accent2,#7eb89a);color:#0e0c09;border-color:var(--color-accent2,#7eb89a);">Push Widgets to Site</button>
         </div>
+        <div id="widgetPushMsg" style="margin-top:8px;font-size:0.8rem;"></div>
         <div id="widgetCurrentList" style="margin-top:20px;"></div>
       </div>
     </section>
@@ -2144,6 +2146,24 @@ document.getElementById('widgetClearBtn').addEventListener('click', () => {
   renderWidgetList();
 });
 
+document.getElementById('widgetPushBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('widgetPushBtn');
+  const msg = document.getElementById('widgetPushMsg');
+  btn.disabled = true;
+  btn.textContent = 'Pushing…';
+  msg.textContent = '';
+  try {
+    const widgets = getAllWidgets();
+    await ghPutJSON('data/widgets.json', widgets, 'feat: update widget embeds via admin');
+    msg.innerHTML = '<span style="color:#7eb89a;">✓ Widgets published — live in ~60s.</span>';
+  } catch(e) {
+    msg.innerHTML = `<span style="color:#ff7070;">✗ Push failed: ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Push Widgets to Site';
+  }
+});
+
 /* ════════════════════════════════════════════════════════
    SETTINGS
    ════════════════════════════════════════════════════════ */
@@ -2731,8 +2751,10 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
 </html>`;
 
   try {
-    await ghPutFile(`${slug}.html`, pageHtml, `feat: create ${slug}.html via admin page creator`);
-    showSyncMsg('syncPageMsg','ok',`✓ Created ${slug}.html — live in ~60s. <a href="${slug}.html" target="_blank" style="color:var(--color-accent);">Open ↗</a>`);
+    let existingPageSha;
+    try { const f = await ghGetFile(`${slug}.html`); existingPageSha = f.sha; } catch(e) { /* new file */ }
+    await ghPutFile(`${slug}.html`, pageHtml, `feat: create/update ${slug}.html via admin page creator`, existingPageSha);
+    showSyncMsg('syncPageMsg','ok',`✓ ${existingPageSha ? 'Updated' : 'Created'} ${slug}.html — live in ~60s. <a href="${slug}.html" target="_blank" style="color:var(--color-accent);">Open ↗</a>`);
     pageBlocks = []; renderPageBlocks(); updatePagePreview();
     document.getElementById('newPageTitle').value = '';
     document.getElementById('newPageSlug').value  = '';

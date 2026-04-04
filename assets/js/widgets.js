@@ -1,11 +1,12 @@
 /* ============================================
    MIDWEST PSYCH FEST — Widget Embed System
-   Reads mpf_widgets from localStorage and
-   injects embed code into #widget-slot on
-   each page. Admin UI lives in admin.html.
+   Reads widget config from data/widgets.json
+   (served by GitHub Pages) with localStorage
+   fallback. Admin UI lives in admin.html.
    ============================================ */
 
 const WIDGETS_KEY = 'mpf_widgets';
+const WIDGETS_REMOTE_PATH = 'data/widgets.json';
 
 // Detect current page name from filename (e.g. "index", "schedule", "map")
 function _widgetPageName() {
@@ -14,17 +15,34 @@ function _widgetPageName() {
   return file === '' ? 'index' : file;
 }
 
+// Load widget config: try remote data/widgets.json first, fall back to localStorage
+async function _loadWidgetConfig() {
+  // Always check remote file first (cross-device source of truth)
+  try {
+    const res = await fetch(WIDGETS_REMOTE_PATH + '?_=' + Date.now());
+    if (res.ok) {
+      const remote = await res.json();
+      // Merge into localStorage so offline/local tools still work
+      try { localStorage.setItem(WIDGETS_KEY, JSON.stringify(remote)); } catch(e) {}
+      return remote;
+    }
+  } catch(e) {}
+
+  // Fallback: localStorage (for local dev or when remote isn't reachable)
+  try {
+    const raw = localStorage.getItem(WIDGETS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+
+  return {};
+}
+
 // Apply the widget for the current page into #widget-slot
-function applyWidget(page) {
+async function applyWidget(page) {
   const slot = document.getElementById('widget-slot');
   if (!slot) return;
 
-  let widgets = {};
-  try {
-    const raw = localStorage.getItem(WIDGETS_KEY);
-    if (raw) widgets = JSON.parse(raw);
-  } catch(e) {}
-
+  const widgets = await _loadWidgetConfig();
   const pageName = page || _widgetPageName();
   const w = widgets[pageName];
 
@@ -47,7 +65,7 @@ function applyWidget(page) {
   }
 }
 
-// Save widget config for a page
+// Save widget config for a page (localStorage only — use Push to Site to publish)
 function saveWidget(page, code, position) {
   let widgets = {};
   try {
@@ -68,7 +86,7 @@ function clearWidget(page) {
   saveWidget(page, '', '');
 }
 
-// Get all configured widgets
+// Get all configured widgets (from localStorage)
 function getAllWidgets() {
   try {
     const raw = localStorage.getItem(WIDGETS_KEY);
