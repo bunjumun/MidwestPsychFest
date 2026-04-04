@@ -344,9 +344,11 @@ async function syncEmailBodiesToSheet() {
     if (!json.ok) throw new Error(json.error || 'Script error');
     const [, ...dataRows] = json.rows;
     const nameToRow = {};
+    const emptyRows = [];  // track blank rows for cleanup
     dataRows.forEach((row, i) => {
       const name = String(row[0] || '').trim().toUpperCase();
       if (name) nameToRow[name] = i + 2; // 1-indexed, skip header
+      else emptyRows.push(i + 2);
     });
 
     const bodyColNum  = cfg.emailBodyCol.trim().toUpperCase().charCodeAt(0) - 64;
@@ -417,8 +419,8 @@ async function syncEmailBodiesToSheet() {
     // 3. Delete sheet rows for bands that no longer exist in the tool
     let deleted = 0;
     const toolNames = new Set(bands.map((b, i) => (state.fieldOverrides[i]?.band ?? b.band).trim().toUpperCase()));
-    // Collect orphan rows (sheet bands not in tool), then delete bottom-to-top
-    const orphanRows = [];
+    // Collect orphan rows (sheet bands not in tool + blank rows), delete bottom-to-top
+    const orphanRows = [...emptyRows];
     for (const [name, row] of Object.entries(nameToRow)) {
       if (!toolNames.has(name)) orphanRows.push(row);
     }
