@@ -2842,36 +2842,84 @@ document.getElementById('pageCreateBtn')?.addEventListener('click', async () => 
   <nav class="site-nav">
     <div class="nav-inner">
       <a href="index.html" class="nav-logo" data-info="name-nav">Midwest <span>Psych</span> Fest</a>
-      <button class="nav-hamburger" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="schedule.html">Schedule</a></li>
-        <li><a href="map.html">Map</a></li>
-        <li><a href="applications.html">Applications</a></li>
-        <li><a href="more-info.html">More Info</a></li>
+      <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="hList" id="navLinks">
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Festival</h2>
+            <ul class="menu-dropdown">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="schedule.html">Schedule</a></li>
+              <li><a href="gallery.html">Gallery</a></li>
+              <li><a href="map.html">Map</a></li>
+              <li><a href="more-info.html">More Info</a></li>
+              <li><a href="applications.html">Applications</a></li>
+              <li><a href="vendors.html">Vendors</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Check-In</h2>
+            <ul class="menu-dropdown">
+              <li><a href="volunteer.html">Volunteer Check-In</a></li>
+              <li><a href="band-checkin.html">Band Check-In</a></li>
+            </ul>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="menu">
+            <h2 class="menu-title">Bar &amp; Merch</h2>
+            <ul class="menu-dropdown">
+              <li><a href="bar.html">Bar</a></li>
+            </ul>
+          </a>
+        </li>
       </ul>
     </div>
   </nav>
   <div class="gen-page-hero">
     <h1>${escHtml(title)}</h1>
   </div>
+  <div id="widget-slot"></div>
   <div class="gen-page-body">${blocksHtml || '\n    <p class="gen-page-text">Content coming soon.</p>'}
   </div>
   <footer class="site-footer">
     <div><span class="nav-logo" style="font-size:1.2rem;">Midwest <span style="color:var(--color-primary)">Psych</span> Fest</span></div>
     <div style="margin-top:16px;font-size:0.8rem;">© 2026 Midwest Psych Fest. All rights reserved.</div>
   </footer>
+  <script src="assets/js/nav.js"><\/script>
   <script src="assets/js/site-info.js"><\/script>
-  <script>
-    document.getElementById('navToggle')?.addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
-  <\/script>
+  <script src="assets/js/widgets.js"><\/script>
 </body>
 </html>`;
 
   try {
+    // Write the page HTML
     let existingPageSha;
     try { const f = await ghGetFile(`${slug}.html`); existingPageSha = f.sha; } catch(e) { /* new file */ }
     await ghPutFile(`${slug}.html`, pageHtml, `feat: create/update ${slug}.html via admin page creator`, existingPageSha);
+
+    // Register page in data/pages.json (if not already listed)
+    try {
+      const { data: pagesData } = await ghGetJSON('data/pages.json');
+      const pages = Array.isArray(pagesData) ? pagesData : [];
+      const alreadyListed = pages.some(p => p.id === slug);
+      if (!alreadyListed) {
+        pages.push({
+          id:    slug,
+          label: title,
+          url:   `${slug}.html`,
+          nav:   navSec !== 'none',
+          navSection: navSec,
+          icon:  '📄'
+        });
+        await ghPutJSON('data/pages.json', pages, `feat: register ${slug}.html in pages.json`);
+      }
+    } catch(pErr) { console.warn('pages.json update skipped:', pErr.message); }
+
     showSyncMsg('syncPageMsg','ok',`✓ ${existingPageSha ? 'Updated' : 'Created'} ${slug}.html — live in ~60s. <a href="${slug}.html" target="_blank" style="color:var(--color-accent);">Open ↗</a>`);
     pageBlocks = []; renderPageBlocks(); updatePagePreview();
     document.getElementById('newPageTitle').value = '';
