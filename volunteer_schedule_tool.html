@@ -350,7 +350,7 @@ async function ghGet(path) {
   const pat = getPat();
   const headers = { Accept: 'application/vnd.github+json' };
   if (pat) headers.Authorization = 'token ' + pat;
-  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, { headers });
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}&_=${Date.now()}`, { headers });
   if (!r.ok) throw new Error('GitHub ' + r.status);
   return r.json();
 }
