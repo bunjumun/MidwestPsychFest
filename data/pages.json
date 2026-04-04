@@ -25,7 +25,8 @@
     "label": "More Info",
     "url": "more-info.html",
     "nav": true,
-    "icon": "ℹ️"
+    "icon": "ℹ️",
+    "hidden": true
   },
   {
     "id": "volunteer",
