@@ -29,10 +29,20 @@
   .hdr-btn.save { background: var(--accent); color: #0e0c09; border-color: var(--accent); }
   .hdr-btn.save:hover { opacity: 0.85; }
   .hdr-btn.active-view { border-color: var(--accent2); color: var(--accent2); }
+  .hdr-btn.sync-sheet { background: rgba(126,184,154,0.15); border-color: var(--accent2); color: var(--accent2); }
+  .hdr-btn.sync-sheet:hover { background: rgba(126,184,154,0.25); }
 
   /* Indicators */
   .sync-indicator { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); transition: color 0.4s; white-space: nowrap; }
   .sync-indicator.synced { color: var(--accent2); }
+
+  /* Sheet config bar */
+  .sheet-config-bar { display:none; padding:10px 32px; background:var(--surface); border-bottom:1px solid var(--border); align-items:center; gap:12px; flex-wrap:wrap; }
+  .sheet-config-bar.open { display:flex; }
+  .sheet-config-bar label { font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .cfg-input { background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:'Archivo',sans-serif; font-size:12px; padding:5px 9px; border-radius:2px; outline:none; transition:border-color 0.15s; }
+  .cfg-input:focus { border-color:var(--accent); }
+  .sheet-cfg-status { font-size:11px; color:var(--muted); }
 
   /* LAYOUT */
   .layout { display: grid; grid-template-columns: 270px 1fr; height: calc(100vh - 57px); }
@@ -168,20 +178,35 @@
     <span class="subtitle">Schedule &amp; Confirmation Tool</span>
   </div>
   <div class="header-right">
-    <span class="sync-indicator" id="syncIndicator">⟳ Live</span>
+    <span class="sync-indicator" id="syncIndicator">Browser only</span>
     <span class="sync-indicator" id="fileIndicator">No file linked</span>
     <div class="header-btns">
       <button class="hdr-btn" id="dashBtn" onclick="toggleDashboard()">Status Dashboard</button>
       <button class="hdr-btn" onclick="exportScheduleJSON()" title="Download schedule JSON for the MPF website">Export JSON</button>
       <button class="hdr-btn" onclick="exportCSV()" title="Export all data as CSV for Google Sheets">Export CSV</button>
       <button class="hdr-btn" id="undoBtn" onclick="undo()" disabled>Undo</button>
-      <button class="hdr-btn" onclick="linkFile()" title="Link a JSON file — loads on open, saves automatically on Save Changes">Link File</button>
-      <button class="hdr-btn save" onclick="saveChanges()">Save Changes</button>
-      <button class="hdr-btn" onclick="downloadBackup()" title="Download a backup JSON file to disk">Download Backup</button>
+      <button class="hdr-btn" onclick="linkFile()" title="Link a local JSON file — auto-saves to disk on Save Draft (Chrome/Edge only)">Link Local File</button>
+      <button class="hdr-btn save" onclick="saveChanges()" title="Save all edits to this browser only">Save Draft</button>
+      <button class="hdr-btn" onclick="downloadBackup()" title="Download current state as a backup JSON file">Backup JSON</button>
       <label class="hdr-btn" style="cursor:pointer" title="Load a previously saved data file">Load Data <input type="file" accept=".json" style="display:none" onchange="importState(event)"></label>
+      <button class="hdr-btn sync-sheet" id="syncSheetBtn" onclick="syncEmailBodiesToSheet()" title="Push all email bodies to column L of the Bands sheet">Sync to Sheet</button>
+      <button class="hdr-btn" onclick="toggleSheetConfig()" title="Configure Google Sheet connection">⚙ Sheet</button>
     </div>
   </div>
 </header>
+
+<div class="sheet-config-bar" id="sheetConfigBar">
+  <label>Apps Script URL</label>
+  <input class="cfg-input" id="syncScriptUrl" style="width:340px" placeholder="https://script.google.com/macros/s/…/exec" />
+  <label>Spreadsheet URL</label>
+  <input class="cfg-input" id="syncSheetUrl" style="width:260px" placeholder="https://docs.google.com/spreadsheets/d/…" />
+  <label>Tab</label>
+  <input class="cfg-input" id="syncSheetName" style="width:80px" placeholder="Bands" />
+  <label>Email body col</label>
+  <input class="cfg-input" id="syncEmailCol" style="width:50px" placeholder="L" />
+  <button class="hdr-btn save" onclick="saveSyncConfigForm()">Save</button>
+  <span class="sheet-cfg-status" id="sheetCfgStatus"></span>
+</div>
 
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
@@ -190,7 +215,104 @@
 
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
-const STATE_KEY = 'mpf_state_saved';
+const STATE_KEY      = 'mpf_state_saved';
+const SYNC_CFG_KEY   = 'mpf_tool_sync_config';
+
+const DEFAULT_SYNC_CONFIG = {
+  scriptUrl:    'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec',
+  sheetId:      '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI',
+  sheetName:    'Bands',
+  emailBodyCol: 'L'
+};
+
+function getSyncConfig() {
+  try { return Object.assign({}, DEFAULT_SYNC_CONFIG, JSON.parse(localStorage.getItem(SYNC_CFG_KEY) || '{}')); }
+  catch { return Object.assign({}, DEFAULT_SYNC_CONFIG); }
+}
+function saveSyncConfig(cfg) { localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg)); }
+function extractSheetId(url) { const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/); return m ? m[1] : url.trim(); }
+
+function toggleSheetConfig() {
+  const bar = document.getElementById('sheetConfigBar');
+  const open = bar.classList.toggle('open');
+  if (open) {
+    const cfg = getSyncConfig();
+    document.getElementById('syncScriptUrl').value = cfg.scriptUrl    || '';
+    document.getElementById('syncSheetUrl').value  = cfg.sheetId      || '';
+    document.getElementById('syncSheetName').value = cfg.sheetName    || 'Bands';
+    document.getElementById('syncEmailCol').value  = cfg.emailBodyCol || 'L';
+  }
+}
+
+function saveSyncConfigForm() {
+  const sheetUrlOrId = document.getElementById('syncSheetUrl').value.trim();
+  const cfg = {
+    scriptUrl:    document.getElementById('syncScriptUrl').value.trim(),
+    sheetId:      extractSheetId(sheetUrlOrId),
+    sheetName:    document.getElementById('syncSheetName').value.trim() || 'Bands',
+    emailBodyCol: document.getElementById('syncEmailCol').value.trim().toUpperCase() || 'L'
+  };
+  saveSyncConfig(cfg);
+  const s = document.getElementById('sheetCfgStatus');
+  s.textContent = '✓ Saved'; s.style.color = 'var(--accent2)';
+  setTimeout(() => { s.textContent = ''; }, 2000);
+}
+
+async function syncEmailBodiesToSheet() {
+  const cfg = getSyncConfig();
+  if (!cfg.scriptUrl || !cfg.sheetId) {
+    toggleSheetConfig();
+    document.getElementById('sheetCfgStatus').textContent = '← Enter connection details first';
+    return;
+  }
+  const btn = document.getElementById('syncSheetBtn');
+  btn.disabled = true; btn.textContent = 'Fetching rows…';
+
+  try {
+    // 1. Fetch all rows to map band name → sheet row number
+    const getUrl = `${cfg.scriptUrl}?sheet=${encodeURIComponent(cfg.sheetName)}&sheetId=${encodeURIComponent(cfg.sheetId)}&_=${Date.now()}`;
+    const getRes = await fetch(getUrl);
+    if (!getRes.ok) throw new Error(`HTTP ${getRes.status}`);
+    const json = await getRes.json();
+    if (!json.ok) throw new Error(json.error || 'Script error');
+    const [, ...dataRows] = json.rows;
+    const nameToRow = {};
+    dataRows.forEach((row, i) => {
+      const name = String(row[0] || '').trim().toUpperCase();
+      if (name) nameToRow[name] = i + 2; // 1-indexed, skip header
+    });
+
+    const colNum = cfg.emailBodyCol.trim().toUpperCase().charCodeAt(0) - 64;
+    let synced = 0, skipped = 0;
+
+    // 2. Push each band's email body to col L
+    for (let idx = 0; idx < bands.length; idx++) {
+      const body = getBody(idx);
+      if (!body) { skipped++; continue; }
+      const bandName = (state.fieldOverrides[idx]?.band ?? bands[idx].band).trim().toUpperCase();
+      const row = nameToRow[bandName];
+      if (!row) { skipped++; continue; }
+      btn.textContent = `Syncing ${idx + 1}/${bands.length}…`;
+      const postRes = await fetch(cfg.scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ sheetId: cfg.sheetId, sheetName: cfg.sheetName, row, col: colNum, value: body })
+      });
+      if (postRes.ok) synced++; else skipped++;
+    }
+
+    btn.textContent = `✓ ${synced} synced`;
+    btn.disabled = false;
+    const el = document.getElementById('syncIndicator');
+    if (el) { el.textContent = `✓ ${synced} bodies → Sheet`; el.classList.add('synced'); clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 4000); }
+    setTimeout(() => { btn.textContent = 'Sync to Sheet'; }, 3500);
+  } catch(e) {
+    console.error('Sheet sync error:', e);
+    btn.textContent = '✗ Sync failed';
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = 'Sync to Sheet'; }, 3000);
+  }
+}
 
 // ─── BAND DATA ────────────────────────────────────────────────────────────────
 const bands = [
@@ -421,10 +543,10 @@ function syncToStorage() {
 function flashSync(msg) {
   const el = document.getElementById('syncIndicator');
   if (!el) return;
-  el.textContent = '✓ Synced';
+  el.textContent = '✓ Saved';
   el.classList.add('synced');
   clearTimeout(el._t);
-  el._t = setTimeout(() => { el.textContent = msg || '⟳ Live'; el.classList.remove('synced'); }, 1800);
+  el._t = setTimeout(() => { el.textContent = msg || 'Browser only'; el.classList.remove('synced'); }, 1800);
 }
 
 function loadFromStorage() {
@@ -478,7 +600,7 @@ function saveChanges() {
     el.textContent = '✓ Saved';
     el.classList.add('synced');
     clearTimeout(el._t);
-    el._t = setTimeout(() => { el.textContent = '⟳ Live'; el.classList.remove('synced'); }, 2200);
+    el._t = setTimeout(() => { el.textContent = 'Browser only'; el.classList.remove('synced'); }, 2200);
   }
 
   writeToLinkedFile(); // also write to disk if file linked
