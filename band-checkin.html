@@ -806,7 +806,7 @@ function doGet(e) {
   let currentRecords = [];
 
   const DEFAULT_CONFIG = {
-    sheetUrl:'https://docs.google.com/spreadsheets/d/1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI/export?format=csv&gid=1311731562',
+    sheetUrl:'https://docs.google.com/spreadsheets/d/1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI/edit',
     sheetId:'1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI', sheetName:'Bands',
     scriptUrl:'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec',
     nameCol:'A', checkinCol:'Q', checkinLabel:'Band Arrived',
@@ -880,8 +880,7 @@ function doGet(e) {
 
   async function writeToSheet(row, col, value) {
     const config = getConfig();
-    if (!config.scriptUrl || !config.sheetId || !col) return false;
-    // Convert column letter to 1-indexed number (A=1, B=2, …) — Apps Script getRange needs an integer
+    if (!config.scriptUrl || !config.sheetId || !col) return { ok: false, error: 'Missing config (scriptUrl, sheetId, or col).' };
     const colNum = typeof col === 'number' ? col : col.trim().toUpperCase().charCodeAt(0) - 64;
     try {
       const res = await fetch(config.scriptUrl, {
@@ -889,17 +888,18 @@ function doGet(e) {
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ sheetId: config.sheetId, sheetName: config.sheetName || 'Bands', row, col: colNum, value })
       });
-      if (!res.ok) { console.error('Sheet write HTTP error:', res.status); return false; }
+      if (!res.ok) return { ok: false, error: `HTTP ${res.status} from Apps Script` };
       const text = await res.text();
       try {
         const data = JSON.parse(text);
-        if (data.ok === false) { console.error('Sheet write script error:', data.error); return false; }
-        return data.ok === true || data.status === 'success';
+        if (data.ok === false) return { ok: false, error: data.error || 'Script error (no detail)' };
+        const success = data.ok === true || data.status === 'success';
+        return success ? { ok: true } : { ok: false, error: `Unexpected response: ${text.slice(0, 100)}` };
       } catch(_) {
-        if (text.toLowerCase().includes('error')) { console.error('Sheet write error:', text); return false; }
-        return true;
+        if (text.toLowerCase().includes('error')) return { ok: false, error: text.slice(0, 120) };
+        return { ok: true };
       }
-    } catch(e) { console.error('Sheet write error:', e); return false; }
+    } catch(e) { return { ok: false, error: e.message }; }
   }
 
   async function lookupBand() {
@@ -1001,38 +1001,44 @@ function doGet(e) {
     updateLocalRecord(row, 'checkin', ts); refreshCard(row);
     const notice = document.getElementById(`bsync-${row}`);
     if (notice) { notice.textContent = 'Syncing to sheet…'; notice.className = 'sync-notice'; }
-    const ok = await writeToSheet(row, config.checkinCol, ts);
-    if (ok) {
+    const result = await writeToSheet(row, config.checkinCol, ts);
+    if (result.ok) {
       await fetchRecords(); refreshCard(row);
       const n2 = document.getElementById(`bsync-${row}`);
       if (n2) { n2.textContent = '✓ Synced to Google Sheet'; n2.className = 'sync-notice synced'; }
     } else {
-      if (notice) { notice.textContent = '✗ Sync failed — check Apps Script config.'; notice.className = 'sync-notice failed'; }
+      updateLocalRecord(row, 'checkin', ''); refreshCard(row);
+      const n2 = document.getElementById(`bsync-${row}`);
+      if (n2) { n2.textContent = `✗ Sync failed: ${result.error}`; n2.className = 'sync-notice failed'; }
     }
   }
   async function undoCheckin(row) {
     const config = getConfig(); updateLocalRecord(row, 'checkin', ''); refreshCard(row);
-    const ok = await writeToSheet(row, config.checkinCol, '');
-    if (ok) { await fetchRecords(); refreshCard(row); }
+    const result = await writeToSheet(row, config.checkinCol, '');
+    if (result.ok) { await fetchRecords(); refreshCard(row); }
+    else { const n2 = document.getElementById(`bsync-${row}`); if (n2) { n2.textContent = `✗ Undo failed: ${result.error}`; n2.className = 'sync-notice failed'; } }
   }
   async function doComplete(row) {
     const config = getConfig(); const ts = nowTimestamp();
     updateLocalRecord(row, 'complete', ts); refreshCard(row);
     const notice = document.getElementById(`bsync-${row}`);
     if (notice) { notice.textContent = 'Syncing…'; notice.className = 'sync-notice'; }
-    const ok = await writeToSheet(row, config.completeCol, ts);
-    if (ok) {
+    const result = await writeToSheet(row, config.completeCol, ts);
+    if (result.ok) {
       await fetchRecords(); refreshCard(row);
       const n2 = document.getElementById(`bsync-${row}`);
       if (n2) { n2.textContent = '✓ Synced to Google Sheet'; n2.className = 'sync-notice synced'; }
     } else {
-      if (notice) { notice.textContent = '✗ Sync failed — check Apps Script config.'; notice.className = 'sync-notice failed'; }
+      updateLocalRecord(row, 'complete', ''); refreshCard(row);
+      const n2 = document.getElementById(`bsync-${row}`);
+      if (n2) { n2.textContent = `✗ Sync failed: ${result.error}`; n2.className = 'sync-notice failed'; }
     }
   }
   async function undoComplete(row) {
     const config = getConfig(); updateLocalRecord(row, 'complete', ''); refreshCard(row);
-    const ok = await writeToSheet(row, config.completeCol, '');
-    if (ok) { await fetchRecords(); refreshCard(row); }
+    const result = await writeToSheet(row, config.completeCol, '');
+    if (result.ok) { await fetchRecords(); refreshCard(row); }
+    else { const n2 = document.getElementById(`bsync-${row}`); if (n2) { n2.textContent = `✗ Undo failed: ${result.error}`; n2.className = 'sync-notice failed'; } }
   }
 
   function toggleAdminPanel() { const panel = document.getElementById('adminPanel'); const open = panel.classList.toggle('open'); if (open) loadConfigForm(); }
@@ -1070,7 +1076,7 @@ function doGet(e) {
     statusEl.textContent = 'Saving…'; statusEl.className = 'config-status';
     const sheetUrl = document.getElementById('sheetUrl').value.trim();
     const cfg = {
-      sheetUrl, sheetId: extractSheetId(sheetUrl),
+      sheetUrl, sheetId: extractSheetId(sheetUrl) || DEFAULT_CONFIG.sheetId,
       sheetName:     document.getElementById('sheetName').value.trim() || 'Bands',
       scriptUrl:     document.getElementById('scriptUrl').value.trim(),
       nameCol:       document.getElementById('nameCol').value.trim().toUpperCase() || 'A',
@@ -1083,8 +1089,8 @@ function doGet(e) {
     setConfig(cfg);
     if (cfg.scriptUrl && cfg.sheetId) {
       const records = await fetchRecords();
-      if (records && records.length) { statusEl.textContent = `✓ Connected — ${records.length} bands loaded via Apps Script.`; statusEl.className = 'config-status ok'; }
-      else if (records) { statusEl.textContent = 'Apps Script reached but no bands found. Check Sheet Tab Name and Name Column.'; statusEl.className = 'config-status err'; }
+      if (records && records.length) { statusEl.textContent = `✓ Connected — ${records.length} bands loaded. First name (col ${cfg.nameCol}): "${records[0].name}"`; statusEl.className = 'config-status ok'; }
+      else if (records) { statusEl.textContent = `Apps Script reached but no bands found. Check Sheet Tab Name ("${cfg.sheetName}") and Name Column (currently "${cfg.nameCol}").`; statusEl.className = 'config-status err'; }
       else { statusEl.textContent = '✗ Could not reach Apps Script. Check URL and deployment settings (Execute as: Me, Access: Anyone).'; statusEl.className = 'config-status err'; }
     } else { statusEl.textContent = 'Config saved. Enter Apps Script URL and Spreadsheet URL to connect.'; statusEl.className = 'config-status ok'; }
   }
