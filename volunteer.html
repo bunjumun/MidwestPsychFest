@@ -354,7 +354,7 @@ function doGet(e) {
         <hr class="admin-section-divider" />
 
         <!-- Dynamic display fields -->
-        <span class="admin-section-label">Display &amp; Edit Fields (shown on shift card — editable by staff)</span>
+        <span class="admin-section-label">Display Fields (shown on shift card)</span>
         <div class="field-rows-header">
           <span class="fh-label">Label shown to staff</span>
           <span class="fh-col">Col</span>
@@ -595,14 +595,10 @@ function doGet(e) {
     const isDone = !!record.completeValue;
 
     const meta = config.fields.map(f => {
-      const val = record.fields[f.col] || '';
-      const inputId = `vfield-${record._row}-${f.col}`;
-      const btnId   = `vfbtn-${record._row}-${f.col}`;
-      return `<div class="shift-meta-row shift-meta-editable">
+      const val = record.fields[f.col] || '—';
+      return `<div class="shift-meta-row">
         <span class="shift-meta-label">${escHtml(f.label)}</span>
-        <input class="shift-meta-input" id="${inputId}" type="text" value="${escHtml(val)}" placeholder="—"
-          onkeydown="if(event.key==='Enter')saveField(${record._row},'${f.col}','${inputId}','${btnId}')" />
-        <button class="shift-meta-save" id="${btnId}" onclick="saveField(${record._row},'${f.col}','${inputId}','${btnId}')">Save</button>
+        <span class="shift-meta-value">${escHtml(val)}</span>
       </div>`;
     }).join('');
 

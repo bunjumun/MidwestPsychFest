@@ -911,37 +911,19 @@
         <div class="adm-card">
           <h3>Column Mapping</h3>
           <p class="text-muted text-xs" style="margin-bottom:14px;">
-            Map your sheet's column letters to the volunteer data fields.
+            Map sheet column letters to volunteer fields. Add or remove rows to match your sheet layout.
+            These labels appear as field names in the Volunteer Schedule Tool.
           </p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Name column</label>
-              <input type="text" id="volColName" maxlength="2" placeholder="A" style="width:60px;" />
-            </div>
-            <div class="form-group">
-              <label>Date column</label>
-              <input type="text" id="volColDate" maxlength="2" placeholder="B" style="width:60px;" />
-            </div>
-            <div class="form-group">
-              <label>Time column</label>
-              <input type="text" id="volColTime" maxlength="2" placeholder="C" style="width:60px;" />
-            </div>
+          <div style="display:grid;grid-template-columns:48px 1fr 28px;gap:4px 8px;align-items:center;margin-bottom:6px;">
+            <span class="text-muted text-xs" style="text-align:center;text-transform:uppercase;letter-spacing:0.07em;">Col</span>
+            <span class="text-muted text-xs" style="text-transform:uppercase;letter-spacing:0.07em;">Label</span>
+            <span></span>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Location column</label>
-              <input type="text" id="volColLoc" maxlength="2" placeholder="D" style="width:60px;" />
-            </div>
-            <div class="form-group">
-              <label>Role column</label>
-              <input type="text" id="volColRole" maxlength="2" placeholder="E" style="width:60px;" />
-            </div>
-            <div class="form-group">
-              <label>Notes column</label>
-              <input type="text" id="volColNotes" maxlength="2" placeholder="F" style="width:60px;" />
-            </div>
+          <div id="adminVolColList" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="volColAddBtn">＋ Add Column</button>
+            <button class="btn btn-accent btn-sm" id="volColSaveBtn">Save Mapping</button>
           </div>
-          <button class="btn btn-accent btn-sm" id="volColSaveBtn" style="margin-top:8px;">Save Mapping</button>
           <div id="volColStatus" class="sync-msg" style="margin-top:8px;"></div>
         </div>
 
@@ -2522,16 +2504,53 @@ const VOL_SHEET_KEY  = 'mpf_vol_sheet_url';
 const VOL_COLS_KEY   = 'mpf_vol_col_map';
 const VOL_COMP_KEY   = 'mpf_vol_completions';
 
+const VOL_COL_DEFAULTS = [
+  { label: 'Name',     field: 'name',     col: 'A' },
+  { label: 'Date',     field: 'date',     col: 'B' },
+  { label: 'Time',     field: 'time',     col: 'C' },
+  { label: 'Location', field: 'location', col: 'D' },
+  { label: 'Role',     field: 'role',     col: 'E' },
+  { label: 'Notes',    field: 'notes',    col: 'F' },
+];
+let adminVolCols = [];
+
+function getAdminVolCols() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(VOL_COLS_KEY));
+    if (Array.isArray(stored) && stored.length) return stored;
+    if (stored && typeof stored === 'object') {
+      return VOL_COL_DEFAULTS.map(d => ({ ...d, col: stored[d.field] || d.col }));
+    }
+  } catch {}
+  return VOL_COL_DEFAULTS.map(d => ({ ...d }));
+}
+
+function renderAdminVolCols() {
+  const container = document.getElementById('adminVolColList');
+  if (!container) return;
+  container.innerHTML = adminVolCols.map((m, i) => `
+    <div style="display:grid;grid-template-columns:48px 1fr 28px;gap:4px 8px;align-items:center;">
+      <input type="text" placeholder="A" value="${escAdm(m.col)}" data-avc-col="${i}" maxlength="3"
+        style="background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-accent);font-family:monospace;font-size:0.88rem;padding:5px 6px;text-align:center;width:100%;outline:none;" />
+      <input type="text" placeholder="Field label" value="${escAdm(m.label)}" data-avc-label="${i}"
+        style="background:var(--color-input-bg);border:1px solid var(--color-border);border-radius:var(--radius);color:var(--color-text);font-family:var(--font-body);font-size:0.85rem;padding:5px 8px;width:100%;outline:none;" />
+      <button onclick="removeAdminVolCol(${i})"
+        style="background:transparent;border:none;color:rgba(255,68,68,0.5);cursor:pointer;font-size:1rem;padding:0 4px;line-height:1;" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function removeAdminVolCol(i) {
+  adminVolCols.splice(i, 1);
+  renderAdminVolCols();
+}
+
+function escAdm(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 function loadVolunteerConfig() {
-  const url  = localStorage.getItem(VOL_SHEET_KEY) || '';
-  const cols = JSON.parse(localStorage.getItem(VOL_COLS_KEY) || '{}');
-  document.getElementById('volSheetUrl').value  = url;
-  document.getElementById('volColName').value   = cols.name   || 'A';
-  document.getElementById('volColDate').value   = cols.date   || 'B';
-  document.getElementById('volColTime').value   = cols.time   || 'C';
-  document.getElementById('volColLoc').value    = cols.location || 'D';
-  document.getElementById('volColRole').value   = cols.role   || 'E';
-  document.getElementById('volColNotes').value  = cols.notes  || 'F';
+  const url = localStorage.getItem(VOL_SHEET_KEY) || '';
+  document.getElementById('volSheetUrl').value = url;
+  adminVolCols = getAdminVolCols();
+  renderAdminVolCols();
 }
 
 document.getElementById('volSheetSaveBtn')?.addEventListener('click', () => {
@@ -2557,16 +2576,27 @@ document.getElementById('volSheetTestBtn')?.addEventListener('click', async () =
 });
 
 document.getElementById('volColSaveBtn')?.addEventListener('click', () => {
-  const cols = {
-    name:     document.getElementById('volColName').value.trim().toUpperCase()  || 'A',
-    date:     document.getElementById('volColDate').value.trim().toUpperCase()  || 'B',
-    time:     document.getElementById('volColTime').value.trim().toUpperCase()  || 'C',
-    location: document.getElementById('volColLoc').value.trim().toUpperCase()   || 'D',
-    role:     document.getElementById('volColRole').value.trim().toUpperCase()  || 'E',
-    notes:    document.getElementById('volColNotes').value.trim().toUpperCase() || 'F',
-  };
-  localStorage.setItem(VOL_COLS_KEY, JSON.stringify(cols));
+  const container = document.getElementById('adminVolColList');
+  const colInputs   = container.querySelectorAll('[data-avc-col]');
+  const labelInputs = container.querySelectorAll('[data-avc-label]');
+  const previous = adminVolCols.slice();
+  adminVolCols = Array.from(colInputs).map((inp, i) => {
+    const col   = inp.value.trim().toUpperCase();
+    const label = labelInputs[i].value.trim();
+    const prev  = previous[i];
+    const field = prev?.field || label.toLowerCase().replace(/\s+/g, '_') || ('field_' + i);
+    return { label, field, col };
+  }).filter(m => m.label || m.col);
+  localStorage.setItem(VOL_COLS_KEY, JSON.stringify(adminVolCols));
+  renderAdminVolCols();
   showSyncMsg('volColStatus', 'ok', '✓ Column mapping saved');
+});
+
+document.getElementById('volColAddBtn')?.addEventListener('click', () => {
+  adminVolCols.push({ label: '', field: '', col: '' });
+  renderAdminVolCols();
+  const inputs = document.querySelectorAll('[data-avc-label]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
 });
 
 function loadVolCompletions() {
