@@ -140,12 +140,6 @@
     }
     .sched-table tr:hover td { background: rgba(255,255,255,0.02); }
     .sched-table td.band-name { font-weight: 500; color: var(--color-text); }
-    .sched-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
-    .sched-filter-btn {
-      padding: 4px 12px; border-radius: 99px; border: 1px solid var(--color-border);
-      background: none; color: var(--color-text-muted); font-size: 0.78rem; cursor: pointer;
-    }
-    .sched-filter-btn.active { border-color: var(--color-primary); color: var(--color-primary); }
 
     /* ── Inline edit form ── */
     .inline-edit-row td { background: rgba(255,60,172,0.04) !important; }
@@ -308,10 +302,6 @@
       <span class="adm-nav-icon">📊</span>
       <span class="nav-label">Dashboard</span>
     </button>
-    <button class="adm-nav-item" data-section="schedule">
-      <span class="adm-nav-icon">📅</span>
-      <span class="nav-label">Schedule</span>
-    </button>
     <button class="adm-nav-item" data-section="siteinfo">
       <span class="adm-nav-icon">ℹ️</span>
       <span class="nav-label">Site Info</span>
@@ -413,183 +403,6 @@
     </section>
 
     <!-- ── SCHEDULE ── -->
-    <section class="adm-section" id="section-schedule">
-      <div class="adm-section-header">
-        <h2>Schedule Editor</h2>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="btn btn-ghost btn-sm" id="schedUndoBtn" disabled title="Undo last change">↩ Undo</button>
-          <button class="btn btn-ghost btn-sm" id="schedReloadBtn" title="Reload schedule from GitHub">↺ Reload</button>
-          <button class="btn btn-ghost btn-sm" id="schedExportBtn">↓ Export JSON</button>
-          <button class="btn btn-accent btn-sm" id="schedSyncBtn">↑ Push to GitHub</button>
-        </div>
-      </div>
-
-      <!-- Sync panel -->
-      <div class="adm-card" style="margin-bottom:16px;">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;">
-
-          <!-- Band Tool column -->
-          <div style="flex:1;min-width:180px;border:1px solid var(--color-border);border-radius:var(--radius);padding:12px 14px;">
-            <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-primary);margin-bottom:8px;">🎸 Band Tool</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <button class="btn btn-ghost btn-sm" id="schedPullToolBtn" style="text-align:left;">↓ Load from Band Tool</button>
-              <button class="btn btn-ghost btn-sm" id="schedPushToolBtn" style="text-align:left;">↑ Push to Band Tool</button>
-            </div>
-            <p class="text-muted text-xs" style="margin-top:8px;line-height:1.6;">Syncs via this browser's localStorage (<code>mpf_schedule</code>).</p>
-          </div>
-
-          <!-- Sheet column -->
-          <div style="flex:1;min-width:180px;border:1px solid var(--color-border);border-radius:var(--radius);padding:12px 14px;">
-            <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-accent);margin-bottom:8px;">📊 Google Sheet</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <button class="btn btn-ghost btn-sm" id="schedPullSheetBtn" style="text-align:left;">↓ Pull from Sheet</button>
-            </div>
-            <p class="text-muted text-xs" style="margin-top:8px;line-height:1.6;">Merges STATUS, EMAIL, PHOTO URL columns into schedule.</p>
-          </div>
-
-          <!-- Backup column -->
-          <div style="flex:1;min-width:180px;border:1px solid var(--color-border);border-radius:var(--radius);padding:12px 14px;">
-            <div style="font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-secondary);margin-bottom:8px;">💾 Backup / Import</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <label class="btn btn-ghost btn-sm" style="text-align:left;cursor:pointer;">
-                ↑ Restore from Backup
-                <input type="file" id="schedRestoreFile" accept=".json" style="display:none" />
-              </label>
-              <label class="btn btn-ghost btn-sm" style="text-align:left;cursor:pointer;">
-                ↑ Import schedule.json
-                <input type="file" id="schedImportFile" accept=".json" style="display:none" />
-              </label>
-            </div>
-            <p class="text-muted text-xs" style="margin-top:8px;line-height:1.6;">Restore: accepts <code>mpf_state.json</code> or <code>mpf_schedule.json</code> from Band Tool.</p>
-          </div>
-
-        </div>
-        <div id="syncSchedMsg" class="sync-msg" style="margin-top:10px;"></div>
-      </div>
-
-      <!-- Filter bar -->
-      <div class="sched-filter-bar">
-        <button class="sched-filter-btn active" data-day="all">All Days</button>
-        <button class="sched-filter-btn" data-day="Friday, May 8">Friday</button>
-        <button class="sched-filter-btn" data-day="Saturday, May 9">Saturday</button>
-        <span style="margin-left:8px;color:var(--color-border);">|</span>
-        <button class="sched-filter-btn active" data-stage="all">All Stages</button>
-        <button class="sched-filter-btn" data-stage="outdoor-stage-a">Stage A</button>
-        <button class="sched-filter-btn" data-stage="outdoor-stage-b">Stage B</button>
-        <button class="sched-filter-btn" data-stage="barn-stage">Barn</button>
-        <span style="flex:1;"></span>
-        <button class="btn btn-accent btn-sm" id="addSetBtn">+ Add Set</button>
-      </div>
-      <div id="schedTableWrap" style="overflow-x:auto;">
-        <table class="sched-table" id="schedTable">
-          <thead>
-            <tr>
-              <th>Band / Act</th>
-              <th>Day</th>
-              <th>Stage</th>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Bio</th>
-              <th style="width:90px;"></th>
-            </tr>
-          </thead>
-          <tbody id="schedBody"></tbody>
-        </table>
-      </div>
-
-      <!-- Add / Edit form (hidden below table) -->
-      <div id="setEditForm" class="adm-card" style="margin-top:24px;display:none;">
-        <h3 id="setFormTitle">Add Set</h3>
-        <div class="adm-grid">
-          <div>
-            <div class="form-group">
-              <label>Band / Act Name</label>
-              <input type="text" id="fBand" placeholder="Artist or act name" />
-            </div>
-            <div class="form-group">
-              <label>Stage</label>
-              <select id="fStage">
-                <option value="outdoor-stage-a">Outdoor Stage A</option>
-                <option value="outdoor-stage-b">Outdoor Stage B</option>
-                <option value="barn-stage">Barn Stage</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Day</label>
-                <select id="fDay">
-                  <option value="Friday, May 8">Friday, May 8</option>
-                  <option value="Saturday, May 9">Saturday, May 9</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Set Time</label>
-                <input type="time" id="fTime" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Arrive By</label>
-                <input type="time" id="fArrive" />
-              </div>
-              <div class="form-group">
-                <label>Status</label>
-                <select id="fStatus">
-                  <option value="confirmed">Confirmed</option>
-                  <option value="pending">Pending</option>
-                  <option value="sent">Sent</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="form-group">
-              <label>Bio</label>
-              <textarea id="fBio" rows="4" placeholder="Short description of the act…"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Contact Email</label>
-              <input type="email" id="fEmail" placeholder="band@email.com" />
-            </div>
-            <div class="form-group">
-              <label>Social / Website URL</label>
-              <input type="url" id="fSocial" placeholder="https://bandcamp.com/…" />
-            </div>
-            <div class="form-group">
-              <label>Photo URL</label>
-              <input type="url" id="fImage" placeholder="https://… or data:image/…" />
-            </div>
-          </div>
-        </div>
-        <input type="hidden" id="fId" />
-        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
-          <button class="btn btn-accent btn-sm" id="setFormSave">Save Set</button>
-          <button class="btn btn-danger btn-sm" id="setFormDelete" style="display:none;">Delete</button>
-          <button class="btn btn-ghost btn-sm" id="setFormCancel">Cancel</button>
-        </div>
-      </div>
-
-      <!-- Schedule Settings -->
-      <div class="adm-card" style="margin-top:24px;">
-        <h3>Schedule Settings</h3>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
-            <input type="checkbox" id="schedHideToggle" style="width:18px;height:18px;cursor:pointer;" />
-            Hide schedule from public
-          </label>
-          <span class="text-muted text-xs" id="schedHideLabel">Schedule is visible</span>
-        </div>
-        <p class="text-muted text-xs" style="line-height:1.7;">
-          When hidden, visitors see <strong style="color:var(--color-text);">"Full Schedule coming soon."</strong> instead of the schedule grid and controls.
-        </p>
-        <div style="display:flex;gap:8px;margin-top:12px;">
-          <button class="btn btn-accent btn-sm" id="schedHideSaveBtn">Push to GitHub</button>
-        </div>
-        <div id="schedHideMsg" class="sync-msg" style="margin-top:8px;"></div>
-      </div>
-    </section>
-
     <!-- ── SITE INFO ── -->
     <section class="adm-section" id="section-siteinfo">
       <div class="adm-section-header">
@@ -667,6 +480,25 @@
             <button class="btn btn-ghost btn-sm" id="infoClearLocalBtn">Clear Local Override</button>
           </div>
         </div>
+      </div>
+
+      <!-- Schedule Visibility -->
+      <div class="adm-card" style="margin-top:16px;">
+        <h3>Schedule Visibility</h3>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
+            <input type="checkbox" id="schedHideToggle" style="width:18px;height:18px;cursor:pointer;" />
+            Hide schedule from public
+          </label>
+          <span class="text-muted text-xs" id="schedHideLabel">Schedule is visible</span>
+        </div>
+        <p class="text-muted text-xs" style="line-height:1.7;">
+          When hidden, visitors see <strong style="color:var(--color-text);">"Full Schedule coming soon."</strong> instead of the schedule grid.
+        </p>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-accent btn-sm" id="schedHideSaveBtn">Push to GitHub</button>
+        </div>
+        <div id="schedHideMsg" class="sync-msg" style="margin-top:8px;"></div>
       </div>
     </section>
 
@@ -1137,7 +969,6 @@
           <div style="display:flex;flex-direction:column;gap:8px;">
             <button class="btn btn-ghost btn-sm" id="exportAllBtn">Export All Data (ZIP)</button>
             <button class="btn btn-ghost btn-sm" id="exportAdminCfgBtn">Export Admin Config</button>
-            <button class="btn btn-ghost btn-sm" id="exportScheduleBtn2">Export schedule.json</button>
             <button class="btn btn-ghost btn-sm" id="exportMarkersBtn2">Export markers.json</button>
             <button class="btn btn-ghost btn-sm" id="exportInfoBtn2">Export info.json</button>
           </div>
@@ -1307,35 +1138,14 @@
    ADMIN — Master Controller
    ════════════════════════════════════════════════════════ */
 
-const SCHEDULE_LS = 'mpf_schedule';
 const INFO_LS     = 'mpf_info';
 const MARKERS_LS  = 'mpf_markers';
 
-// ── Schedule state (managed independently of schedule.js) ─
-let adminSchedule = [];
 let adminMarkers  = [];
 let adminInfo     = {};
 let adminInfoSha  = '';
-let adminSchedSha = '';
 let adminMarkersSha = '';
-
-let schedDayFilter   = 'all';
-let schedStageFilter = 'all';
-let editingSetId     = null;
 let editingMarkerIdx = null;
-let schedUndoStack   = [];   // array of JSON snapshots for undo
-
-// Apps Script config — read from same key the schedule tool writes
-const SCHED_SYNC_CFG_KEY = 'mpf_tool_sync_config';
-const SCHED_SYNC_DEFAULTS = {
-  scriptUrl: 'https://script.google.com/macros/s/AKfycbzNeKKu9nAKNnXmYztU-C83xANb4wVa9FlDF6yC8xW7pt2Wrxdl7uGAG3xowqTQ0Uga/exec',
-  sheetId:   '1nyiG_ksiQPQPEVnoyO1vUc1FUGy-9X9Jb-67d0IQKhI',
-  sheetName: 'Bands',
-};
-function getSchedSyncCfg() {
-  try { return Object.assign({}, SCHED_SYNC_DEFAULTS, JSON.parse(localStorage.getItem(SCHED_SYNC_CFG_KEY) || '{}')); }
-  catch { return Object.assign({}, SCHED_SYNC_DEFAULTS); }
-}
 
 /* ── Auth ──────────────────────────────────────────────── */
 // AUTH_SESSION const is defined in stages.js
@@ -1487,7 +1297,6 @@ function bootDashboard() {
   const repoLink = document.getElementById('dashRepoLink');
   if (repoLink) repoLink.href = `https://github.com/${repo}`;
 
-  loadScheduleData();
   loadMarkersData();
   loadInfoData();
   loadStagesEditor();
@@ -1591,471 +1400,6 @@ function relTime(iso) {
   if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
   return Math.floor(diff/86400) + 'd ago';
 }
-
-/* ════════════════════════════════════════════════════════
-   SCHEDULE EDITOR
-   ════════════════════════════════════════════════════════ */
-
-async function loadScheduleData() {
-  // Always load from GitHub first to get current SHA, then overlay local edits
-  try {
-    const { data, sha } = await ghGetJSON('data/schedule.json');
-    adminSchedule = Array.isArray(data) ? data : [];
-    adminSchedSha = sha;
-  } catch(e) {
-    // GitHub unavailable — fall back to localStorage or bare fetch
-    try {
-      const ls = localStorage.getItem(SCHEDULE_LS);
-      if (ls) { adminSchedule = JSON.parse(ls); }
-    } catch(e2) {}
-    if (!adminSchedule.length) {
-      try {
-        const r = await fetch('data/schedule.json?_=' + Date.now());
-        if (r.ok) adminSchedule = await r.json();
-      } catch(e3) {}
-    }
-  }
-  renderScheduleTable();
-  updateDashboardSummary();
-}
-
-function getFilteredSchedule() {
-  return adminSchedule.filter(s => {
-    const dayOk   = schedDayFilter   === 'all' || s.day   === schedDayFilter;
-    const stageOk = schedStageFilter === 'all' || s.stage_id === schedStageFilter;
-    return dayOk && stageOk;
-  });
-}
-
-function renderScheduleTable() {
-  const tbody = document.getElementById('schedBody');
-  const rows  = getFilteredSchedule();
-  const STATUS_COLORS = {
-    confirmed: 'var(--color-accent)',
-    pending:   'var(--color-secondary)',
-    sent:      'var(--color-primary)',
-    cancelled: '#888',
-  };
-  tbody.innerHTML = rows.map(s => `
-    <tr data-id="${escHtml(s.id)}">
-      <td class="band-name">${escHtml(s.band)}</td>
-      <td style="white-space:nowrap;color:var(--color-text-muted);">${escHtml(s.day || '')}</td>
-      <td style="white-space:nowrap;">${escHtml(s.stage || s.stage_id || '')}</td>
-      <td style="white-space:nowrap;">${escHtml(s.set_time_display || s.set_time || '')}</td>
-      <td>
-        <span style="color:${STATUS_COLORS[s.status] || '#aaa'};font-size:0.75rem;">
-          ${escHtml(s.status || '')}
-        </span>
-      </td>
-      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-                 color:var(--color-text-muted);font-size:0.75rem;">
-        ${s.bio ? escHtml(s.bio.slice(0,50)) + (s.bio.length>50?'…':'') : ''}
-      </td>
-      <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm" style="padding:3px 8px;"
-                onclick="openSetEdit('${escHtml(s.id)}')">Edit</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="7" style="color:var(--color-text-muted);padding:20px;text-align:center;">No sets match filter.</td></tr>';
-}
-
-// Filter buttons
-document.querySelectorAll('.sched-filter-btn[data-day]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.sched-filter-btn[data-day]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    schedDayFilter = btn.dataset.day;
-    renderScheduleTable();
-  });
-});
-document.querySelectorAll('.sched-filter-btn[data-stage]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.sched-filter-btn[data-stage]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    schedStageFilter = btn.dataset.stage;
-    renderScheduleTable();
-  });
-});
-
-// Add set button
-document.getElementById('addSetBtn').addEventListener('click', () => {
-  editingSetId = null;
-  document.getElementById('setFormTitle').textContent = 'Add Set';
-  document.getElementById('setFormDelete').style.display = 'none';
-  clearSetForm();
-  document.getElementById('setEditForm').style.display = 'block';
-  document.getElementById('fBand').focus();
-  document.getElementById('setEditForm').scrollIntoView({ behavior: 'smooth' });
-});
-
-function openSetEdit(id) {
-  const s = adminSchedule.find(x => x.id === id);
-  if (!s) return;
-  editingSetId = id;
-  document.getElementById('setFormTitle').textContent = 'Edit Set';
-  document.getElementById('setFormDelete').style.display = '';
-  document.getElementById('fId').value       = s.id;
-  document.getElementById('fBand').value     = s.band || '';
-  document.getElementById('fStage').value    = s.stage_id || 'outdoor-stage-a';
-  document.getElementById('fDay').value      = s.day || 'Friday, May 8';
-  document.getElementById('fTime').value     = s.set_time || '';
-  document.getElementById('fArrive').value   = s._arrive_by || '';
-  document.getElementById('fStatus').value   = s.status || 'confirmed';
-  document.getElementById('fBio').value      = s.bio || '';
-  document.getElementById('fEmail').value    = s._email || '';
-  document.getElementById('fSocial').value   = s.social?.link || '';
-  document.getElementById('fImage').value    = s.image || '';
-  document.getElementById('setEditForm').style.display = 'block';
-  document.getElementById('setEditForm').scrollIntoView({ behavior: 'smooth' });
-}
-
-function clearSetForm() {
-  ['fId','fBand','fTime','fArrive','fBio','fEmail','fSocial','fImage'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('fStage').value  = 'outdoor-stage-a';
-  document.getElementById('fDay').value    = 'Friday, May 8';
-  document.getElementById('fStatus').value = 'confirmed';
-}
-
-document.getElementById('setFormSave').addEventListener('click', () => {
-  const band = document.getElementById('fBand').value.trim();
-  if (!band) { alert('Band name is required.'); return; }
-  schedPushUndo();
-  const stageId  = document.getElementById('fStage').value;
-  const stageMap = { 'outdoor-stage-a':'Outdoor Stage A', 'outdoor-stage-b':'Outdoor Stage B', 'barn-stage':'Barn Stage' };
-  const day      = document.getElementById('fDay').value;
-  const dateMap  = { 'Friday, May 8':'2026-05-08', 'Saturday, May 9':'2026-05-09' };
-  const time24   = document.getElementById('fTime').value;
-  const arrive24 = document.getElementById('fArrive').value;
-  const social   = document.getElementById('fSocial').value.trim();
-
-  const entry = {
-    id:                 editingSetId || ('s' + Date.now() + Math.random().toString(36).slice(2,6)),
-    band,
-    stage_id:           stageId,
-    stage:              stageMap[stageId] || stageId,
-    day,
-    date:               dateMap[day] || '',
-    set_time:           time24,
-    set_time_display:   toDisplayTime(time24),
-    status:             document.getElementById('fStatus').value,
-    bio:                document.getElementById('fBio').value.trim(),
-    image:              document.getElementById('fImage').value.trim(),
-    social:             social ? { link: social } : {},
-    _email:             document.getElementById('fEmail').value.trim(),
-    _arrive_by:         arrive24,
-    _arrive_by_display: toDisplayTime(arrive24),
-  };
-
-  if (editingSetId) {
-    const idx = adminSchedule.findIndex(s => s.id === editingSetId);
-    if (idx !== -1) adminSchedule[idx] = entry;
-  } else {
-    adminSchedule.push(entry);
-  }
-
-  saveScheduleToStorage();
-  renderScheduleTable();
-  document.getElementById('setEditForm').style.display = 'none';
-  clearSetForm();
-  editingSetId = null;
-});
-
-document.getElementById('setFormDelete').addEventListener('click', () => {
-  if (!editingSetId) return;
-  if (!confirm('Delete this set? Use Undo if you change your mind.')) return;
-  schedPushUndo();
-  adminSchedule = adminSchedule.filter(s => s.id !== editingSetId);
-  saveScheduleToStorage();
-  renderScheduleTable();
-  document.getElementById('setEditForm').style.display = 'none';
-  editingSetId = null;
-});
-
-document.getElementById('setFormCancel').addEventListener('click', () => {
-  document.getElementById('setEditForm').style.display = 'none';
-  editingSetId = null;
-});
-
-function saveScheduleToStorage() {
-  localStorage.setItem(SCHEDULE_LS, JSON.stringify(adminSchedule));
-  // notify schedule.js in other tabs
-  window.dispatchEvent(new StorageEvent('storage', { key: SCHEDULE_LS }));
-}
-
-// ── Undo stack ────────────────────────────────────────────
-function schedPushUndo() {
-  schedUndoStack.push(JSON.stringify(adminSchedule));
-  if (schedUndoStack.length > 30) schedUndoStack.shift();
-  document.getElementById('schedUndoBtn').disabled = false;
-}
-
-document.getElementById('schedUndoBtn').addEventListener('click', () => {
-  if (!schedUndoStack.length) return;
-  adminSchedule = JSON.parse(schedUndoStack.pop());
-  saveScheduleToStorage();
-  renderScheduleTable();
-  document.getElementById('setEditForm').style.display = 'none';
-  editingSetId = null;
-  if (!schedUndoStack.length) document.getElementById('schedUndoBtn').disabled = true;
-  showSyncMsg('syncSchedMsg', 'ok', 'Undone — ' + adminSchedule.length + ' sets restored.');
-});
-
-// ── Reload from GitHub ────────────────────────────────────
-document.getElementById('schedReloadBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('schedReloadBtn');
-  btn.textContent = 'Loading…'; btn.disabled = true;
-  await loadScheduleData();
-  btn.textContent = '↺ Reload'; btn.disabled = false;
-  showSyncMsg('syncSchedMsg', 'ok', '↺ Reloaded from GitHub — ' + adminSchedule.length + ' sets.');
-});
-
-// ── Load from Band Tool (full replace from localStorage) ──
-document.getElementById('schedPullToolBtn').addEventListener('click', () => {
-  try {
-    const raw = localStorage.getItem(SCHEDULE_LS);
-    if (!raw) {
-      showSyncMsg('syncSchedMsg', 'err', 'No Band Tool data in this browser. Open the Band Tool and let it save first.');
-      return;
-    }
-    const toolData = JSON.parse(raw);
-    if (!Array.isArray(toolData) || !toolData.length) {
-      showSyncMsg('syncSchedMsg', 'err', 'Band Tool data is empty.');
-      return;
-    }
-    schedPushUndo();
-    // Full replace — band tool is source of truth for schedule data
-    // Normalise field names: band tool uses 'email', admin uses '_email'
-    adminSchedule = toolData.map(e => ({
-      ...e,
-      _email:             e._email || e.email || '',
-      _arrive_by:         e._arrive_by || e.arrive_by || '',
-      _arrive_by_display: e._arrive_by_display || e.arrive_by_display || '',
-    }));
-    saveScheduleToStorage();
-    renderScheduleTable();
-    showSyncMsg('syncSchedMsg', 'ok',
-      `↓ Loaded ${adminSchedule.length} sets from Band Tool. Push to GitHub when ready.`);
-  } catch(e) {
-    showSyncMsg('syncSchedMsg', 'err', 'Load failed: ' + e.message);
-  }
-});
-
-// ── Push to Band Tool (write adminSchedule → localStorage) ─
-document.getElementById('schedPushToolBtn').addEventListener('click', () => {
-  try {
-    if (!adminSchedule.length) {
-      showSyncMsg('syncSchedMsg', 'err', 'Schedule is empty — nothing to push.');
-      return;
-    }
-    // Normalise for band tool: it expects 'email' not '_email'
-    const toolData = adminSchedule.map(e => ({
-      ...e,
-      email: e.email || e._email || '',
-    }));
-    localStorage.setItem(SCHEDULE_LS, JSON.stringify(toolData));
-    window.dispatchEvent(new StorageEvent('storage', { key: SCHEDULE_LS }));
-    showSyncMsg('syncSchedMsg', 'ok',
-      `↑ Pushed ${toolData.length} sets to Band Tool localStorage. Open Band Tool to pick up changes.`);
-  } catch(e) {
-    showSyncMsg('syncSchedMsg', 'err', 'Push failed: ' + e.message);
-  }
-});
-
-// ── Pull from Sheet (Apps Script) ────────────────────────
-document.getElementById('schedPullSheetBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('schedPullSheetBtn');
-  btn.disabled = true; btn.textContent = 'Fetching…';
-  try {
-    const cfg = getSchedSyncCfg();
-    if (!cfg.scriptUrl || !cfg.sheetId) throw new Error('No Apps Script URL configured — set it in the Band Tool → ⚙ Sheet config first.');
-
-    const url = `${cfg.scriptUrl}?sheet=${encodeURIComponent(cfg.sheetName)}&sheetId=${encodeURIComponent(cfg.sheetId)}&_=${Date.now()}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error || 'Apps Script error');
-
-    const [headerRow, ...dataRows] = json.rows;
-    const hdr = headerRow.map(h => String(h).trim().toUpperCase());
-
-    // Flexible column matching — try common name variants
-    const findCol = (...names) => { for (const n of names) { const i = hdr.indexOf(n.toUpperCase()); if (i >= 0) return i; } return -1; };
-    const iStatus = findCol('STATUS');
-    const iEmail  = findCol('EMAIL', 'EMAIL ADDRESS', 'BAND EMAIL');
-    const iPhoto  = findCol('PHOTO URL', 'PHOTO', 'IMAGE URL', 'IMAGE');
-    const iBio    = findCol('BIO', 'BIOGRAPHY', 'DESCRIPTION');
-
-    const colInfo = [
-      iStatus >= 0 ? `STATUS(col ${iStatus+1})` : '⚠ STATUS not found',
-      iEmail  >= 0 ? `EMAIL(col ${iEmail+1})`   : '',
-      iPhoto  >= 0 ? `PHOTO(col ${iPhoto+1})`   : '',
-      iBio    >= 0 ? `BIO(col ${iBio+1})`       : '',
-    ].filter(Boolean).join(', ');
-
-    schedPushUndo();
-    let matched = 0, updated = 0;
-    dataRows.forEach(row => {
-      const name = String(row[0] || '').trim().toUpperCase();
-      if (!name) return;
-      const idx = adminSchedule.findIndex(s => (s.band || '').toUpperCase() === name);
-      if (idx === -1) return;
-      matched++;
-      const s = adminSchedule[idx];
-      const status = iStatus >= 0 ? String(row[iStatus] || '').trim() : '';
-      const email  = iEmail  >= 0 ? String(row[iEmail]  || '').trim() : '';
-      const photo  = iPhoto  >= 0 ? String(row[iPhoto]  || '').trim() : '';
-      const bio    = iBio    >= 0 ? String(row[iBio]    || '').trim() : '';
-      if (status) { s.status = status.toLowerCase(); updated++; }
-      if (email)    s._email = email;
-      if (photo)    s.image  = photo;
-      if (bio)      s.bio    = bio;
-    });
-
-    saveScheduleToStorage();
-    renderScheduleTable();
-    showSyncMsg('syncSchedMsg', 'ok',
-      `↓ Sheet pulled — ${matched} bands matched, ${updated} statuses updated. Cols: ${colInfo}. Push to GitHub when ready.`);
-  } catch(e) {
-    showSyncMsg('syncSchedMsg', 'err', 'Sheet pull failed: ' + e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = '↓ Pull from Sheet';
-  }
-});
-
-// ── Restore from Band Tool backup (mpf_state.json or mpf_schedule.json) ──
-document.getElementById('schedRestoreFile').addEventListener('change', e => {
-  const file = e.target.files[0]; if (!file) return;
-  e.target.value = '';
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-
-      // Detect format
-      const isState    = data && typeof data === 'object' && !Array.isArray(data) &&
-                         ('status' in data || 'emails' in data || 'times' in data);
-      const isSchedule = Array.isArray(data) && data.length > 0 && 'band' in data[0];
-
-      if (!isState && !isSchedule) {
-        showSyncMsg('syncSchedMsg', 'err', 'Unrecognized file — use mpf_state.json or mpf_schedule.json from Band Tool.');
-        return;
-      }
-
-      if (isState) {
-        // State backup: indexed by band position — need mpf_schedule to map index→band name
-        const raw = localStorage.getItem(SCHEDULE_LS);
-        if (!raw) {
-          showSyncMsg('syncSchedMsg', 'err',
-            'State backup restore needs the Band Tool open first (to know band order). ' +
-            'Open Band Tool in another tab so it syncs, then try again.');
-          return;
-        }
-        const bandList = JSON.parse(raw); // [{band, ...}, ...]
-        const sc = Object.keys(data.status || {}).length;
-        const ec = Object.keys(data.emails || {}).length;
-        const tc = Object.keys(data.times  || {}).length;
-        if (!confirm(`Restore from state backup?\n\n${sc} statuses · ${ec} emails · ${tc} time overrides\n\nThis merges into your current schedule.`)) return;
-
-        schedPushUndo();
-        let applied = 0;
-        Object.entries(data.status || {}).forEach(([idx, status]) => {
-          const bandEntry = bandList[parseInt(idx)];
-          if (!bandEntry) return;
-          const name = (bandEntry.band || '').toUpperCase();
-          const si = adminSchedule.findIndex(s => (s.band || '').toUpperCase() === name);
-          if (si === -1) return;
-          adminSchedule[si].status = status;
-          applied++;
-        });
-        Object.entries(data.emails || {}).forEach(([idx, email]) => {
-          const bandEntry = bandList[parseInt(idx)];
-          if (!bandEntry) return;
-          const name = (bandEntry.band || '').toUpperCase();
-          const si = adminSchedule.findIndex(s => (s.band || '').toUpperCase() === name);
-          if (si !== -1 && email) adminSchedule[si]._email = email;
-        });
-        Object.entries(data.times || {}).forEach(([idx, timeStr]) => {
-          const bandEntry = bandList[parseInt(idx)];
-          if (!bandEntry) return;
-          const name = (bandEntry.band || '').toUpperCase();
-          const si = adminSchedule.findIndex(s => (s.band || '').toUpperCase() === name);
-          if (si !== -1 && timeStr) {
-            adminSchedule[si].set_time_display = timeStr;
-          }
-        });
-        Object.entries(data.photos || {}).forEach(([idx, photo]) => {
-          const bandEntry = bandList[parseInt(idx)];
-          if (!bandEntry) return;
-          const name = (bandEntry.band || '').toUpperCase();
-          const si = adminSchedule.findIndex(s => (s.band || '').toUpperCase() === name);
-          if (si !== -1 && photo) adminSchedule[si].image = photo;
-        });
-
-        saveScheduleToStorage();
-        renderScheduleTable();
-        showSyncMsg('syncSchedMsg', 'ok', `↑ State backup applied — ${applied} status updates merged. Push to GitHub when ready.`);
-
-      } else {
-        // Schedule export array — full replace
-        if (!confirm(`Replace current schedule with ${data.length} sets from this file?`)) return;
-        schedPushUndo();
-        adminSchedule = data.map(e => ({
-          ...e,
-          _email:             e._email || e.email || '',
-          _arrive_by:         e._arrive_by || e.arrive_by || '',
-          _arrive_by_display: e._arrive_by_display || e.arrive_by_display || '',
-        }));
-        saveScheduleToStorage();
-        renderScheduleTable();
-        showSyncMsg('syncSchedMsg', 'ok', `↑ Loaded ${adminSchedule.length} sets from schedule file. Push to GitHub when ready.`);
-      }
-    } catch(err) {
-      showSyncMsg('syncSchedMsg', 'err', 'Could not read file: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-});
-
-// ── Import raw schedule.json ──────────────────────────────
-document.getElementById('schedImportFile').addEventListener('change', e => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      schedPushUndo();
-      adminSchedule = Array.isArray(data) ? data : [];
-      saveScheduleToStorage();
-      renderScheduleTable();
-      showSyncMsg('syncSchedMsg', 'ok', 'Imported ' + adminSchedule.length + ' sets.');
-    } catch(err) {
-      showSyncMsg('syncSchedMsg', 'err', 'Invalid JSON: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
-// Export
-document.getElementById('schedExportBtn').addEventListener('click', () => {
-  dlJson(adminSchedule, 'schedule.json');
-});
-
-// GitHub sync
-document.getElementById('schedSyncBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('schedSyncBtn');
-  btn.textContent = 'Pushing…'; btn.disabled = true;
-  try {
-    await ghPutJSON('data/schedule.json', adminSchedule, 'admin: update schedule');
-    showSyncMsg('syncSchedMsg', 'ok', '↑ schedule.json pushed to GitHub — deploy will start automatically.');
-  } catch(e) {
-    showSyncMsg('syncSchedMsg', 'err', e.message);
-  } finally {
-    btn.textContent = '↑ Push to GitHub'; btn.disabled = false;
-  }
-});
 
 /* ════════════════════════════════════════════════════════
    SITE INFO EDITOR
@@ -2612,8 +1956,6 @@ document.getElementById('exportAdminCfgBtn').addEventListener('click', () => {
   };
   dlJson(cfg, 'admin-config.json');
 });
-document.getElementById('exportScheduleBtn2').addEventListener('click',
-  () => dlJson(adminSchedule, 'schedule.json'));
 document.getElementById('exportMarkersBtn2').addEventListener('click',
   () => dlJson(adminMarkers, 'markers.json'));
 document.getElementById('exportInfoBtn2').addEventListener('click',
@@ -2624,7 +1966,6 @@ document.getElementById('settingsSetupBtn').addEventListener('click',
 
 function exportAll() {
   dlJson({
-    schedule:     adminSchedule,
     markers:      adminMarkers,
     info:         collectInfoForm(),
     stages:       getAllStages(),
@@ -2640,18 +1981,22 @@ function exportAll() {
 function updateDashboardSummary() {
   const el = document.getElementById('dashSchedSummary');
   if (!el) return;
-  const total     = adminSchedule.length;
-  const confirmed = adminSchedule.filter(s => s.status === 'confirmed').length;
-  const pending   = adminSchedule.filter(s => s.status === 'pending').length;
-  const day1      = adminSchedule.filter(s => s.day?.includes('May 8')).length;
-  const day2      = adminSchedule.filter(s => s.day?.includes('May 9')).length;
-  el.innerHTML = `
-    <div>Total sets: <strong style="color:var(--color-text);">${total}</strong></div>
-    <div>Confirmed: <strong style="color:var(--color-accent);">${confirmed}</strong></div>
-    ${pending ? `<div>Pending: <strong style="color:var(--color-secondary);">${pending}</strong></div>` : ''}
-    <div>Friday, May 8: <strong style="color:var(--color-text);">${day1}</strong></div>
-    <div>Saturday, May 9: <strong style="color:var(--color-text);">${day2}</strong></div>
-  `;
+  try {
+    const raw       = localStorage.getItem('mpf_schedule');
+    const schedule  = raw ? JSON.parse(raw) : [];
+    const total     = schedule.length;
+    const confirmed = schedule.filter(s => s.status === 'confirmed').length;
+    const pending   = schedule.filter(s => s.status === 'pending').length;
+    const day1      = schedule.filter(s => s.day?.includes('May 8')).length;
+    const day2      = schedule.filter(s => s.day?.includes('May 9')).length;
+    el.innerHTML = `
+      <div>Total sets: <strong style="color:var(--color-text);">${total}</strong></div>
+      <div>Confirmed: <strong style="color:var(--color-accent);">${confirmed}</strong></div>
+      ${pending ? `<div>Pending: <strong style="color:var(--color-secondary);">${pending}</strong></div>` : ''}
+      <div>Friday, May 8: <strong style="color:var(--color-text);">${day1}</strong></div>
+      <div>Saturday, May 9: <strong style="color:var(--color-text);">${day2}</strong></div>
+    `;
+  } catch(e) { el.textContent = 'No schedule data — open Band Tool to load.'; }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -2957,7 +2302,6 @@ async function checkForDraft() {
     const ago = Math.round((Date.now() - new Date(draft.savedAt)) / 60000);
     const agoStr = ago < 2 ? 'just now' : `${ago}m ago`;
     if (confirm(`📋 Cloud draft found (saved ${agoStr}).\n\nResume cloud draft? Click Cancel to start fresh from live data.`)) {
-      if (draft.state && draft.state.schedule) { adminSchedule = draft.state.schedule; renderScheduleTable(); }
       if (draft.state && draft.state.markers)  { adminMarkers  = draft.state.markers;  renderMarkersTable(); }
       if (draft.state && draft.state.info)     { adminInfo     = draft.state.info; }
     }
@@ -2968,7 +2312,7 @@ document.getElementById('btnSaveDraft')?.addEventListener('click', async () => {
   const btn = document.getElementById('btnSaveDraft');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    await ghSaveDraft('admin', { schedule: adminSchedule, markers: adminMarkers, info: adminInfo, savedAt: new Date().toISOString() });
+    await ghSaveDraft('admin', { markers: adminMarkers, info: adminInfo, savedAt: new Date().toISOString() });
     const badge = document.getElementById('topDraftBadge');
     if (badge) badge.style.display = 'inline-block';
     btn.textContent = '✓ Draft Saved';
@@ -3567,7 +2911,6 @@ document.querySelectorAll('.adm-nav-item[data-section="alerts"]').forEach(btn =>
 // Collect entire current editor state into one object
 function collectDraftState() {
   return {
-    schedule:    adminSchedule,
     markers:     adminMarkers,
     info:        adminInfo,
     imageBlocks: (() => { try { return JSON.parse(localStorage.getItem('mpf_image_blocks') || 'null'); } catch(e) { return null; } })(),
@@ -3578,7 +2921,6 @@ function collectDraftState() {
 
 // Restore editor state from a draft snapshot
 function applyDraftState(state) {
-  if (state.schedule)    { adminSchedule = state.schedule;   renderSchedTable(); }
   if (state.markers)     { adminMarkers  = state.markers;    renderMarkersTable(); }
   if (state.info)        { adminInfo     = state.info;       populateInfoForm(adminInfo); }
   if (state.imageBlocks) localStorage.setItem('mpf_image_blocks', JSON.stringify(state.imageBlocks));

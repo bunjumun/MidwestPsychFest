@@ -169,6 +169,23 @@
   .extra-input:focus { border-color: var(--accent2); }
   .extra-textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Archivo', sans-serif; font-size: 12px; padding: 8px 10px; border-radius: 2px; outline: none; transition: border-color 0.15s; width: 100%; min-height: 80px; resize: vertical; line-height: 1.5; }
   .extra-textarea:focus { border-color: var(--accent2); }
+
+  /* ADD BAND MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:28px 30px; width:420px; max-width:95vw; }
+  .modal-title { font-family:'Archivo Black',sans-serif; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:18px; }
+  .modal-field { margin-bottom:12px; }
+  .modal-field label { display:block; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .modal-input { background:var(--bg); border:1px solid var(--border); color:var(--text); font-family:'Archivo',sans-serif; font-size:13px; padding:6px 10px; border-radius:2px; outline:none; width:100%; transition:border-color .15s; }
+  .modal-input:focus { border-color:var(--accent); }
+  .modal-row { display:flex; gap:12px; }
+  .modal-row .modal-field { flex:1; }
+  .modal-actions { display:flex; gap:8px; margin-top:18px; }
+  .modal-btn { background:var(--accent); color:#0e0c09; border:none; font-family:'Archivo Black',sans-serif; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:8px 18px; border-radius:2px; cursor:pointer; transition:opacity .15s; }
+  .modal-btn:hover { opacity:.85; }
+  .modal-btn.ghost { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
+  .modal-btn.ghost:hover { color:var(--text); border-color:var(--muted); }
 </style>
 </head>
 <body data-repo="bunjumun/MidwestPsychFest">
@@ -182,6 +199,7 @@
     <span class="sync-indicator" id="fileIndicator">No file linked</span>
     <div class="header-btns">
       <button class="hdr-btn" id="dashBtn" onclick="toggleDashboard()">Status Dashboard</button>
+      <button class="hdr-btn" onclick="openAddBandModal()" title="Add a new band to the schedule">+ Add Band</button>
       <button class="hdr-btn" onclick="exportScheduleJSON()" title="Export schedule as mpf_schedule.json — push to live site via admin">Export Schedule</button>
       <button class="hdr-btn" onclick="exportCSV()" title="Export all data as CSV for Google Sheets">Export CSV</button>
       <button class="hdr-btn" id="undoBtn" onclick="undo()" disabled>Undo</button>
@@ -214,6 +232,48 @@
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
   <div class="main" id="main"><div class="placeholder">← Select a band to view their details</div></div>
+</div>
+
+<!-- ADD BAND MODAL -->
+<div class="modal-overlay" id="addBandOverlay">
+  <div class="modal-box">
+    <div class="modal-title">Add Band</div>
+    <div class="modal-field">
+      <label>Band / Act Name</label>
+      <input class="modal-input" id="abName" type="text" placeholder="e.g. SUNGRAZER" />
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Stage</label>
+        <select class="modal-input" id="abStage">
+          <option value="Outdoor Stage A">Outdoor Stage A</option>
+          <option value="Outdoor Stage B">Outdoor Stage B</option>
+          <option value="Barn Stage">Barn Stage</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Day</label>
+        <select class="modal-input" id="abDay">
+          <option value="Friday, May 8">Friday, May 8</option>
+          <option value="Saturday, May 9">Saturday, May 9</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Set Time (24h)</label>
+        <input class="modal-input" id="abTime" type="time" value="18:00" />
+      </div>
+      <div class="modal-field">
+        <label>Contact Email (optional)</label>
+        <input class="modal-input" id="abEmail" type="email" placeholder="band@email.com" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="saveNewBand()">Add Band</button>
+      <button class="modal-btn ghost" onclick="closeAddBandModal()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -394,7 +454,7 @@ async function pullFromSheet() {
 }
 
 // ─── BAND DATA ────────────────────────────────────────────────────────────────
-const bands = [
+let bands = [
   {"band":"SINQUBE","stage":"Outdoor Stage A","type":"outdoor","time_str":"5:00 PM","arrive_str":"3:30 PM","date":"Friday, May 8","email":"octoberemberband@gmail.com"},
   {"band":"HOLLYWOOD MANNEQUIN","stage":"Outdoor Stage B","type":"outdoor","time_str":"6:00 PM","arrive_str":"4:30 PM","date":"Friday, May 8","email":"hollywoodmannequin@gmail.com"},
   {"band":"BOG","stage":"Barn Stage","type":"barn","time_str":"6:30 PM","arrive_str":"5:00 PM","date":"Friday, May 8","email":""},
@@ -443,6 +503,51 @@ let state = {
   fieldOverrides: {},  // idx -> { band, stage, date, arrive_str } partial overrides
   _patchWarn:     {},  // idx -> true if fields drifted since patch saved
 };
+
+// ─── LOAD BANDS FROM STORAGE ─────────────────────────────────────────────────
+// Rebuilds the mutable bands array + state from mpf_schedule localStorage.
+// Returns true if data was loaded, false if storage was empty (use hardcoded defaults).
+function loadBandsFromStorage() {
+  try {
+    const raw = localStorage.getItem('mpf_schedule');
+    if (!raw) return false;
+    const entries = JSON.parse(raw);
+    if (!entries.length) return false;
+    bands = entries.map(e => ({
+      band:       e.band       || '',
+      stage:      e.stage      || 'Outdoor Stage A',
+      type:       (e.stage_id || '').includes('barn') ? 'barn' : 'outdoor',
+      time_str:   e.set_time_display || '5:00 PM',
+      arrive_str: e.arrive_by_display || '',
+      date:       e.day        || '',
+      email:      e.email      || '',
+    }));
+    entries.forEach((e, i) => {
+      if (e.status)    state.status[i] = e.status;
+      if (e.image)     state.photos[i] = e.image;
+      if (e.email_body) state.bodies[i] = { manual: true, text: e.email_body };
+      if (e.bio || e.social?.link || e.streaming) {
+        state.extra[i] = { bio: e.bio || '', social: e.social?.link || '', streaming: e.streaming || '' };
+      }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// ─── DELETE STATE AT INDEX ────────────────────────────────────────────────────
+// Shifts all state index keys down when a band at position d is removed.
+function deleteStateAtIndex(d) {
+  ['emails','bodies','status','times','photos','extra','fieldOverrides'].forEach(key => {
+    const next = {};
+    Object.entries(state[key]).forEach(([k, v]) => {
+      const i = parseInt(k);
+      if (i < d)       next[i]   = v;
+      else if (i > d)  next[i-1] = v;
+      // i === d: dropped
+    });
+    state[key] = next;
+  });
+}
 
 // ─── UNDO STACK ───────────────────────────────────────────────────────────────
 let undoStack = [];
@@ -595,7 +700,9 @@ function stateForExport() {
 // ─── STORAGE SYNC ─────────────────────────────────────────────────────────────
 function syncToStorage() {
   const schedule = bands.map((b, i) => {
-    const ex = getExtra(i);
+    const ex       = getExtra(i);
+    const body     = getBody(i);
+    const defBody  = getDefaultBody(i);
     return {
       id:                `${slugify(getBandName(i))}-${slugify(getBandDate(i).split(',')[0])}`,
       band:              getBandName(i),
@@ -613,6 +720,8 @@ function syncToStorage() {
       social:            ex.social ? { link: ex.social } : {},
       streaming:         ex.streaming || '',
       image:             getPhoto(i),
+      // Persist email body; empty string means "use generated template"
+      email_body:        body === defBody ? '' : body,
     };
   });
   try { localStorage.setItem('mpf_schedule', JSON.stringify(schedule)); } catch(e) {}
@@ -669,6 +778,34 @@ function saveChanges() {
   const ef = document.getElementById('emailField');
   if (ta && currentIdx !== null) commitBodyEdit(currentIdx, ta.value);
   if (ef && currentIdx !== null) state.emails[currentIdx] = ef.value.trim();
+
+  // Bake field overrides into the bands array so they survive as source data
+  Object.entries(state.fieldOverrides).forEach(([idxStr, overrides]) => {
+    const i = parseInt(idxStr);
+    if (!bands[i]) return;
+    if (overrides.band)       { bands[i].band       = overrides.band; }
+    if (overrides.stage)      { bands[i].stage      = overrides.stage;
+                                bands[i].type        = overrides.stage.toLowerCase().includes('barn') ? 'barn' : 'outdoor'; }
+    if (overrides.date)       { bands[i].date       = overrides.date; }
+    if (overrides.arrive_str) { bands[i].arrive_str = overrides.arrive_str; }
+    if (overrides.time_str)   { bands[i].time_str   = overrides.time_str; }
+  });
+  state.fieldOverrides = {};
+  state._patchWarn     = {};
+
+  // Also bake email overrides into bands.email
+  Object.entries(state.emails).forEach(([idxStr, email]) => {
+    const i = parseInt(idxStr);
+    if (bands[i]) bands[i].email = email;
+  });
+  state.emails = {};
+
+  // Bake time overrides into bands.time_str
+  Object.entries(state.times).forEach(([idxStr, t]) => {
+    const i = parseInt(idxStr);
+    if (bands[i]) bands[i].time_str = t;
+  });
+  state.times = {};
 
   try { localStorage.setItem(STATE_KEY, JSON.stringify(stateForExport())); } catch(e) {}
   syncToStorage();
@@ -1179,6 +1316,9 @@ function renderBand(idx) {
         ? `<textarea class="email-body-edit" id="bodyEdit" oninput="handleBodyEdit(${idx}, this.value)">${escHtml(body)}</textarea>`
         : `<div class="email-body">${escHtml(body)}</div>`
       }
+      <div style="margin-top:28px;padding-top:18px;border-top:1px solid var(--border);">
+        <button onclick="deleteBand(${idx})" style="background:none;border:1px solid rgba(155,107,107,0.4);color:var(--missing);font-family:'Archivo Black',sans-serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;border-radius:2px;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--missing)'" onmouseout="this.style.borderColor='rgba(155,107,107,0.4)'">Delete Band</button>
+      </div>
     </div>`;
 
   if (editingTime) {
@@ -1504,26 +1644,23 @@ async function pushToLiveSite() {
   if (ta && currentIdx !== null) commitBodyEdit(currentIdx, ta.value);
   if (ef && currentIdx !== null) state.emails[currentIdx] = ef.value.trim();
 
-  // Build the schedule array (same as syncToStorage)
+  // Build public schedule — strip private fields (email, arrive times, email body)
   const schedule = bands.map((b, i) => {
     const ex = getExtra(i);
     return {
-      id:                `${slugify(getBandName(i))}-${slugify(getBandDate(i).split(',')[0])}`,
-      band:              getBandName(i),
-      stage:             getBandStage(i),
-      stage_id:          slugify(getBandStage(i)),
-      day:               getBandDate(i),
-      date:              dateToISO(getBandDate(i)),
-      set_time:          parseTime12to24(getTime(i)),
-      set_time_display:  getTime(i),
-      arrive_by:         parseTime12to24(getArrive(i)),
-      arrive_by_display: getArrive(i),
-      email:             getEmail(i),
-      status:            getStatus(i),
-      bio:               ex.bio || '',
-      social:            ex.social ? { link: ex.social } : {},
-      streaming:         ex.streaming || '',
-      image:             getPhoto(i),
+      id:               `${slugify(getBandName(i))}-${slugify(getBandDate(i).split(',')[0])}`,
+      band:             getBandName(i),
+      stage:            getBandStage(i),
+      stage_id:         slugify(getBandStage(i)),
+      day:              getBandDate(i),
+      date:             dateToISO(getBandDate(i)),
+      set_time:         parseTime12to24(getTime(i)),
+      set_time_display: getTime(i),
+      status:           getStatus(i),
+      bio:              ex.bio || '',
+      social:           ex.social ? { link: ex.social } : {},
+      streaming:        ex.streaming || '',
+      image:            getPhoto(i),
     };
   });
 
@@ -1539,10 +1676,67 @@ async function pushToLiveSite() {
   }
 }
 
+// ─── ADD / DELETE BAND ────────────────────────────────────────────────────────
+function openAddBandModal() {
+  document.getElementById('abName').value  = '';
+  document.getElementById('abEmail').value = '';
+  document.getElementById('abTime').value  = '18:00';
+  document.getElementById('abStage').value = 'Outdoor Stage A';
+  document.getElementById('abDay').value   = 'Friday, May 8';
+  document.getElementById('addBandOverlay').classList.add('open');
+  document.getElementById('abName').focus();
+}
+
+function closeAddBandModal() {
+  document.getElementById('addBandOverlay').classList.remove('open');
+}
+
+function saveNewBand() {
+  const name  = document.getElementById('abName').value.trim().toUpperCase();
+  const stage = document.getElementById('abStage').value;
+  const day   = document.getElementById('abDay').value;
+  const time24 = document.getElementById('abTime').value || '18:00';
+  const email = document.getElementById('abEmail').value.trim();
+
+  if (!name) { document.getElementById('abName').focus(); return; }
+
+  const time12  = parse24to12(time24);
+  const arrive  = computeArriveStr(time12);
+  const isBar   = stage.toLowerCase().includes('barn');
+
+  pushUndo();
+  bands.push({ band: name, stage, type: isBar ? 'barn' : 'outdoor', time_str: time12, arrive_str: arrive, date: day, email });
+  closeAddBandModal();
+  saveChanges();
+  buildSidebar();
+  selectBand(bands.length - 1);
+}
+
+function deleteBand(idx) {
+  if (!confirm(`Delete "${getBandName(idx)}"?\n\nThis cannot be undone.`)) return;
+  pushUndo();
+  deleteStateAtIndex(idx);
+  bands.splice(idx, 1);
+  saveChanges();
+  buildSidebar();
+  currentIdx = null;
+  document.getElementById('main').innerHTML = '<div class="placeholder">← Select a band to view their details</div>';
+}
+
+// Close modal on overlay click
+document.getElementById('addBandOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAddBandModal();
+});
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (async () => {
-  loadSavedState();     // 1. full state from localStorage (survives refresh, not cache clear)
-  loadFromStorage();    // 2. merge any mpf_schedule data written by the website
+  // 1. Try to rebuild bands + state from mpf_schedule (primary, survives reload)
+  const loadedFromStorage = loadBandsFromStorage();
+  if (!loadedFromStorage) {
+    // 2. Fall back to legacy state backup (mpf_state_saved) + partial mpf_schedule merge
+    loadSavedState();
+    loadFromStorage();
+  }
   await tryAutoLoad();  // 3. auto-read linked file if browser permission still granted
   buildSidebar();
   syncToStorage();
