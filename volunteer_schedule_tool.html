@@ -247,17 +247,17 @@
       <div class="config-panel">
         <h3>Column Mapping</h3>
         <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-          Map sheet column letters to data fields. Row 1 is assumed to be a header row and is skipped.
+          Map sheet column letters (A, B, C…) to volunteer fields. Row 1 is assumed to be a header and is skipped.
+          Use <strong style="color:var(--text);">＋</strong> to add extra columns, <strong style="color:var(--err);">✕</strong> to remove one.
         </p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;">
-          <div class="field-group"><label>Name</label><input type="text" class="field-input" id="cfgColName" placeholder="A" maxlength="2" /></div>
-          <div class="field-group"><label>Date</label><input type="text" class="field-input" id="cfgColDate" placeholder="B" maxlength="2" /></div>
-          <div class="field-group"><label>Time</label><input type="text" class="field-input" id="cfgColTime" placeholder="C" maxlength="2" /></div>
-          <div class="field-group"><label>Location</label><input type="text" class="field-input" id="cfgColLoc" placeholder="D" maxlength="2" /></div>
-          <div class="field-group"><label>Role</label><input type="text" class="field-input" id="cfgColRole" placeholder="E" maxlength="2" /></div>
-          <div class="field-group"><label>Notes</label><input type="text" class="field-input" id="cfgColNotes" placeholder="F" maxlength="2" /></div>
+        <div style="display:grid;grid-template-columns:auto 1fr 48px 28px;gap:6px 8px;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);">Col</span>
+          <span style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);">Label</span>
+          <span></span><span></span>
         </div>
+        <div id="colMappingList" style="display:flex;flex-direction:column;gap:6px;"></div>
         <div class="field-actions" style="margin-top:14px;">
+          <button class="hdr-btn" id="btnAddColMap">＋ Add Column</button>
           <button class="hdr-btn save" id="btnSaveCols">Save Mapping</button>
         </div>
         <div class="config-status" id="colsStatus"></div>
@@ -300,9 +300,50 @@ let selectedIdx = null;
 /* ── Storage ───────────────────────────────────────── */
 function getVols()  { try { return JSON.parse(localStorage.getItem(LS_VOLS)) || []; } catch { return []; } }
 function saveVols(v) { localStorage.setItem(LS_VOLS, JSON.stringify(v)); }
-function getCols()  { try { return JSON.parse(localStorage.getItem(LS_COLS)) || {}; } catch { return {}; } }
 function getPat()   { return localStorage.getItem(LS_PAT) || ''; }
 function getComps() { try { return JSON.parse(localStorage.getItem(LS_COMPS)) || []; } catch { return []; } }
+
+const DEFAULT_COL_MAPPINGS = [
+  { label: 'Name',     field: 'name',     col: 'A' },
+  { label: 'Date',     field: 'date',     col: 'B' },
+  { label: 'Time',     field: 'time',     col: 'C' },
+  { label: 'Location', field: 'location', col: 'D' },
+  { label: 'Role',     field: 'role',     col: 'E' },
+  { label: 'Notes',    field: 'notes',    col: 'F' },
+];
+let colMappings = [];
+
+function getColMappings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(LS_COLS));
+    if (Array.isArray(stored) && stored.length) return stored;
+    // Migrate old object format { name:'A', date:'B', … }
+    if (stored && typeof stored === 'object') {
+      return DEFAULT_COL_MAPPINGS.map(d => ({ ...d, col: stored[d.field] || d.col }));
+    }
+  } catch {}
+  return DEFAULT_COL_MAPPINGS.map(d => ({ ...d }));
+}
+
+function renderColMappings() {
+  const container = document.getElementById('colMappingList');
+  if (!container) return;
+  container.innerHTML = colMappings.map((m, i) => `
+    <div style="display:grid;grid-template-columns:48px 1fr 28px;gap:6px;align-items:center;">
+      <input type="text" class="field-input" placeholder="A" value="${escHtml(m.col)}"
+        data-cm-col="${i}" maxlength="3" style="font-size:12px;padding:5px 8px;text-align:center;font-family:monospace;" />
+      <input type="text" class="field-input" placeholder="Field label" value="${escHtml(m.label)}"
+        data-cm-label="${i}" style="font-size:12px;padding:5px 8px;" />
+      <button onclick="removeColMapping(${i})"
+        style="background:transparent;border:none;color:rgba(224,112,112,0.55);cursor:pointer;font-size:1rem;padding:0 4px;line-height:1;" title="Remove">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeColMapping(i) {
+  colMappings.splice(i, 1);
+  renderColMappings();
+}
 
 /* ── GitHub API ────────────────────────────────────── */
 async function ghGet(path) {
@@ -477,20 +518,14 @@ async function importFromSheet() {
     const r = await fetch(url + (url.includes('?') ? '&' : '?') + '_=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const text = await r.text();
-    const cols  = getCols();
-    const colIdx = c => (c || 'A').toUpperCase().charCodeAt(0) - 65;
+    const mappings = (colMappings.length ? colMappings : DEFAULT_COL_MAPPINGS).filter(m => m.field && m.col);
+    const colIdx = c => c.toUpperCase().charCodeAt(0) - 65;
     const rows = text.trim().split('\n').slice(1); // skip header
     const imported = rows.map(row => {
       const cells = parseCSVRow(row);
-      return {
-        name:     (cells[colIdx(cols.name)]     || '').trim(),
-        date:     (cells[colIdx(cols.date)]     || '').trim(),
-        time:     (cells[colIdx(cols.time)]     || '').trim(),
-        location: (cells[colIdx(cols.location)] || '').trim(),
-        role:     (cells[colIdx(cols.role)]     || '').trim(),
-        notes:    (cells[colIdx(cols.notes)]    || '').trim(),
-        status:   'pending',
-      };
+      const vol = { status: 'pending' };
+      mappings.forEach(m => { vol[m.field] = (cells[colIdx(m.col)] || '').trim(); });
+      return vol;
     }).filter(v => v.name);
 
     // Merge: preserve status/completions for existing volunteers by name
@@ -575,16 +610,11 @@ document.getElementById('btnSyncComps').addEventListener('click', async () => {
 
 /* ── Config tab ────────────────────────────────────── */
 function loadConfig() {
-  const url  = localStorage.getItem(LS_URL) || '';
-  const cols = getCols();
-  const pat  = getPat();
-  document.getElementById('cfgSheetUrl').value  = url;
-  document.getElementById('cfgColName').value   = cols.name     || 'A';
-  document.getElementById('cfgColDate').value   = cols.date     || 'B';
-  document.getElementById('cfgColTime').value   = cols.time     || 'C';
-  document.getElementById('cfgColLoc').value    = cols.location || 'D';
-  document.getElementById('cfgColRole').value   = cols.role     || 'E';
-  document.getElementById('cfgColNotes').value  = cols.notes    || 'F';
+  const url = localStorage.getItem(LS_URL) || '';
+  const pat = getPat();
+  document.getElementById('cfgSheetUrl').value = url;
+  colMappings = getColMappings();
+  renderColMappings();
   if (pat) document.getElementById('patInput').value = pat.slice(0,4) + '●●●●●●●●●●●●';
 }
 
@@ -609,15 +639,29 @@ document.getElementById('btnTestSheet').addEventListener('click', async () => {
 });
 
 document.getElementById('btnSaveCols').addEventListener('click', () => {
-  localStorage.setItem(LS_COLS, JSON.stringify({
-    name:     document.getElementById('cfgColName').value.trim().toUpperCase()  || 'A',
-    date:     document.getElementById('cfgColDate').value.trim().toUpperCase()  || 'B',
-    time:     document.getElementById('cfgColTime').value.trim().toUpperCase()  || 'C',
-    location: document.getElementById('cfgColLoc').value.trim().toUpperCase()   || 'D',
-    role:     document.getElementById('cfgColRole').value.trim().toUpperCase()  || 'E',
-    notes:    document.getElementById('cfgColNotes').value.trim().toUpperCase() || 'F',
-  }));
+  const container = document.getElementById('colMappingList');
+  const labelInputs = container.querySelectorAll('[data-cm-label]');
+  const colInputs   = container.querySelectorAll('[data-cm-col]');
+  const previous = colMappings.slice();
+  colMappings = Array.from(labelInputs).map((inp, i) => {
+    const label = inp.value.trim();
+    const col   = (colInputs[i].value.trim()).toUpperCase();
+    const prev  = previous[i];
+    // Preserve existing field key; derive from label for new rows
+    const field = prev?.field || label.toLowerCase().replace(/\s+/g, '_') || ('field_' + i);
+    return { label, field, col };
+  }).filter(m => m.label || m.col);
+  localStorage.setItem(LS_COLS, JSON.stringify(colMappings));
+  renderColMappings();
   showCfgStatus('colsStatus', 'ok', '✓ Saved');
+});
+
+document.getElementById('btnAddColMap').addEventListener('click', () => {
+  colMappings.push({ label: '', field: '', col: '' });
+  renderColMappings();
+  // Focus the new label input
+  const inputs = document.querySelectorAll('[data-cm-label]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
 });
 
 document.getElementById('btnVerifyPat').addEventListener('click', async () => {
